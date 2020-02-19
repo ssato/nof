@@ -10,11 +10,12 @@ NOF - Network Objects Finder
       :target: https://travis-ci.org/ssato/nof
    :alt: [Test status]
 
-.. image:: https://scrutinizer-ci.com/g/ssato/nof/badges/quality-score.png?b=master
+.. TODO:
+.. .. image:: https://scrutinizer-ci.com/g/ssato/nof/badges/quality-score.png?b=master
       :target: https://scrutinizer-ci.com/g/ssato/nof
    :alt: [Code Quality by Scrutinizer]
 
-.. image:: https://img.shields.io/lgtm/grade/python/g/ssato/nof.svg
+.. .. image:: https://img.shields.io/lgtm/grade/python/g/ssato/nof.svg
       :target: https://lgtm.com/projects/g/ssato/nof/context:python
    :alt: [Code Quality by LGTM]
 
