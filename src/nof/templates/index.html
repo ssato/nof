@@ -1,0 +1,22 @@
+{% extends "base.html" -%}
+
+{% block page_content -%}
+<div>Index</div>
+<ul id="graph_files">
+{%  for fname in filenames %}
+<li>
+  <!-- TODO:
+  <a href="/graph/{{ fname }}">graph data (YAML file)</a>, 
+  <a href="/node_link/{{ fname }}">Node link data (JSON file)</a>,
+  -->
+  <div>{{ fname }}:</div>
+  <div><a href="/finder/networks/{{ fname }}">find networks by IP address</a></div>
+  <div><a href="/finder/paths/{{ fname }}">find paths by src and dst IP addresses</a></div>
+</li>
+{%  else %}
+<li>No data. Please go to <a href="/upload">Upload page</a>.</li>
+{%  endfor %}
+</ul>
+{% endblock %}
+{# vim:sw=2:ts=2:et:
+-#}

@@ -1,0 +1,56 @@
+/*
+ *
+ * ref. http://www.htmq.com/color/websafe216.shtml
+ */
+#main-svg {
+  /*
+  margin: 10px;
+  border: medium solid #c0c0c0;
+  */
+}
+
+.node {
+  stroke: #000033;
+  stroke-width: 2;
+  fill: #99ccff;
+}
+
+.node.network {
+  stroke: #006699;
+}
+
+.node.firewall {
+  stroke: #cc3333;
+}
+
+.node:hover, .node.found {
+  stroke: #66ffff;
+  stroke-width: 5;
+  fill: #99ccff;
+}
+
+.tooltip {
+  position: absolute;
+  text-align: center;
+  width: auto;
+  height: auto;
+  padding: 2px;
+  font-size: x-small;
+  /* background: white; */
+  -webkit-box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.8);
+  -moz-box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.8);
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.8);
+  visibility: hidden;
+}
+
+.node-info-box, node-details-box, node-paths-box {
+  margin-top: 10px;
+}
+
+/*
+.p-5-node-info-box, .p-5-node-details-box {
+  border: 2px solid #c0c0c0;
+}
+*/
+/* vim:sw=2:ts=2:et:
+ */

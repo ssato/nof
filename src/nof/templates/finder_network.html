@@ -1,0 +1,22 @@
+{% extends "finder.html" -%}
+
+{% block main_resutls -%}
+    <div class="row m-5 p-5 node-paths-box" id="node-networks">
+      {%- if networks -%}
+      <ul>
+      {%-   for net in networks %}
+        <li>ID: #{{ loop.index }}
+          <div class="row path-node node-{{ net.type }}">
+            <span class="text-primary">#{{ net.id }}: {{ net.name }}</span>
+            <span class="text-secondary">{{ net.addr }}</span>
+          </div>
+        </li>
+      {%-   endfor %}
+      </ul>
+      {% else %}
+      None
+      {%- endif %}
+    </div>
+{% endblock %}
+{# vim:sw=2:ts=2:et:
+-#}

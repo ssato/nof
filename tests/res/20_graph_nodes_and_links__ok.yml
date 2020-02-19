@@ -1,0 +1,119 @@
+---
+nodes:
+  - id: 1
+    name: net_A
+    type: network  # net[work_segment] | firewall | ...
+    addr: 192.168.1.0/24
+
+  - id: 2
+    name: FW_A
+    type: firewall
+    addr: 192.168.1.254
+
+  - id: 3
+    name: net_B
+    type: network
+    addr: 192.168.2.0/24
+
+  - id: 4
+    name: FW_B
+    type: firewall
+    addr: 192.168.2.254
+
+  - id: 5
+    name: net_C
+    type: network
+    addr: 192.168.10.0/24
+
+  - id: 6
+    name: FW_C
+    type: firewall
+    addr: 192.168.10.254
+
+  - id: 7
+    name: FW_D
+    type: firewall
+    addr: 192.168.0.254
+
+  - id: 8
+    name: net_www_example_com_0
+    type: network
+    addr: 93.184.0.0/24
+
+  - id: 9
+    name: FW_net_www_example_com_0
+    type: firewall
+    addr: 93.184.0.34
+
+  - id: 10
+    name: net_www_example_com_1
+    type: network
+    addr: 93.184.216.0/24
+
+  - id: 11
+    name: FW_net_www_example_com_1
+    type: firewall
+    addr: 93.184.216.34
+
+  - id: 12
+    name: net_cdn_redhat_com_0
+    type: network
+    addr: 23.59.92.0/24
+
+  - id: 13
+    name: FW_net_cdn_redhat_com_0
+    type: firewall
+    addr: 23.59.92.251
+
+  - id: 14
+    name: FW_L_0
+    type: firewall
+    addr: 172.16.0.1
+
+  - id: 15
+    name: net_L_0
+    type: network
+    addr: 172.16.0.0/12
+
+  - id: 16
+    name: FW_L_1
+    type: firewall
+    addr: 172.16.1.1
+
+  - id: 17
+    name: net_L_1
+    type: network
+    addr: 172.16.1.0/24
+
+  - id: 18
+    name: FW_L_2
+    type: firewall
+    addr: 172.16.2.1
+
+  - id: 19
+    name: net_L_2
+    type: network
+    addr: 172.16.2.0/24
+
+# adjacency list
+edges:
+  - [1, 2]
+  - [2, 7]
+  - [3, 4]
+  - [4, 7]
+  - [5, 6]
+  - [6, 7]
+  - [7, 9]
+  - [7, 11]
+  - [7, 13]
+  - [8, 9]
+  - [10, 11]
+  - [12, 13]
+  - [14, 9]
+  - [15, 14]
+  - [16, 14]
+  - [17, 16]
+  - [18, 16]
+  - [19, 18]
+
+# vim:sw=2:ts=2:et:

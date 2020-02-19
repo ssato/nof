@@ -1,0 +1,7 @@
+include LICENSE.MIT
+include AUTHORS.txt
+include MANIFEST.in
+include README.rst
+include tox.ini
+recursive-include src *.py *.css *.js *.html
+recursive-include tests *.py *.yml

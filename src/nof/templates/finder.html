@@ -1,0 +1,71 @@
+{% extends "base.html" -%}
+{% block subtitle %}Analyze data: {{ filename | safe }}{% endblock -%}
+
+{% block scripts %}
+{{ super() }}
+<!-- d3js -->
+<script type="text/javascript" src="https://d3js.org/d3.v5.min.js"></script>
+<script type="text/javascript" src="https://d3js.org/d3-fetch.v1.min.js"></script>
+<script type="text/javascript" src="https://d3js.org/d3-dispatch.v1.min.js"></script>
+<script type="text/javascript" src="https://d3js.org/d3-quadtree.v1.min.js"></script>
+<script type="text/javascript" src="https://d3js.org/d3-timer.v1.min.js"></script>
+<script type="text/javascript" src="https://d3js.org/d3-force.v2.min.js"></script>
+<!-- custom -->
+<script type="text/javascript" src="{{ url_for('static', filename='js/network_graph.js') }}"></script>
+<script type="text/javascript">
+d3.json("{{ node_link_url }}").then(render_node_link);
+
+/* seealso: src/nof/main/views.py */
+var network_addresses = {{ networks | map(attribute='addr') | list | tojson() }};
+var node_type = {{ node_type | d("any") | tojson }};
+{% if node_paths | d(false) -%}
+var node_paths = {{ node_paths | tojson }};
+
+{%   if node_type != "any" -%}
+var node_path_0_addrs = {{ node_paths.0 | selectattr('type', 'equalto', node_type)
+                                        | map(attribute='addr') | list | tojson() }};
+{%   else -%}
+var node_path_0_addrs = {{ node_paths.0 | map(attribute='addr') | list | tojson() }};
+{%   endif -%}
+{% else -%}
+var node_paths = [];
+var node_path_0_addrs = [];
+{% endif -%}
+</script>
+{% endblock %}
+
+{% block page_content -%}
+<div id="node-graph" class="row">
+  <div class="col-sm-8"><svg id="main-svg"/></div>
+  <div class="col-sm-4 container-fluid">
+    {% block main_form -%}
+    <div class="row m-5 p-5 finder-form-box">{{ wtf.quick_form(form) }}</div>
+    {% endblock %}
+    <div class="row m-5 p-5 node-info-box" id="node-info">...</div>
+    <div class="row m-5 p-5 node-details-box" id="node-details">(Node Details)</div>
+    {% block main_resutls -%}
+    <div class="row m-5 p-5 node-paths-box" id="node-paths">
+      {%- if node_paths -%}
+      <ul>
+      {%-   for nodes in node_paths %}
+        <li>Path: #{{ loop.index }}
+      {%-     for node in nodes %}
+          <div class="row path-node node-{{ node.type }}">
+            <span class="text-primary">#{{ node.id }}: {{ node.name }}</span>
+            <span class="text-secondary">{{ node.type }}</span>
+            <span class="text-secondary">{{ node.addr }}</span>
+          </div>
+      {%-     endfor %}
+        </li>
+      {%-   endfor %}
+      </ul>
+      {% else %}
+      None
+      {%- endif %}
+    </div>
+    {% endblock main_resutls -%}
+  </div>
+</div>
+{% endblock %}
+{# vim:sw=2:ts=2:et:
+-#}

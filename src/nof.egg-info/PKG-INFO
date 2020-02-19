@@ -1,0 +1,30 @@
+Metadata-Version: 2.1
+Name: nof
+Version: 0.1.0
+Summary: Network objects finder
+Home-page: https://localhost.localdomain
+Author: Satoru SATOH
+Author-email: ssato@redhat.com
+Maintainer: Satoru SATOH
+Maintainer-email: ssato@redhat.com
+License: MIT
+Description: 
+        Network objects finder
+        
+        - Home: https://localhost.localdomain
+        - License: MIT
+Platform: UNKNOWN
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 2
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 2.7
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Environment :: Console
+Classifier: Operating System :: OS Independent
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Topic :: Utilities
+Classifier: License :: OSI Approved :: MIT License
+Provides-Extra: devel
