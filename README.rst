@@ -19,4 +19,19 @@ research possibility of web application assists network engineers. This is not
 intended to use in production nor a supported Red Hat product at all. Please
 use this software at your own risk.
 
+Installation
+===============
+
+Requirements
+-------------
+
+See pkg/requirements.txt.
+
+Build and Installation
+=======================
+
+
+
+
+
 .. vim:sw=2:ts=2:et:
