@@ -3,7 +3,7 @@ NOF - Network Objects Finder
 ================================
 
 .. image:: https://img.shields.io/travis/ssato/nof.svg
-      :target: https://travis-ci.org/ssato/nof
+      :target: https://travis-ci.org/ssato/nof.svg
    :alt: [Test status]
 
 .. TODO:
