@@ -15,4 +15,7 @@ NODE_TYPES = (NODE_ANY, NODE_NET, NODE_ROUTER, NODE_FIREWALL, NODE_SWITCH,
               NODE_HOST) \
            = ("any", "network", "firewall", "router", "switch", "host")
 
+CONFIG_TYPES = (CONFIG_FORTIOS_FIREWALL_POLICY, ) \
+             = ("fortios_firewall_policy", )
+
 # vim:sw=4:ts=4:et:

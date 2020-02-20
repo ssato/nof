@@ -13,10 +13,11 @@ import flask_wtf
 import wtforms.validators
 import wtforms
 
-from nof.globals import NODE_TYPES
+from nof.globals import NODE_TYPES, CONFIG_TYPES
 
 
 NODE_TYPE_PAIRS = [(k, k.title()) for k in NODE_TYPES]
+CNF_TYPE_PAIRS = [(k, k.title()) for k in CONFIG_TYPES]
 
 
 class UploadForm(flask_wtf.FlaskForm):
@@ -55,5 +56,18 @@ class PathFinderForm(flask_wtf.FlaskForm):
     find_type = wtforms.SelectField(u"Object Type", choices=NODE_TYPE_PAIRS,
                                     default=NODE_TYPES[0])
     submit = wtforms.SubmitField("Find")
+
+
+class ConfigUploadForm(flask_wtf.FlaskForm):
+    """
+    Form to upload config data like fortios 'show full-configuration' output.
+    """
+    upload = flask_wtf.file.FileField(u"Config data", validators=[
+        flask_wtf.file.FileRequired(),
+    ])
+    ctype = wtforms.SelectField(u"Config Type", choices=CNF_TYPE_PAIRS,
+                                default=CONFIG_TYPES[0])
+    submit = wtforms.SubmitField(u"Upload Config")
+
 
 # vim:sw=4:ts=4:et:

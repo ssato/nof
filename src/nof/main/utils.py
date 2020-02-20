@@ -9,11 +9,16 @@ import glob
 import os.path
 import os
 
+import anyconfig
 import flask
 import werkzeug.utils
 
-from ..lib import finder
+from ..lib import finder, fortios
 from ..globals import NODE_ANY
+
+
+
+FORTIOS_FWP_PREFIX = "fortios_firewall_policies_"
 
 
 def uploaddir():
@@ -24,17 +29,28 @@ def uploaddir():
                      flask.current_app.config["UPLOADED_FILES_DEST"])
 
 
-def list_graph_filenames():
+def list_graph_filenames(pattern=None):
     """
     :return: A list of graph (YAML) data files.
     """
-    files = glob.glob(os.path.join(uploaddir(), "*.yml"))
+    if pattern is None:
+        pattern = "*.yml"
+
+    files = glob.glob(os.path.join(uploaddir(), pattern))
     return sorted(os.path.basename(f) for f in files)
 
 
 def graph_path(filename):
     """
     :param filename: Original YAML file name
+    """
+    filename = werkzeug.utils.secure_filename(filename)
+    return os.path.join(uploaddir(), filename)
+
+
+def upload_filepath(filename):
+    """
+    :param filename: Uploaded file path
     """
     filename = werkzeug.utils.secure_filename(filename)
     return os.path.join(uploaddir(), filename)
@@ -54,6 +70,24 @@ def node_link_path(filename):
     :param filename: Original YAML file name
     """
     return os.path.join(uploaddir(), node_link_filename(filename))
+
+
+def processed_filename(filename, prefix=None):
+    """
+    :param filename: Processed file path
+    """
+    if prefix is None:
+        prefix = "out_"
+
+    basename = os.path.splitext(werkzeug.utils.secure_filename(filename))[0]
+    return "{}{}.json".format(prefix, basename)
+
+
+def processed_filepath(filename, prefix=None):
+    """
+    :param filename: Processed file path
+    """
+    return os.path.join(uploaddir(), processed_filename(filename, prefix))
 
 
 def generate_node_link_data_from_graph_data(filename):
@@ -110,5 +144,18 @@ def find_paths_from_graph(filename, src_ip, dst_ip, node_type=None):
     graph = _load_graph_by_filename(filename)
 
     return finder.find_paths(graph, src_ip, dst_ip, node_type=node_type)
+
+
+def parse_config_and_dump_json_file(filename, ctype=None):
+    """
+    Parse fortios 'show full-configuration' output and dump parsed results as
+    JSON file.
+    """
+    filepath = upload_filepath(filename)
+    policies = fortios.parse_firewall_policy(filepath)
+
+    prefix = FORTIOS_FWP_PREFIX
+    outpath = processed_filepath(filename, prefix=prefix)
+    anyconfig.dump(dict(firewall_policies=policies), outpath)
 
 # vim:sw=4:ts=4:et:

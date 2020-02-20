@@ -102,4 +102,16 @@ def find_node_link_paths(filename, src_ip, dst_ip):
     paths = utils.find_paths_from_graph(filename, src_ip, dst_ip)
     return flask.jsonify(paths)
 
+
+@API.route("/config/<path:filename>", methods=["GET"])
+def get_config(filename):
+    """
+    Get config parsed.
+
+    :param filename: graph (YAML) data filename
+    """
+    filename = werkzeug.utils.secure_filename(filename)
+    return flask.send_from_directory(utils.uploaddir(), filename)
+
+
 # vim:sw=4:ts=4:et:

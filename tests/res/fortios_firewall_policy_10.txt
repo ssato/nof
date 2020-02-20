@@ -1,0 +1,25 @@
+#
+# .. seealso:: https://csps.hitachi-solutions.co.jp/fortinet/faq/FG-21-0054/
+# 
+config xxxxx
+end
+config firewall policy
+    edit 2
+        set name "Sample Policy"
+        set uuid 83ca38c4-3a67-51e9-6b3e-9437f3c23e08
+        set srcintf "lan"
+        set dstintf "wan1"
+        set srcaddr "all"
+        set dstaddr "all"
+        set action accept
+        set status enable
+        set schedule "always"
+        set service "HTTP"
+        set session-ttl 600
+        set application-list "app-sample"
+        set ssl-ssh-profile "deep-inspection"
+        set nat enable
+    next
+end
+config xxxxx
+end
