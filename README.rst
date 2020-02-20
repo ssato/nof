@@ -2,8 +2,8 @@
 NOF - Network Objects Finder
 ================================
 
-.. image:: https://img.shields.io/travis/ssato/nof.svg
-      :target: https://travis-ci.org/ssato/nof.svg
+.. image:: https://img.shields.io/travis/ssato/nof
+      :target: https://travis-ci.org/ssato/nof
    :alt: [Test status]
 
 .. TODO:
