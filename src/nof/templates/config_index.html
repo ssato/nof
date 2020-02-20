@@ -1,0 +1,17 @@
+{% extends "base.html" -%}
+
+{% block page_content -%}
+<div>Index</div>
+<ul id="config_files">
+{%  for fname, link in flinks %}
+<li>
+  <div>{{ fname }}:</div>
+  <div><a href="{{ link }}">Parsed Results</a></div>
+</li>
+{%  else %}
+<li>No data. Please go to <a href="/config/upload">Upload page</a>.</li>
+{%  endfor %}
+</ul>
+{% endblock %}
+{# vim:sw=2:ts=2:et:
+-#}
