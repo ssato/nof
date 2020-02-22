@@ -10,59 +10,209 @@ r"""Parse fortios configuration
 """
 from __future__ import absolute_import
 
+import collections
+import itertools
 import re
 
 
-_COMMENT_RE = re.compile(r"^(?:\s+)?#")
-_SECTION_END_RE = re.compile(r"^end$")
-_ITEM_END_RE = re.compile(r"^\s+next$")
+EMPTY_RE = re.compile(r"^\s+$")
+COMMENT_RE = re.compile(r"^#(.*)$")
 
-_FIREWALL_POLICY_SECT_START_RE = re.compile(r"^config firewall policy$")
-_FIREWALL_POLICY_SECT_END_RE = _SECTION_END_RE
-_FIREWALL_POLICY_ITEM_START_RE = re.compile(r"^\s+edit (\d+)$")
-_FIREWALL_POLICY_ITEM_LINE_RE = re.compile(r"\s+set ([a-z0-9-]+) (.+)$")
-_FIREWALL_POLICY_ITEM_END_RE = _ITEM_END_RE
+# Examples:
+# - 'config firewall address'
+# - '       config ftgd-wf'
+# - '            config filters'
+CONFIG_START_RE = re.compile(r"^(\s*)"
+                             r"config\s+"
+                             r'(?:(\S+)|"([^"\s]+)")' r"(?# word )"
+                             r"(?:\s+"
+                             r'(?:(\S+)|"([^"\s]+)")'
+                             r")*$")
+CONFIG_END_RE = re.compile(r"^end$")
+
+# Examples:
+# - '     edit "fortinet"'
+# - '            edit 1'
+EDIT_START_RE = re.compile(r"^(\s+)"
+                           r"edit\s+"
+                           r'(?:(\S+)|"([^"\s]+)")'
+                           r"$")
+EDIT_END_RE = re.compile(r"next$")
+SET_OR_UNSET_LINE_RE = re.compile(r"^\s+"
+                                  r"(set|unset)\s+"
+                                  r'(?:(\S+)|"([^"\s]+)")'
+                                  r"(?:\s+"
+                                  r'(?:(\S+)|"([^"\s]+)")'
+                                  r")*$")
+
+(ST_IN_CONFIG, ST_IN_EDIT, ST_OTHER) = list(range(3))
 
 
-def parse_firewall_policy_itr(lines):
+def list_matches(matches):
     """
-    :param lines:
-        A list of configuration strings, ['config firewall policy', '    edit
-        10', '        set name ...', ..., 'end']
+    :param matches: A list of matched strings or None
+    :return: A list of matched strings only
     """
-    in_sect = False
-    in_item = False
-    item = dict()
+    return [m for m in matches if m is not None]
+
+
+def process_config_line(matched):
+    """
+    :param matched: :class:`re.Match` object holding the config line info
+
+    :raises: ValueError
+    :return: A tuple of (indent_str, config_name_str)
+    """
+    matches = matched.groups()
+    if len(matches) < 2:
+        msg = "line: {}, matches: {}".format(matched.string,
+                                             ", ".join(matches))
+        raise ValueError(msg)
+
+    return (matches[0],
+            ' '.join(list_matches(matches[1:])))  # TBD: What to return?
+
+
+def process_edit_line(matched):
+    """
+    :param matched: :class:`re.Match` object holding the 'edit' line info
+
+    :raises: ValueError
+    :return: A tuple of (indent_str, edit_name_str)
+    """
+    matches = matched.groups()
+    if len(matches) < 2:
+        msg = "line: {}, matches: {}".format(matched.string,
+                                             ", ".join(matches))
+        raise ValueError(msg)
+
+    return (matches[0], ' '.join(list_matches(matches[1:])))
+
+
+def process_set_or_unset_line(matched):
+    """
+    :param matched: :class:`re.Match` object holding the '*set' line info
+
+    :raises: ValueError
+    :return: A tuple of (name, type, *args)
+    """
+    matches = matched.groups()
+    if len(matches) < 2:
+        msg = "line: {}, matches: {}".format(matched.string,
+                                             ", ".join(matches))
+        raise ValueError(msg)
+
+    return dict(name=matches[1], type=matches[0],
+                values=list_matches(matches[1:]))
+
+
+_COUNT = itertools.count()
+
+
+def id_gen():
+    """ID generator
+    """
+    return next(_COUNT)
+
+
+(NT_CONFIG, NT_EDIT) = ("config", "edit")
+
+
+def make_Node(name, _type=None):
+    """Make a collections.namedtuple object represents a config node.
+    """
+    if _type is None:
+        _type = NT_CONFIG
+
+    Node = collections.namedtuple("Config", ("name", "id", "type",
+                                             "children"))
+    return Node(name=name, id=id_gen(), type=_type, children=[])
+
+
+def Node_to_dict(node):
+    """Convert a Node namedtuple object to a dict.
+    """
+    return dict(name=node.name, _id=node.id, type=node.type,
+                children=node.children)
+
+
+def parse_show_config_itr(lines):
+    """
+    Parse 'config xxxxx xxxx' .. 'end'.
+
+    :param lines: A list of lines in the configuration outputs
+    :param indent: indent string (leading white spaces)
+    """
+    state = ST_OTHER
+    configs = []  # stack holds nested config objects
 
     for line in lines:
-        if _COMMENT_RE.match(line):  # skip comments
+        if EMPTY_RE.match(line):
             continue
 
-        if _FIREWALL_POLICY_SECT_START_RE.match(line):
-            in_sect = True
-            continue
+        matched = COMMENT_RE.match(line)
+        if matched:
+            yield dict(type="comment", content=matched.groups()[0])  # TBD
 
-        if in_sect:
-            if _FIREWALL_POLICY_SECT_END_RE.match(line):
-                return  # 'config firewall policy' section was end.
+        if state == ST_OTHER:
+            matched = CONFIG_START_RE.match(line)
+            if matched:
+                state = ST_IN_CONFIG
 
-            if _FIREWALL_POLICY_ITEM_START_RE.match(line):
-                in_item = True
+                (indent, name) = process_config_line(matched)
+                config = make_Node(name, _type=NT_CONFIG)
+                configs.append(config)  # push config
+
+        elif state == ST_IN_CONFIG:
+            if indent:
+                # strip leading white spaces to try the next match.
+                line = re.sub(r"^" + indent, '', line)
+
+            matched = EDIT_START_RE.match(line)
+            if matched:
+                state = ST_IN_EDIT
+
+                (edit_indent, name) = process_edit_line(matched)
+                edit = make_Node(name, _type=NT_EDIT)
+                configs.append(edit)  # push edit
+
+            matched = CONFIG_END_RE.match(line)
+            if matched:
+                config = Node_to_dict(configs.pop())  # pop config
+
+                if not configs:  # It's a top level object.
+                    state = ST_OTHER
+                    yield config
+                else:
+                    state = ST_IN_EDIT
+                    configs[-1].children.append(config)
+
                 continue
 
-            if in_item:
-                if _FIREWALL_POLICY_ITEM_END_RE.match(line):
-                    in_item = False
-                    yield item
-                    item = dict()
-                else:
-                    matched = _FIREWALL_POLICY_ITEM_LINE_RE.match(line)
-                    if matched:
-                        (key, val) = matched.groups()
-                        item[key] = val
+            matched = SET_OR_UNSET_LINE_RE.match(line)
+            if matched:
+                set_val = process_set_or_unset_line(matched)
+                configs[-1].children.append(set_val)
+
+        elif state == ST_IN_EDIT:
+            if edit_indent:
+                line = re.sub(r"^" + indent + edit_indent, '', line)
+
+            matched = EDIT_END_RE.match(line)
+            if matched:
+                edit = Node_to_dict(configs.pop())
+                configs[-1].children.append(edit)
+
+                state = ST_IN_CONFIG
+                continue
+
+            matched = SET_OR_UNSET_LINE_RE.match(line)
+            if matched:
+                set_val = process_set_or_unset_line(matched)
+                configs[-1].children.append(set_val)
 
 
-def parse_firewall_policy(filepath):
+def parse_show_config(filepath):
     """Parse configuration output and returns a list of firewwall policies.
     """
     try:
@@ -70,6 +220,6 @@ def parse_firewall_policy(filepath):
     except UnicodeDecodeError:
         lines = open(filepath, encoding="shift-jis").readlines()
 
-    return list(parse_firewall_policy_itr(lines))
+    return list(parse_show_config_itr(lines))
 
 # vim:sw=4:ts=4:et:
