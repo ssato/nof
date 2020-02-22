@@ -1,8 +1,6 @@
 #
 # .. seealso:: https://csps.hitachi-solutions.co.jp/fortinet/faq/FG-21-0054/
 # 
-config xxxxx
-end
 config firewall policy
     edit 2
         set name "Sample Policy"
@@ -20,6 +18,4 @@ config firewall policy
         set ssl-ssh-profile "deep-inspection"
         set nat enable
     next
-end
-config xxxxx
 end
