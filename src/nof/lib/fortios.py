@@ -24,9 +24,9 @@ COMMENT_RE = re.compile(r"^#(.*)$")
 # - '            config filters'
 CONFIG_START_RE = re.compile(r"^(\s*)"
                              r"config\s+"
-                             r'(?:(\S+)|"([^"\s]+)")' r"(?# word )"
+                             r'(?:([^"\s]+)|"([^"\s]+)")' r"(?# word )"
                              r"(?:\s+"
-                             r'(?:(\S+)|"([^"\s]+)")'
+                             r'(?:([^"\s]+)|"([^"\s]+)")'
                              r")*$")
 CONFIG_END_RE = re.compile(r"^end$")
 
@@ -35,14 +35,14 @@ CONFIG_END_RE = re.compile(r"^end$")
 # - '            edit 1'
 EDIT_START_RE = re.compile(r"^(\s+)"
                            r"edit\s+"
-                           r'(?:(\S+)|"([^"\s]+)")'
+                           r'(?:([^"\s]+)|"([^"\s]+)")'
                            r"$")
 EDIT_END_RE = re.compile(r"next$")
 SET_OR_UNSET_LINE_RE = re.compile(r"^\s+"
                                   r"(set|unset)\s+"
-                                  r'(?:(\S+)|"([^"\s]+)")'
+                                  r'(?:([^"\s]+)|"([^"\s]+)")'
                                   r"(?:\s+"
-                                  r'(?:(\S+)|"([^"\s]+)")'
+                                  r'(?:([^"\s]+)|"([^"\s]+)")'
                                   r")*$")
 
 (ST_IN_CONFIG, ST_IN_EDIT, ST_OTHER) = list(range(3))
@@ -53,7 +53,7 @@ def list_matches(matches):
     :param matches: A list of matched strings or None
     :return: A list of matched strings only
     """
-    return [m for m in matches if m is not None]
+    return [m for m in matches if m and m.strip()]
 
 
 def process_config_line(matched):
