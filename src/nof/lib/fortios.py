@@ -93,19 +93,10 @@ def process_set_or_unset_line(matched):
     return dict(type=matches[0], name=matches[1])
 
 
-_COUNT = itertools.count()
-
-
-def id_gen():
-    """ID generator
-    """
-    return next(_COUNT)
-
-
 (NT_CONFIG, NT_EDIT) = ("config", "edit")
 
 
-def make_Node(name, _type=None):
+def make_Node(name, id_gen, _type=None):
     """Make a collections.namedtuple object represents a config node.
     """
     if _type is None:
@@ -130,8 +121,13 @@ def parse_show_config_itr(lines):
     :param lines: A list of lines in the configuration outputs
     :param indent: indent string (leading white spaces)
     """
+    counter = itertools.count()
     state = ST_OTHER
     configs = []  # stack holds nested config objects
+
+    def id_gen():
+        """ID generator"""
+        return next(counter)
 
     for line in lines:
         if EMPTY_RE.match(line):
@@ -147,7 +143,7 @@ def parse_show_config_itr(lines):
                 state = ST_IN_CONFIG
 
                 (indent, name) = process_config_or_edit_line(matched)
-                config = make_Node(name, _type=NT_CONFIG)
+                config = make_Node(name, id_gen, _type=NT_CONFIG)
                 configs.append(config)  # push config
 
         elif state == ST_IN_CONFIG:
@@ -160,7 +156,7 @@ def parse_show_config_itr(lines):
                 state = ST_IN_EDIT
 
                 (edit_indent, name) = process_config_or_edit_line(matched)
-                edit = make_Node(name, _type=NT_EDIT)
+                edit = make_Node(name, id_gen, _type=NT_EDIT)
                 configs.append(edit)  # push edit
 
             matched = CONFIG_END_RE.match(line)
