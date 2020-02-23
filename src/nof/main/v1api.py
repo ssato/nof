@@ -33,7 +33,7 @@ def _upload_graph(filename):
     payload = flask.request.get_data()
     try:
         yml_data = anyconfig.loads(payload.decode("utf-8"), ac_parser="yaml")
-        anyconfig.dump(yml_data, utils.graph_path(filename))
+        anyconfig.dump(yml_data, utils.upload_filepath(filename))
         utils.generate_node_link_data_from_graph_data(filename)
     except (IOError, OSError, ValueError, RuntimeError):
         flask.abort(400, dict(code="Invalid data",
@@ -50,7 +50,7 @@ def _load_graph_by_filename(filename):
     """
     Load graph (YAML) data found by given filename.
     """
-    filepath = utils.graph_path(filename)
+    filepath = utils.upload_filepath(filename)
     return finder.load(filepath, ac_parser="yaml")
 
 

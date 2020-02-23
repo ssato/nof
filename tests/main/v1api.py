@@ -36,7 +36,7 @@ class V1_API_10_Simple_TestCase(C.BluePrintTestCaseWithWorkdir):
             shutil.copy(filepath, nof.main.utils.uploaddir())
 
             filename = os.path.basename(filepath)
-            filepath_2 = nof.main.utils.graph_path(filename)
+            filepath_2 = nof.main.utils.upload_filepath(filename)
             self.assertTrue(os.path.exists(filepath_2))
 
             path = _url_path("graph", filename)

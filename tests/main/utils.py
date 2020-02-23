@@ -19,13 +19,13 @@ class TT_10_path_functions_TestCases(C.BluePrintTestCaseWithWorkdir):
     def test_10_uploaddir(self):
         self.assertEqual(TT.uploaddir(), self.workdir)
 
-    def test_20_graph_path(self):
+    def test_20_upload_filepath(self):
         filename = "foo.yml"
-        self.assertEqual(TT.graph_path(filename),
+        self.assertEqual(TT.upload_filepath(filename),
                          os.path.join(TT.uploaddir(), filename))
 
         filename = "../../foo.yml"
-        self.assertNotEqual(TT.graph_path(filename),
+        self.assertNotEqual(TT.upload_filepath(filename),
                             os.path.join(TT.uploaddir(), filename))
 
     def test_30_node_link_filename(self):

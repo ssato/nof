@@ -13,9 +13,9 @@ from .forms import (
 )
 from .globals import APP
 from .utils import (
-    graph_path, generate_node_link_data_from_graph_data, list_filenames,
+    upload_filepath, generate_node_link_data_from_graph_data, list_filenames,
     find_networks_from_graph, find_paths_from_graph,
-    upload_filepath, parse_config_and_dump_json_file,
+    parse_config_and_dump_json_file,
     FORTIOS_FWP_PREFIX
 )
 from ..globals import NODE_ANY
@@ -44,7 +44,7 @@ def upload():
 
     if form.validate_on_submit():
         yml_data = form.upload.data
-        filepath = graph_path(yml_data.filename)
+        filepath = upload_filepath(yml_data.filename)
         filename = os.path.basename(filepath)
         yml_data.save(filepath)
 

@@ -41,14 +41,6 @@ def list_filenames(pattern=None):
     return sorted(os.path.basename(f) for f in files)
 
 
-def graph_path(filename):
-    """
-    :param filename: Original YAML file name
-    """
-    filename = werkzeug.utils.secure_filename(filename)
-    return os.path.join(uploaddir(), filename)
-
-
 def upload_filepath(filename):
     """
     :param filename: Uploaded file path
@@ -95,7 +87,7 @@ def generate_node_link_data_from_graph_data(filename):
     """
     :param filename: Original YAML file name
     """
-    filepath = graph_path(filename)
+    filepath = upload_filepath(filename)
     outpath = node_link_path(filename)
     msg = "filepath: {}, outpath: {}".format(filepath, outpath)
 
@@ -112,7 +104,7 @@ def generate_node_link_data_from_graph_data(filename):
 def _load_graph_by_filename(filename):
     """Load graph data by filename
     """
-    filepath = graph_path(filename)
+    filepath = upload_filepath(filename)
     return finder.load(filepath, ac_parser="yaml")
 
 
