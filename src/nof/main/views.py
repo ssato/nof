@@ -109,11 +109,13 @@ def path_finder(filename):
 def config_index():
     """Top page for config uploads.
     """
-    fns = itertools.chain(list_filenames("{}*.json".format(c))
-                          for c in CONFIG_TYPES)
+    fns = itertools.chain(*(list_filenames("{}*.json".format(c))
+                            for c in CONFIG_TYPES))
     flinks = [(fn, flask.url_for("api.get_config", filename=fn)) for fn in fns]
+    ulink = flask.url_for(".upload_config")
 
-    return flask.render_template("config_index.html", flinks=flinks)
+    return flask.render_template("config_index.html", flinks=flinks,
+                                 ulink=ulink)
 
 
 @APP.route("/config/upload", methods=["GET", "POST"])
@@ -126,7 +128,7 @@ def upload_config():
 
     if form.validate_on_submit():
         cnf_data = form.upload.data
-        cnf_type = form.ctype
+        cnf_type = form.ctype.data
 
         filepath = upload_filepath(cnf_data.filename)
         filename = os.path.basename(filepath)
@@ -137,11 +139,11 @@ def upload_config():
         except (IOError, OSError, ValueError, RuntimeError):
             flask.flash(u"Failed to convert the data uploaded! "
                         u"Please try again with other valid data files.")
-            return flask.render_template("upload.html", **octxs)
+            return flask.render_template("config_upload.html", **octxs)
 
         flask.flash(u"File was successfully uploaded and processed.")
         return flask.redirect(flask.url_for(".config_index"))
 
-    return flask.render_template("upload.html", filename=filename, **octxs)
+    return flask.render_template("config_upload.html", filename=filename, **octxs)
 
 # vim:sw=4:ts=4:et:
