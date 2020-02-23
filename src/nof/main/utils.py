@@ -13,12 +13,8 @@ import anyconfig
 import flask
 import werkzeug.utils
 
-from ..lib import finder, fortios
-from ..globals import NODE_ANY
-
-
-
-FORTIOS_FWP_PREFIX = "fortios_firewall_policies_"
+from ..lib import finder, configparsers
+from ..globals import NODE_ANY, CONFIG_TYPES
 
 
 def uploaddir():
@@ -130,10 +126,14 @@ def parse_config_and_dump_json_file(filename, ctype=None):
     JSON file.
     """
     filepath = upload_filepath(filename)
-    policies = fortios.parse_firewall_policy(filepath)
 
-    prefix = FORTIOS_FWP_PREFIX
-    outpath = processed_filepath(filename, prefix=prefix)
-    anyconfig.dump(dict(firewall_policies=policies), outpath)
+    if ctype is None:
+        ctype = CONFIG_TYPES[0]  # default
+
+    parse_fn = configparsers.PARSERS[ctype]
+    cnf = parse_fn(filepath)
+
+    outpath = processed_filepath(filename, prefix=ctype)
+    anyconfig.dump(dict(configs=cnf), outpath)
 
 # vim:sw=4:ts=4:et:
