@@ -1,12 +1,12 @@
 [
   {
     "name": "system np6",
-    "_id": 16,
+    "_id": 0,
     "type": "config",
     "children": [
       {
         "name": "np6_0",
-        "_id": 17,
+        "_id": 1,
         "type": "edit",
         "children": [
           {
@@ -83,7 +83,7 @@
       },
       {
         "name": "np6_1",
-        "_id": 18,
+        "_id": 2,
         "type": "edit",
         "children": [
           {

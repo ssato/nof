@@ -13,12 +13,12 @@
   },
   {
     "name": "firewall policy",
-    "_id": 13,
+    "_id": 0,
     "type": "config",
     "children": [
       {
         "name": "2",
-        "_id": 14,
+        "_id": 1,
         "type": "edit",
         "children": [
           {

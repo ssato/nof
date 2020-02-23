@@ -9,7 +9,7 @@
   },
   {
     "name": "system global",
-    "_id": 15,
+    "_id": 0,
     "type": "config",
     "children": [
       {
