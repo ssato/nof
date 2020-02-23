@@ -4,6 +4,7 @@
 #
 """Views.
 """
+import itertools
 import os.path
 
 import flask
@@ -15,10 +16,9 @@ from .globals import APP
 from .utils import (
     upload_filepath, generate_node_link_data_from_graph_data, list_filenames,
     find_networks_from_graph, find_paths_from_graph,
-    parse_config_and_dump_json_file,
-    FORTIOS_FWP_PREFIX
+    parse_config_and_dump_json_file
 )
-from ..globals import NODE_ANY
+from ..globals import NODE_ANY, CONFIG_TYPES
 
 
 SUMMARIES = dict(index=u"NOF",
@@ -109,7 +109,8 @@ def path_finder(filename):
 def config_index():
     """Top page for config uploads.
     """
-    fns = list_filenames("{}*.json".format(FORTIOS_FWP_PREFIX))
+    fns = itertools.chain(list_filenames("{}*.json".format(c))
+                          for c in CONFIG_TYPES)
     flinks = [(fn, flask.url_for("api.get_config", filename=fn)) for fn in fns]
 
     return flask.render_template("config_index.html", flinks=flinks)
