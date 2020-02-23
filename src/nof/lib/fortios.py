@@ -222,7 +222,13 @@ def parse_show_config_itr(lines):
 
 
 def parse_show_config(filepath):
-    """Parse configuration output and returns a list of firewwall policies.
+    """
+    Parse 'show full-configuration output and returns a list of parsed configs.
+
+    :param filepath:
+        a str or :class:`pathlib.Path` object represents file path contains
+        'show full-configuration` or any other 'show ...' outputs
+    :raises: IOError, OSError
     """
     try:
         lines = open(filepath).readlines()
