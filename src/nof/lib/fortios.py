@@ -171,6 +171,7 @@ def parse_show_config_itr(lines):
                 (edit_indent, name) = process_config_or_edit_line(matched)
                 edit = make_Node(name, id_gen, _type=NT_EDIT)
                 configs.append(edit)  # push edit
+                continue
 
             matched = CONFIG_END_RE.match(line)
             if matched:
@@ -182,6 +183,7 @@ def parse_show_config_itr(lines):
                 else:
                     state = ST_IN_EDIT
                     configs[-1].children.append(config)
+                    indent = ''  # reest it.
 
                 continue
 
@@ -196,16 +198,27 @@ def parse_show_config_itr(lines):
 
             matched = EDIT_END_RE.match(line)
             if matched:
+                state = ST_IN_CONFIG
+
                 edit = Node_to_dict(configs.pop())
                 configs[-1].children.append(edit)
-
-                state = ST_IN_CONFIG
+                edit_indent = ''  # reset it.
                 continue
 
             matched = SET_OR_UNSET_LINE_RE.match(line)
             if matched:
                 set_val = process_set_or_unset_line(matched)
                 configs[-1].children.append(set_val)
+                continue
+
+            matched = CONFIG_START_RE.match(line)
+            if matched:
+                state = ST_IN_CONFIG
+
+                (indent, name) = process_config_or_edit_line(matched)
+                config = make_Node(name, id_gen, _type=NT_CONFIG)
+                indent = indent + edit_indent
+                configs.append(config)  # push config
 
 
 def parse_show_config(filepath):
