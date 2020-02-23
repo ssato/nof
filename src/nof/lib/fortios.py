@@ -56,7 +56,7 @@ def list_matches(matches):
     return [m for m in matches if m and m.strip()]
 
 
-def process_config_line(matched):
+def process_config_or_edit_line(matched):
     """
     :param matched: :class:`re.Match` object holding the config line info
 
@@ -71,22 +71,6 @@ def process_config_line(matched):
 
     return (matches[0],
             ' '.join(list_matches(matches[1:])))  # TBD: What to return?
-
-
-def process_edit_line(matched):
-    """
-    :param matched: :class:`re.Match` object holding the 'edit' line info
-
-    :raises: ValueError
-    :return: A tuple of (indent_str, edit_name_str)
-    """
-    matches = matched.groups()
-    if len(matches) < 2:
-        msg = "line: {}, matches: {}".format(matched.string,
-                                             ", ".join(matches))
-        raise ValueError(msg)
-
-    return (matches[0], ' '.join(list_matches(matches[1:])))
 
 
 def process_set_or_unset_line(matched):
@@ -159,7 +143,7 @@ def parse_show_config_itr(lines):
             if matched:
                 state = ST_IN_CONFIG
 
-                (indent, name) = process_config_line(matched)
+                (indent, name) = process_config_or_edit_line(matched)
                 config = make_Node(name, _type=NT_CONFIG)
                 configs.append(config)  # push config
 
@@ -172,7 +156,7 @@ def parse_show_config_itr(lines):
             if matched:
                 state = ST_IN_EDIT
 
-                (edit_indent, name) = process_edit_line(matched)
+                (edit_indent, name) = process_config_or_edit_line(matched)
                 edit = make_Node(name, _type=NT_EDIT)
                 configs.append(edit)  # push edit
 
