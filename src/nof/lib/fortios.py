@@ -40,20 +40,31 @@ EDIT_START_RE = re.compile(r"^(\s+)"
 EDIT_END_RE = re.compile(r"next$")
 SET_OR_UNSET_LINE_RE = re.compile(r"^\s+"
                                   r"(set|unset)\s+"
-                                  r'(?:([^"\s]+)|"([^"\s]+)")'
+                                  r'(?:([^"\s]+)|"([^"\s]+)")' r"(?# key )"
                                   r"(?:\s+"
-                                  r'(?:([^"\s]+)|"([^"\s]+)")'
-                                  r")*$")
+                                  r"(.+)"
+                                  r")?$")
+SET_VALUE_RE = re.compile(r'(?:([^"\s]+)|"([^"\s]+)")\s*')
 
 (ST_IN_CONFIG, ST_IN_EDIT, ST_OTHER) = list(range(3))
 
 
-def list_matches(matches):
+def is_not_empty_nor_white_spaces(astr):
+    """
+    True if given string is not empty or does not consists of white spaces.
+    """
+    return astr and astr.strip()
+
+
+def list_matches(matches, cond=None):
     """
     :param matches: A list of matched strings or None
     :return: A list of matched strings only
     """
-    return [m for m in matches if m and m.strip()]
+    if cond is None:
+        cond = is_not_empty_nor_white_spaces
+
+    return [m for m in matches if cond(m)]
 
 
 def process_config_or_edit_line(matched):
@@ -80,17 +91,19 @@ def process_set_or_unset_line(matched):
     :raises: ValueError
     :return: A tuple of (name, type, *args)
     """
-    matches = matched.groups()
+    matches = [m for m in matched.groups() if m is not None]
     if len(matches) < 2:
         msg = "line: {}, matches: {}".format(matched.string,
                                              ", ".join(matches))
         raise ValueError(msg)
 
-    if len(matches) > 2:
-        return dict(type=matches[0], name=matches[1],
-                    values=list_matches(matches[2:]))
+    if len(matches) == 2:  # ex. unset ssd-trim-weekday
+        return dict(type=matches[0], name=matches[1])
 
-    return dict(type=matches[0], name=matches[1])
+    vss = SET_VALUE_RE.findall(matches[2])
+    values = [m for m in itertools.chain.from_iterable(vss) if m]
+
+    return dict(type=matches[0], name=matches[1], values=values)
 
 
 (NT_CONFIG, NT_EDIT) = ("config", "edit")
