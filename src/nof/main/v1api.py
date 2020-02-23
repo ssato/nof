@@ -74,7 +74,7 @@ def get_node_link(filename):
 
     :param filename: graph (YAML) data filename
     """
-    filename = utils.node_link_filename(filename)
+    filename = utils.processed_filename(filename, prefix='')
     return flask.send_from_directory(utils.uploaddir(), filename)
 
 

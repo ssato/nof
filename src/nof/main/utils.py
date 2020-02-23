@@ -50,27 +50,12 @@ def upload_filepath(filename):
 
 
 @functools.lru_cache(maxsize=None)
-def node_link_filename(filename):
-    """
-    :param filename: Original YAML file name
-    """
-    basename = os.path.splitext(werkzeug.utils.secure_filename(filename))[0]
-    return "{}.json".format(basename)
-
-
-def node_link_path(filename):
-    """
-    :param filename: Original YAML file name
-    """
-    return os.path.join(uploaddir(), node_link_filename(filename))
-
-
 def processed_filename(filename, prefix=None):
     """
     :param filename: Processed file path
     """
     if prefix is None:
-        prefix = "out_"
+        prefix = ''
 
     basename = os.path.splitext(werkzeug.utils.secure_filename(filename))[0]
     return "{}{}.json".format(prefix, basename)
@@ -88,7 +73,7 @@ def generate_node_link_data_from_graph_data(filename):
     :param filename: Original YAML file name
     """
     filepath = upload_filepath(filename)
-    outpath = node_link_path(filename)
+    outpath = processed_filepath(filename)
     msg = "filepath: {}, outpath: {}".format(filepath, outpath)
 
     try:

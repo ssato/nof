@@ -43,7 +43,7 @@ class Views_TestCase(C.BluePrintTestCaseWithWorkdir):
 
             self.assertEqual(resp.status_code, 200, resp)
 
-            uppath = nof.main.utils.node_link_path(filename)
+            uppath = nof.main.utils.processed_filepath(filename)
             self.assertTrue(os.path.exists(uppath))
 
     def test_40_finder__get(self):
@@ -52,7 +52,7 @@ class Views_TestCase(C.BluePrintTestCaseWithWorkdir):
             shutil.copy(filepath, nof.main.utils.uploaddir())
 
             nof.main.utils.generate_node_link_data_from_graph_data(filename)
-            outpath = nof.main.utils.node_link_path(filename)
+            outpath = nof.main.utils.processed_filepath(filename)
 
             self.assertTrue(os.path.exists(outpath))
 

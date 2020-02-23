@@ -28,13 +28,15 @@ class TT_10_path_functions_TestCases(C.BluePrintTestCaseWithWorkdir):
         self.assertNotEqual(TT.upload_filepath(filename),
                             os.path.join(TT.uploaddir(), filename))
 
-    def test_30_node_link_filename(self):
+    def test_30_processed_filename__wo_prefix(self):
         filename = "a.yml"
-        res = TT.node_link_filename(filename)
+        res = TT.processed_filename(filename)
+        self.assertEqual(res, "a.json")
 
-        self.assertTrue(res)
-        self.assertTrue(res.endswith(".json"))
-        self.assertNotEqual(res, os.path.join(TT.uploaddir(), filename))
+    def test_32_processed_filename__w_prefix(self):
+        filename = "a.yml"
+        res = TT.processed_filename(filename, prefix="out_")
+        self.assertEqual(res, "out_a.json")
 
 
 class TT_20_util_functions_TestCases(C.BluePrintTestCaseWithWorkdir):
@@ -46,7 +48,7 @@ class TT_20_util_functions_TestCases(C.BluePrintTestCaseWithWorkdir):
             filename = os.path.basename(filepath)
             TT.generate_node_link_data_from_graph_data(filename)
 
-            outpath = TT.node_link_path(filename)
+            outpath = TT.processed_filepath(filename)
             self.assertTrue(os.path.exists(outpath))
             self.assertTrue(outpath.endswith(".json"))
 

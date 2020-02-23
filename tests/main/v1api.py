@@ -58,7 +58,7 @@ class V1_API_10_Simple_TestCase(C.BluePrintTestCaseWithWorkdir):
 
             self.assertEqual(resp.status_code, 201, resp.data)
 
-            outpath = nof.main.utils.node_link_path(filename)
+            outpath = nof.main.utils.processed_filepath(filename)
             outdata = anyconfig.load(outpath)
 
             self.assertTrue(os.path.exists(outpath))
@@ -71,7 +71,7 @@ class V1_API_10_Simple_TestCase(C.BluePrintTestCaseWithWorkdir):
             shutil.copy(filepath, nof.main.utils.uploaddir())
 
             nof.main.utils.generate_node_link_data_from_graph_data(filename)
-            outpath = nof.main.utils.node_link_path(filename)
+            outpath = nof.main.utils.processed_filepath(filename)
 
             self.assertTrue(os.path.exists(outpath))
 
