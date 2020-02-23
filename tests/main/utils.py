@@ -91,4 +91,18 @@ class TT_20_util_functions_TestCases(C.BluePrintTestCaseWithWorkdir):
         self.assertEqual(len(res), len(C.ok_yml_files()))
         self.assertEqual(res, exp, res)
 
+
+class TT_30_parse_TestCases(C.BluePrintTestCaseWithWorkdir):
+
+    def test_10_parse_config_and_dump_json_file(self):
+        for ctype in ("fortios", ):
+            for filepath in C.config_files("fortios"):
+                fname = os.path.basename(filepath)
+                outpath = TT.processed_filepath(fname, prefix=ctype)
+
+                shutil.copy(filepath, TT.uploaddir())
+                TT.parse_config_and_dump_json_file(fname, ctype)
+
+                self.assertTrue(os.path.exists(outpath))
+
 # vim:sw=4:ts=4:et:
