@@ -28,8 +28,7 @@
       },
       {
         "type": "unset",
-        "name": "fgd-alert-subscription",
-        "values": []
+        "name": "fgd-alert-subscription"
       },
       {
         "type": "set",
