@@ -13,6 +13,10 @@ import nof.lib.fortios as TT
 from .. import common as C
 
 
+def _process(reg, proc_fn, line):
+    return proc_fn(reg.match(line))
+
+
 class TT_10_Simple_Function_TestCases(unittest.TestCase):
 
     maxDiff = 10000
@@ -29,9 +33,12 @@ class TT_10_Simple_Function_TestCases(unittest.TestCase):
                (TT.SET_OR_UNSET_LINE_RE,
                 "    set ssd-trim-min 60\n", ["set", "ssd-trim-min", "60"]),
                (TT.SET_OR_UNSET_LINE_RE,
+                '        set service "HTTP" "PING" "TRACEROUTE"\n',
+                ["set", "service", '"HTTP" "PING" "TRACEROUTE"']),
+               (TT.SET_OR_UNSET_LINE_RE,
                 "    unset ssd-trim-weekday\n", ["unset", "ssd-trim-weekday"]),
                (TT.SET_OR_UNSET_LINE_RE,
-                '    set vdom "root"\n', ["set", "vdom", "root"]))
+                '    set vdom "root"\n', ["set", "vdom", '"root"']))
 
         for reg, line, exp in les:
             try:
@@ -40,6 +47,35 @@ class TT_10_Simple_Function_TestCases(unittest.TestCase):
                 raise ValueError("{!s}: line={}, "
                                  "reg={!r}".format(exc, line, exp))
             self.assertEqual(TT.list_matches(matches), exp)
+
+    def test_20_process_config_or_edit_line(self):
+        res = _process(TT.CONFIG_START_RE, TT.process_config_or_edit_line,
+                       "config system interface\n")
+        self.assertEqual(res, ('', 'system interface'))
+
+        res = _process(TT.CONFIG_START_RE, TT.process_config_or_edit_line,
+                       "        config ipv6\n")
+        self.assertEqual(res, ('        ', 'ipv6'))
+
+    def test_30_process_set_or_unset_line(self):
+        res = _process(TT.SET_OR_UNSET_LINE_RE, TT.process_set_or_unset_line,
+                       "    set admin-port 80\n")
+        self.assertDictEqual(res, dict(type="set", name="admin-port",
+                                       values=["80"]))
+
+        res = _process(TT.SET_OR_UNSET_LINE_RE, TT.process_set_or_unset_line,
+                       "    unset ip6-allowaccess\n")
+        self.assertDictEqual(res, dict(type="unset", name="ip6-allowaccess"))
+
+        res = _process(TT.SET_OR_UNSET_LINE_RE, TT.process_set_or_unset_line,
+                       '    set admin-server-cert "Fortinet_Factory"\n')
+        self.assertDictEqual(res, dict(type="set", name="admin-server-cert",
+                                       values=["Fortinet_Factory"]))
+
+        res = _process(TT.SET_OR_UNSET_LINE_RE, TT.process_set_or_unset_line,
+                       '    set member "DNS" "HTTP" "HTTPS"\n')
+        self.assertDictEqual(res, dict(type="set", name="member",
+                                       values=["DNS", "HTTP", "HTTPS"]))
 
     def test_90_parse_show_config__simple_config_set(self):
         inputs = glob.glob(os.path.join(C.resdir(), "fortios", "*.txt"))
