@@ -41,6 +41,10 @@ def ok_yml_files():
     return sorted(glob.glob(os.path.join(resdir(), "*__ok.yml")))
 
 
+def config_files(ctype):
+    return sorted(glob.glob(os.path.join(resdir(), ctype, "*.txt")))
+
+
 def setup_workdir():
     return tempfile.mkdtemp()
 
