@@ -98,7 +98,7 @@ class TT_30_parse_TestCases(C.BluePrintTestCaseWithWorkdir):
         for ctype in ("fortios", ):
             for filepath in C.config_files("fortios"):
                 fname = os.path.basename(filepath)
-                outpath = TT.processed_filepath(fname, prefix=ctype)
+                outpath = TT.processed_filepath(fname, prefix=ctype + '_')
 
                 shutil.copy(filepath, TT.uploaddir())
                 TT.parse_config_and_dump_json_file(fname, ctype)

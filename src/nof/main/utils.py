@@ -133,7 +133,7 @@ def parse_config_and_dump_json_file(filename, ctype=None):
     parse_fn = configparsers.PARSERS[ctype]
     cnf = parse_fn(filepath)
 
-    outpath = processed_filepath(filename, prefix=ctype)
+    outpath = processed_filepath(filename, prefix=ctype + '_')
     anyconfig.dump(dict(configs=cnf), outpath)
 
 # vim:sw=4:ts=4:et:
