@@ -79,11 +79,11 @@ class TT_20_util_functions_TestCases(C.BluePrintTestCaseWithWorkdir):
         self.assertEqual(n_1, res_1[0][0]["addr"], repr(res_1))
         self.assertEqual(n_2, res_2[0][-1]["addr"], repr(res_2[0][-1]["addr"]))
 
-    def test_30_list_graph_filenames(self):
+    def test_30_list_filenames(self):
         for filepath in C.ok_yml_files():
             shutil.copy(filepath, TT.uploaddir())
 
-        res = TT.list_graph_filenames()
+        res = TT.list_filenames()
         exp = sorted(os.path.basename(f) for f in C.ok_yml_files())
 
         self.assertEqual(len(res), len(C.ok_yml_files()))

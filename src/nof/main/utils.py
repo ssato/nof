@@ -29,8 +29,9 @@ def uploaddir():
                      flask.current_app.config["UPLOADED_FILES_DEST"])
 
 
-def list_graph_filenames(pattern=None):
+def list_filenames(pattern=None):
     """
+    :param pattern: Filename pattern [*.yml]
     :return: A list of graph (YAML) data files.
     """
     if pattern is None:

@@ -13,7 +13,7 @@ from .forms import (
 )
 from .globals import APP
 from .utils import (
-    graph_path, generate_node_link_data_from_graph_data, list_graph_filenames,
+    graph_path, generate_node_link_data_from_graph_data, list_filenames,
     find_networks_from_graph, find_paths_from_graph,
     upload_filepath, parse_config_and_dump_json_file,
     FORTIOS_FWP_PREFIX
@@ -30,7 +30,7 @@ SUMMARIES = dict(index=u"NOF",
 def index():
     """Top page.
     """
-    filenames = list_graph_filenames()
+    filenames = list_filenames("*.yml")
     return flask.render_template("index.html", filenames=filenames)
 
 
@@ -109,7 +109,7 @@ def path_finder(filename):
 def config_index():
     """Top page for config uploads.
     """
-    fns = list_graph_filenames(pattern="{}*.json".format(FORTIOS_FWP_PREFIX))
+    fns = list_filenames("{}*.json".format(FORTIOS_FWP_PREFIX))
     flinks = [(fn, flask.url_for("api.get_config", filename=fn)) for fn in fns]
 
     return flask.render_template("config_index.html", flinks=flinks)
