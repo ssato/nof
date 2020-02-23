@@ -86,8 +86,11 @@ def process_set_or_unset_line(matched):
                                              ", ".join(matches))
         raise ValueError(msg)
 
-    return dict(name=matches[1], type=matches[0],
-                values=list_matches(matches[1:]))
+    if len(matches) > 2:
+        return dict(type=matches[0], name=matches[1],
+                    values=list_matches(matches[2:]))
+
+    return dict(type=matches[0], name=matches[1])
 
 
 _COUNT = itertools.count()
