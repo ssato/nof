@@ -3,14 +3,19 @@
 # License: MIT
 #
 # pylint: disable=missing-docstring, invalid-name
+import glob
 import os.path
 import unittest
+
+import anyconfig
 
 import nof.lib.fortios as TT
 from .. import common as C
 
 
 class TT_10_Simple_Function_TestCases(unittest.TestCase):
+
+    maxDiff = 10000
 
     def test_10_list_matches(self):
         # A pair of (line, expected_result)
@@ -36,7 +41,16 @@ class TT_10_Simple_Function_TestCases(unittest.TestCase):
                                  "reg={!r}".format(exc, line, exp))
             self.assertEqual(TT.list_matches(matches), exp)
 
-    def test_20_process_config_line(self):
-        pass       
+    def test_90_parse_show_config__simple_config_set(self):
+        inputs = glob.glob(os.path.join(C.resdir(), "fortios", "*.txt"))
+        for inp_path in sorted(inputs):
+            exp_path = inp_path + ".exp.json"
+
+            res = TT.parse_show_config(inp_path)
+            res_exp = anyconfig.load(exp_path)
+
+            self.assertEqual(len(res),  len(res_exp))
+            for cnf, exp in zip(res, res_exp):
+                self.assertDictEqual(cnf, exp, cnf)
 
 # vim:sw=4:ts=4:et:
