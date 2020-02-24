@@ -1,0 +1,245 @@
+[
+  {
+    "type": "comment",
+    "content": " https://help.fortinet.com/cli/fos60hlp/60/Content/FortiOS/fortiOS-cli-ref/config/system/global.htm"
+  },
+  {
+    "type": "comment",
+    "content": " (Some parts are omitted.)"
+  },
+  {
+    "name": "system global",
+    "_id": 0,
+    "type": "config",
+    "children": [
+      {
+        "type": "set",
+        "name": "admin-concurrent",
+        "values": [
+          "enable"
+        ]
+      },
+      {
+        "type": "set",
+        "name": "admin-console-timeout",
+        "values": [
+          "0"
+        ]
+      },
+      {
+        "type": "unset",
+        "name": "fgd-alert-subscription"
+      },
+      {
+        "type": "set",
+        "name": "fortiextender",
+        "values": [
+          "disable"
+        ]
+      },
+      {
+        "type": "set",
+        "name": "gui-device-latitude",
+        "values": [
+          "''"
+        ]
+      },
+      {
+        "type": "set",
+        "name": "gui-device-longitude",
+        "values": [
+          "''"
+        ]
+      },
+      {
+        "type": "set",
+        "name": "fds-statistics-period",
+        "values": [
+          "60"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "system np6",
+    "_id": 1,
+    "type": "config",
+    "children": [
+      {
+        "name": "np6_0",
+        "_id": 2,
+        "type": "edit",
+        "children": [
+          {
+            "type": "set",
+            "name": "fastpath",
+            "values": [
+              "enable"
+            ]
+          },
+          {
+            "type": "set",
+            "name": "per-session-accounting",
+            "values": [
+              "enable-by-log"
+            ]
+          },
+          {
+            "type": "set",
+            "name": "session-timeout-random-range",
+            "values": [
+              "8"
+            ]
+          },
+          {
+            "type": "set",
+            "name": "session-timeout-fixed",
+            "values": [
+              "disable"
+            ]
+          },
+          {
+            "name": "fp-anomaly-v4",
+            "_id": 3,
+            "type": "config",
+            "children": [
+              {
+                "type": "set",
+                "name": "tcp-syn-fin",
+                "values": [
+                  "allow"
+                ]
+              },
+              {
+                "type": "set",
+                "name": "tcp-fin-noack",
+                "values": [
+                  "trap-to-host"
+                ]
+              },
+              {
+                "type": "set",
+                "name": "ipv4-opttimestamp",
+                "values": [
+                  "trap-to-host"
+                ]
+              }
+            ]
+          },
+          {
+            "name": "fp-anomaly-v6",
+            "_id": 4,
+            "type": "config",
+            "children": [
+              {
+                "type": "set",
+                "name": "ipv6-land",
+                "values": [
+                  "trap-to-host"
+                ]
+              },
+              {
+                "type": "set",
+                "name": "ipv6-optendpid",
+                "values": [
+                  "trap-to-host"
+                ]
+              },
+              {
+                "type": "set",
+                "name": "ipv6-optinvld",
+                "values": [
+                  "trap-to-host"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "np6_1",
+        "_id": 5,
+        "type": "edit",
+        "children": [
+          {
+            "type": "set",
+            "name": "fastpath",
+            "values": [
+              "enable"
+            ]
+          },
+          {
+            "type": "set",
+            "name": "per-session-accounting",
+            "values": [
+              "enable-by-log"
+            ]
+          },
+          {
+            "type": "set",
+            "name": "session-timeout-random-range",
+            "values": [
+              "8"
+            ]
+          },
+          {
+            "type": "set",
+            "name": "session-timeout-fixed",
+            "values": [
+              "disable"
+            ]
+          },
+          {
+            "name": "fp-anomaly-v4",
+            "_id": 6,
+            "type": "config",
+            "children": [
+              {
+                "type": "set",
+                "name": "tcp-syn-fin",
+                "values": [
+                  "allow"
+                ]
+              },
+              {
+                "type": "set",
+                "name": "tcp-fin-noack",
+                "values": [
+                  "trap-to-host"
+                ]
+              },
+              {
+                "type": "set",
+                "name": "ipv4-opttimestamp",
+                "values": [
+                  "trap-to-host"
+                ]
+              }
+            ]
+          },
+          {
+            "name": "fp-anomaly-v6",
+            "_id": 7,
+            "type": "config",
+            "children": [
+              {
+                "type": "set",
+                "name": "ipv6-land",
+                "values": [
+                  "trap-to-host"
+                ]
+              },
+              {
+                "type": "set",
+                "name": "ipv6-optinvld",
+                "values": [
+                  "trap-to-host"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]
