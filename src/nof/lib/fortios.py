@@ -28,8 +28,6 @@ CONFIG_START_RE = re.compile(r"^(\s*)"
                              r"(?:\s+"
                              r'(?:([^"\s]+)|"([^"\s]+)")'
                              r")*$")
-CONFIG_END_RE = re.compile(r"^end$")
-
 # Examples:
 # - '     edit "fortinet"'
 # - '            edit 1'
@@ -37,7 +35,6 @@ EDIT_START_RE = re.compile(r"^(\s+)"
                            r"edit\s+"
                            r'(?:([^"\s]+)|"([^"\s]+)")'
                            r"$")
-EDIT_END_RE = re.compile(r"next$")
 SET_OR_UNSET_LINE_RE = re.compile(r"^\s+"
                                   r"(set|unset)\s+"
                                   r'(?:([^"\s]+)|"([^"\s]+)")' r"(?# key )"
@@ -109,15 +106,31 @@ def process_set_or_unset_line(matched):
 (NT_CONFIG, NT_EDIT) = ("config", "edit")
 
 
-def make_Node(name, id_gen, _type=None):
-    """Make a collections.namedtuple object represents a config node.
+def make_end_re(indent, _type=None):
+    """
+    Make a regex object to match for 'config' or 'edit' section ends
+    """
+    end = "next$" if _type == NT_EDIT else "end$"
+    return re.compile(r"^" + indent + end)
+
+
+def make_Node(matched, id_gen, _type=None):
+    """
+    :param matched: :class:`re.Match` object holding the config line info
+    :param id_gen: Any callable to generate unique ID of this node object
+    :param _type: Node type
+
+    :return: A collections.namedtuple object has a config or edit info
     """
     if _type is None:
         _type = NT_CONFIG
 
-    Node = collections.namedtuple("Config", ("name", "id", "type",
-                                             "children"))
-    return Node(name=name, id=id_gen(), type=_type, children=[])
+    (indent, name) = process_config_or_edit_line(matched)
+    end_re = make_end_re(indent, _type)
+
+    Node = collections.namedtuple(_type.title(),
+                                  ("name", "id", "type", "end_re", "children"))
+    return Node(name=name, id=id_gen(), type=_type, end_re=end_re, children=[])
 
 
 def Node_to_dict(node):
@@ -132,7 +145,6 @@ def parse_show_config_itr(lines):
     Parse 'config xxxxx xxxx' .. 'end'.
 
     :param lines: A list of lines in the configuration outputs
-    :param indent: indent string (leading white spaces)
     """
     counter = itertools.count()
     state = ST_OTHER
@@ -155,25 +167,20 @@ def parse_show_config_itr(lines):
             if matched:
                 state = ST_IN_CONFIG
 
-                (indent, name) = process_config_or_edit_line(matched)
-                config = make_Node(name, id_gen, _type=NT_CONFIG)
+                config = make_Node(matched, id_gen)
                 configs.append(config)  # push config
 
         elif state == ST_IN_CONFIG:
-            if indent:
-                # strip leading white spaces to try the next match.
-                line = re.sub(r"^" + indent, '', line)
-
             matched = EDIT_START_RE.match(line)
             if matched:
                 state = ST_IN_EDIT
 
-                (edit_indent, name) = process_config_or_edit_line(matched)
-                edit = make_Node(name, id_gen, _type=NT_EDIT)
+                edit = make_Node(matched, id_gen, _type=NT_EDIT)
                 configs.append(edit)  # push edit
                 continue
 
-            matched = CONFIG_END_RE.match(line)
+            assert configs[-1].type == NT_CONFIG, configs[-1]
+            matched = configs[-1].end_re.match(line)
             if matched:
                 config = Node_to_dict(configs.pop())  # pop config
 
@@ -183,7 +190,6 @@ def parse_show_config_itr(lines):
                 else:
                     state = ST_IN_EDIT
                     configs[-1].children.append(config)
-                    indent = ''  # reest it.
 
                 continue
 
@@ -193,16 +199,13 @@ def parse_show_config_itr(lines):
                 configs[-1].children.append(set_val)
 
         elif state == ST_IN_EDIT:
-            if edit_indent:
-                line = re.sub(r"^" + indent + edit_indent, '', line)
-
-            matched = EDIT_END_RE.match(line)
+            assert configs[-1].type == NT_EDIT, configs[-1]
+            matched = configs[-1].end_re.match(line)
             if matched:
                 state = ST_IN_CONFIG
 
                 edit = Node_to_dict(configs.pop())
                 configs[-1].children.append(edit)
-                edit_indent = ''  # reset it.
                 continue
 
             matched = SET_OR_UNSET_LINE_RE.match(line)
@@ -215,9 +218,7 @@ def parse_show_config_itr(lines):
             if matched:
                 state = ST_IN_CONFIG
 
-                (indent, name) = process_config_or_edit_line(matched)
-                config = make_Node(name, id_gen, _type=NT_CONFIG)
-                indent = indent + edit_indent
+                config = make_Node(matched, id_gen)
                 configs.append(config)  # push config
 
 
