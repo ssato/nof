@@ -144,6 +144,7 @@ def upload_config():
         flask.flash(u"File was successfully uploaded and processed.")
         return flask.redirect(flask.url_for(".config_index"))
 
-    return flask.render_template("config_upload.html", filename=filename, **octxs)
+    return flask.render_template("config_upload.html", filename=filename,
+                                 **octxs)
 
 # vim:sw=4:ts=4:et:
