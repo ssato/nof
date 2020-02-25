@@ -144,7 +144,7 @@ def parse_show_config_itr(lines):
     """
     Parse 'config xxxxx xxxx' .. 'end'.
 
-    :param lines: A list of lines in the configuration outputs
+    :param lines: An iterator yields each lines in the configuration outputs
     """
     counter = itertools.count()
     state = ST_OTHER
@@ -229,13 +229,19 @@ def parse_show_config(filepath):
     :param filepath:
         a str or :class:`pathlib.Path` object represents file path contains
         'show full-configuration` or any other 'show ...' outputs
+
+    :return:
+        A list of configs (mapping objects) or [] (no data or something went
+        wrong)
     :raises: IOError, OSError
     """
-    try:
-        lines = open(filepath).readlines()
-    except UnicodeDecodeError:
-        lines = open(filepath, encoding="shift-jis").readlines()
+    for enc in ("utf-8", "shift-jis"):
+        try:
+            lines = open(filepath, encoding=enc)
+            return list(parse_show_config_itr(lines))
+        except UnicodeDecodeError:
+            pass  # Try the next encoding...
 
-    return list(parse_show_config_itr(lines))
+    return []
 
 # vim:sw=4:ts=4:et:
