@@ -20,50 +20,29 @@ import anyconfig
 EMPTY_RE = re.compile(r"^\s+$")
 COMMENT_RE = re.compile(r"^#(.*)$")
 
+WORD_RE_S = r'(?:([^" \t\n\r\f\v]+)|"([^"]+)")'
+
 # Examples:
 # - 'config firewall address'
 # - '       config ftgd-wf'
 # - '            config filters'
 CONFIG_START_RE = re.compile(r"^(\s*)"
                              r"config\s+"
-                             r'(?:([^"\s]+)|"([^"\s]+)")' r"(?# word )"
-                             r"(?:\s+"
-                             r'(?:([^"\s]+)|"([^"\s]+)")'
-                             r")*$")
+                             r"(.+)$")
 # Examples:
 # - '     edit "fortinet"'
 # - '            edit 1'
 EDIT_START_RE = re.compile(r"^(\s+)"
                            r"edit\s+"
-                           r'(?:([^"\s]+)|"([^"\s]+)")'
+                           + WORD_RE_S +
                            r"$")
 SET_OR_UNSET_LINE_RE = re.compile(r"^\s+"
                                   r"(set|unset)\s+"
-                                  r'(?:([^"\s]+)|"([^"\s]+)")' r"(?# key )"
-                                  r"(?:\s+"
-                                  r"(.+)"
-                                  r")?$")
-SET_VALUE_RE = re.compile(r'(?:([^"\s]+)|"([^"\s]+)")\s*')
+                                  r"(\S+)\s*"
+                                  r"(.+)*$")
+SET_VALUE_RE = re.compile(WORD_RE_S + r"\s*")
 
 (ST_IN_CONFIG, ST_IN_EDIT, ST_OTHER) = list(range(3))
-
-
-def is_not_empty_nor_white_spaces(astr):
-    """
-    True if given string is not empty or does not consists of white spaces.
-    """
-    return astr and astr.strip()
-
-
-def list_matches(matches, cond=None):
-    """
-    :param matches: A list of matched strings or None
-    :return: A list of matched strings only
-    """
-    if cond is None:
-        cond = is_not_empty_nor_white_spaces
-
-    return [m for m in matches if cond(m)]
 
 
 def process_config_or_edit_line(matched):
@@ -79,8 +58,12 @@ def process_config_or_edit_line(matched):
                                              ", ".join(matches))
         raise ValueError(msg)
 
-    return (matches[0],
-            ' '.join(list_matches(matches[1:])))  # TBD: What to return?
+    if len(matches) > 2:  # edit
+        vals = [m for m in matches[1:] if m][0]
+    else:
+        vals = matches[1]
+
+    return (matches[0], vals)
 
 
 def process_set_or_unset_line(matched):
