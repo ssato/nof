@@ -64,22 +64,22 @@ class TT_10_Simple_Function_TestCases(unittest.TestCase):
     def test_30_process_set_or_unset_line(self):
         res = _process(TT.SET_OR_UNSET_LINE_RE, TT.process_set_or_unset_line,
                        "    set admin-port 80\n")
-        self.assertDictEqual(res, dict(type="set", name="admin-port",
-                                       values=["80"]))
+        self.assertEqual(res, dict(type="set", name="admin-port",
+                                   values=["80"]))
 
         res = _process(TT.SET_OR_UNSET_LINE_RE, TT.process_set_or_unset_line,
                        "    unset ip6-allowaccess\n")
-        self.assertDictEqual(res, dict(type="unset", name="ip6-allowaccess"))
+        self.assertEqual(res, dict(type="unset", name="ip6-allowaccess"))
 
         res = _process(TT.SET_OR_UNSET_LINE_RE, TT.process_set_or_unset_line,
                        '    set admin-server-cert "Fortinet_Factory"\n')
-        self.assertDictEqual(res, dict(type="set", name="admin-server-cert",
-                                       values=["Fortinet_Factory"]))
+        self.assertEqual(res, dict(type="set", name="admin-server-cert",
+                                   values=["Fortinet_Factory"]))
 
         res = _process(TT.SET_OR_UNSET_LINE_RE, TT.process_set_or_unset_line,
                        '    set member "DNS" "HTTP" "HTTPS"\n')
-        self.assertDictEqual(res, dict(type="set", name="member",
-                                       values=["DNS", "HTTP", "HTTPS"]))
+        self.assertEqual(res, dict(type="set", name="member",
+                                   values=["DNS", "HTTP", "HTTPS"]))
 
     def test_80_parse_show_config__simple_config_set(self):
         for inp_path, exp_path in _inp_and_exp_result_files():
@@ -90,7 +90,7 @@ class TT_10_Simple_Function_TestCases(unittest.TestCase):
 
             self.assertEqual(len(res),  len(res_exp))
             for cnf, exp in zip(res, res_exp):
-                self.assertDictEqual(cnf, exp, cnf)
+                self.assertEqual(cnf, exp, cnf)
 
     def test_90_parse_show_config_and_dump__simple_config_set(self):
         for inp_path, exp_path in _inp_and_exp_result_files():
@@ -99,6 +99,6 @@ class TT_10_Simple_Function_TestCases(unittest.TestCase):
             self.assertTrue(os.path.exists(exp_path))
             res_exp = TT.anyconfig.load(exp_path)
 
-            self.assertDictEqual(res, res_exp, repr(res))
+            self.assertEqual(res, res_exp, repr(res))
 
 # vim:sw=4:ts=4:et:
