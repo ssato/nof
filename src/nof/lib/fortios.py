@@ -249,4 +249,39 @@ def parse_show_config_and_dump(inpath, outpath):
 
     return data
 
+
+def _make_config_0(cnf):
+    """
+    Make a mapping object contains configurations by category.
+
+    :param cnf:
+        A mapping object contains configurations of a category loaded from
+        parsed configs, e.g. configurations of 'firewall policy'
+    :return: A mapping object sorted, modified and organized better than `cnf`
+    """
+    name = cnf["name"]  # It should be exists.
+    configs = [dict((x["name"],
+                     dict(sets=dict((c["name"], c["values"]) for c
+                                    in x["children"] if c["type"] == "set"),
+                          unsets=[c["name"] for c in x["children"]
+                                  if c["type"] == "unset"]))
+               for x in cnf["children"])]
+
+    return (name, configs)
+
+
+def load_firewall_configs(filepath):
+    """
+    :param filepath: (JSON) file path contains parsed results
+
+    :raises: IOError, OSError, TypeError, AttributeError
+    """
+    cnfs = anyconfig.load(filepath)
+    fwcs = [x for x in cnfs.get("configs", [])
+            if x["type"] == "config" and x["name"].startswith("firewall")]
+
+    ret = dict(_make_config_0(c) for c in fwcs)
+
+    return ret
+
 # vim:sw=4:ts=4:et:
