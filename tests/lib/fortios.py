@@ -17,9 +17,15 @@ def _process(reg, proc_fn, line):
     return proc_fn(reg.match(line))
 
 
+def _inp_and_exp_result_files():
+    inputs = glob.glob(os.path.join(C.resdir(), "fortios", "*.txt"))
+    for inp_path in sorted(inputs):
+        yield (inp_path, inp_path + ".exp.json")
+
+
 class TT_10_Simple_Function_TestCases(unittest.TestCase):
 
-    maxDiff = 10000
+    maxDiff = None
 
     def test_10_list_matches(self):
         # A pair of (line, expected_result)
@@ -77,16 +83,24 @@ class TT_10_Simple_Function_TestCases(unittest.TestCase):
         self.assertDictEqual(res, dict(type="set", name="member",
                                        values=["DNS", "HTTP", "HTTPS"]))
 
-    def test_90_parse_show_config__simple_config_set(self):
-        inputs = glob.glob(os.path.join(C.resdir(), "fortios", "*.txt"))
-        for inp_path in sorted(inputs):
-            exp_path = inp_path + ".exp.json"
-
+    def test_80_parse_show_config__simple_config_set(self):
+        for inp_path, exp_path in _inp_and_exp_result_files():
             res = TT.parse_show_config(inp_path)
-            res_exp = anyconfig.load(exp_path)
+
+            self.assertTrue(os.path.exists(exp_path))
+            res_exp = anyconfig.load(exp_path)["configs"]
 
             self.assertEqual(len(res),  len(res_exp))
             for cnf, exp in zip(res, res_exp):
                 self.assertDictEqual(cnf, exp, cnf)
+
+    def test_90_parse_show_config_and_dump__simple_config_set(self):
+        for inp_path, exp_path in _inp_and_exp_result_files():
+            res = TT.parse_show_config_and_dump(inp_path, exp_path)
+
+            self.assertTrue(os.path.exists(exp_path))
+            res_exp = anyconfig.load(exp_path)
+
+            self.assertDictEqual(res, res_exp, repr(res))
 
 # vim:sw=4:ts=4:et:

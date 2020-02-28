@@ -14,6 +14,8 @@ import collections
 import itertools
 import re
 
+import anyconfig
+
 
 EMPTY_RE = re.compile(r"^\s+$")
 COMMENT_RE = re.compile(r"^#(.*)$")
@@ -243,5 +245,25 @@ def parse_show_config(filepath):
             pass  # Try the next encoding...
 
     return []
+
+
+def parse_show_config_and_dump(inpath, outpath):
+    """
+    Similiar to the above :func:`parse_show_config` but save results as JSON
+    file (path: `outpath`).
+
+    :param inpath:
+        a str or :class:`pathlib.Path` object represents file path contains
+        'show full-configuration` or any other 'show ...' outputs
+    :param outpath: (JSON) file path to save parsed results
+
+    :return: A mapping object contains parsed results
+    :raises: IOError, OSError
+    """
+    configs = parse_show_config(inpath)
+    data = dict(configs=configs)
+    anyconfig.dump(data, outpath)
+
+    return data
 
 # vim:sw=4:ts=4:et:
