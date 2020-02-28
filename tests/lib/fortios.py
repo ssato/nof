@@ -11,8 +11,12 @@ import nof.lib.fortios as TT
 from .. import common as C
 
 
-def _process(reg, proc_fn, line):
-    return proc_fn(reg.match(line))
+def _try_match_and_proc(line, reg, proc_fn):
+    matched = reg.match(line)
+    try:
+        return proc_fn(matched)
+    except AttributeError:
+        raise ValueError("Not match! line={}".format(line))
 
 
 def _inp_and_exp_result_files():
@@ -25,61 +29,46 @@ class TT_10_Simple_Function_TestCases(unittest.TestCase):
 
     maxDiff = None
 
-    def test_10_list_matches(self):
-        # A pair of (line, expected_result)
-        les = ((TT.COMMENT_RE, "#global_vdom=1\n", ["global_vdom=1"]),
-               (TT.CONFIG_START_RE,
-                "config system global\n", ["system", "global"]),
-               (TT.CONFIG_START_RE,
-                "        config fp-anomaly-v4\n", ["fp-anomaly-v4"]),
-               (TT.EDIT_START_RE, "    edit 1\n", ["1"]),
-               (TT.EDIT_START_RE, '    edit "np6_0"\n', ["np6_0"]),
-               (TT.SET_OR_UNSET_LINE_RE,
-                "    set ssd-trim-min 60\n", ["set", "ssd-trim-min", "60"]),
-               (TT.SET_OR_UNSET_LINE_RE,
-                '        set service "HTTP" "PING" "TRACEROUTE"\n',
-                ["set", "service", '"HTTP" "PING" "TRACEROUTE"']),
-               (TT.SET_OR_UNSET_LINE_RE,
-                "    unset ssd-trim-weekday\n", ["unset", "ssd-trim-weekday"]),
-               (TT.SET_OR_UNSET_LINE_RE,
-                '    set vdom "root"\n', ["set", "vdom", '"root"']))
+    def test_20_process_config_or_edit_line__config(self):
+        exps = (("config system global\n", ('', 'system global')),
+                ("    config fp-anomaly-v4\n", ('    ', 'fp-anomaly-v4')),
+                ("config firewall service category\n",
+                 ('', 'firewall service category')),
+                ('config system replacemsg utm "virus-html"\n',
+                 ('', 'system replacemsg utm "virus-html"')))
 
-        for reg, line, exp in les:
-            try:
-                matches = reg.match(line).groups()
-            except AttributeError as exc:
-                raise ValueError("{!s}: line={}, "
-                                 "reg={!r}".format(exc, line, exp))
-            self.assertEqual(TT.list_matches(matches), exp)
+        for line, exp in exps:
+            res = _try_match_and_proc(line, TT.CONFIG_START_RE,
+                                      TT.process_config_or_edit_line)
+            self.assertEqual(res, exp)
 
-    def test_20_process_config_or_edit_line(self):
-        res = _process(TT.CONFIG_START_RE, TT.process_config_or_edit_line,
-                       "config system interface\n")
-        self.assertEqual(res, ('', 'system interface'))
+    def test_22_process_config_or_edit_line__edit(self):
+        exps = (("    edit 1\n", ('    ', '1')),
+                ('    edit "np6_0"\n', ('    ', 'np6_0')),
+                ('    edit "VoIP, Messaging & Other Applications"',
+                 ('    ', 'VoIP, Messaging & Other Applications')))
 
-        res = _process(TT.CONFIG_START_RE, TT.process_config_or_edit_line,
-                       "        config ipv6\n")
-        self.assertEqual(res, ('        ', 'ipv6'))
+        for line, exp in exps:
+            res = _try_match_and_proc(line, TT.EDIT_START_RE,
+                                      TT.process_config_or_edit_line)
+            self.assertEqual(res, exp)
 
     def test_30_process_set_or_unset_line(self):
-        res = _process(TT.SET_OR_UNSET_LINE_RE, TT.process_set_or_unset_line,
-                       "    set admin-port 80\n")
-        self.assertEqual(res, dict(type="set", name="admin-port",
-                                   values=["80"]))
+        exps = (("    set admin-port 80\n",
+                 dict(type="set", name="admin-port", values=["80"])),
+                ("    unset ip6-allowaccess\n",
+                 dict(type="unset", name="ip6-allowaccess")),
+                ('    set admin-server-cert "Fortinet_Factory"\n',
+                 dict(type="set", name="admin-server-cert",
+                      values=["Fortinet_Factory"])),
+                ('    set member "DNS" "HTTP" "HTTPS"\n',
+                 dict(type="set", name="member",
+                      values=["DNS", "HTTP", "HTTPS"])))
 
-        res = _process(TT.SET_OR_UNSET_LINE_RE, TT.process_set_or_unset_line,
-                       "    unset ip6-allowaccess\n")
-        self.assertEqual(res, dict(type="unset", name="ip6-allowaccess"))
-
-        res = _process(TT.SET_OR_UNSET_LINE_RE, TT.process_set_or_unset_line,
-                       '    set admin-server-cert "Fortinet_Factory"\n')
-        self.assertEqual(res, dict(type="set", name="admin-server-cert",
-                                   values=["Fortinet_Factory"]))
-
-        res = _process(TT.SET_OR_UNSET_LINE_RE, TT.process_set_or_unset_line,
-                       '    set member "DNS" "HTTP" "HTTPS"\n')
-        self.assertEqual(res, dict(type="set", name="member",
-                                   values=["DNS", "HTTP", "HTTPS"]))
+        for line, exp in exps:
+            res = _try_match_and_proc(line, TT.SET_OR_UNSET_LINE_RE,
+                                      TT.process_set_or_unset_line)
+            self.assertEqual(res, exp)
 
     def test_80_parse_show_config__simple_config_set(self):
         for inp_path, exp_path in _inp_and_exp_result_files():
@@ -88,7 +77,7 @@ class TT_10_Simple_Function_TestCases(unittest.TestCase):
             self.assertTrue(os.path.exists(exp_path))
             res_exp = TT.anyconfig.load(exp_path)["configs"]
 
-            self.assertEqual(len(res),  len(res_exp))
+            self.assertEqual(len(res), len(res_exp))
             for cnf, exp in zip(res, res_exp):
                 self.assertEqual(cnf, exp, cnf)
 
