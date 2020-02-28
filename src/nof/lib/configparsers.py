@@ -14,6 +14,6 @@ from . import fortios
 
 
 # .. seealso:: ..globals.CONFIG_TYPES
-PARSERS = dict(fortios=fortios.parse_show_config)
+PARSERS = dict(fortios=fortios.parse_show_config_and_dump)
 
 # vim:sw=4:ts=4:et:

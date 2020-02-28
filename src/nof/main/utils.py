@@ -9,7 +9,6 @@ import glob
 import os.path
 import os
 
-import anyconfig
 import flask
 import werkzeug.utils
 
@@ -131,9 +130,8 @@ def parse_config_and_dump_json_file(filename, ctype=None):
         ctype = CONFIG_TYPES[0]  # default
 
     parse_fn = configparsers.PARSERS[ctype]
-    cnf = parse_fn(filepath)
-
     outpath = processed_filepath(filename, prefix=ctype + '_')
-    anyconfig.dump(dict(configs=cnf), outpath)
+
+    return parse_fn(filepath, outpath)
 
 # vim:sw=4:ts=4:et:
