@@ -7,8 +7,6 @@ import glob
 import os.path
 import unittest
 
-import anyconfig
-
 import nof.lib.fortios as TT
 from .. import common as C
 
@@ -88,7 +86,7 @@ class TT_10_Simple_Function_TestCases(unittest.TestCase):
             res = TT.parse_show_config(inp_path)
 
             self.assertTrue(os.path.exists(exp_path))
-            res_exp = anyconfig.load(exp_path)["configs"]
+            res_exp = TT.anyconfig.load(exp_path)["configs"]
 
             self.assertEqual(len(res),  len(res_exp))
             for cnf, exp in zip(res, res_exp):
@@ -99,7 +97,7 @@ class TT_10_Simple_Function_TestCases(unittest.TestCase):
             res = TT.parse_show_config_and_dump(inp_path, exp_path)
 
             self.assertTrue(os.path.exists(exp_path))
-            res_exp = anyconfig.load(exp_path)
+            res_exp = TT.anyconfig.load(exp_path)
 
             self.assertDictEqual(res, res_exp, repr(res))
 
