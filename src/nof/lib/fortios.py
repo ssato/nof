@@ -207,57 +207,6 @@ def parse_show_config_itr(lines):
                 configs.append(config)  # push config
 
 
-def parse_show_config(filepath):
-    """
-    Parse 'show full-configuration output and returns a list of parsed configs.
-
-    :param filepath:
-        a str or :class:`pathlib.Path` object represents file path contains
-        'show full-configuration` or any other 'show ...' outputs
-
-    :return:
-        A list of configs (mapping objects) or [] (no data or something went
-        wrong)
-    :raises: IOError, OSError
-    """
-    for enc in ("utf-8", "shift-jis"):
-        try:
-            lines = open(filepath, encoding=enc)
-            return list(parse_show_config_itr(lines))
-        except UnicodeDecodeError:
-            pass  # Try the next encoding...
-
-    return []
-
-
-def parse_show_config_and_dump(inpath, outpath):
-    """
-    Similiar to the above :func:`parse_show_config` but save results as JSON
-    file (path: `outpath`).
-
-    :param inpath:
-        a str or :class:`pathlib.Path` object represents file path contains
-        'show full-configuration` or any other 'show ...' outputs
-    :param outpath: (JSON) file path to save parsed results
-
-    :return: A mapping object contains parsed results
-    :raises: IOError, OSError
-    """
-    configs = parse_show_config(inpath)
-    data = dict(configs=configs)
-    anyconfig.dump(data, outpath)
-
-    return data
-
-
-def load_configs(filepath):
-    """
-    :param filepath: (JSON) file path contains parsed results
-    :raises: IOError, OSError, TypeError, AttributeError
-    """
-    return anyconfig.load(filepath)
-
-
 def _val_or_vals(obj):
     """
     :return: An item or a list of items
@@ -317,5 +266,56 @@ def make_sub_config_from_file(filepath, prefix=None):
     ret = dict(_make_config_0(c, prefix) for c in fwcs)
 
     return ret
+
+
+def parse_show_config(filepath):
+    """
+    Parse 'show full-configuration output and returns a list of parsed configs.
+
+    :param filepath:
+        a str or :class:`pathlib.Path` object represents file path contains
+        'show full-configuration` or any other 'show ...' outputs
+
+    :return:
+        A list of configs (mapping objects) or [] (no data or something went
+        wrong)
+    :raises: IOError, OSError
+    """
+    for enc in ("utf-8", "shift-jis"):
+        try:
+            lines = open(filepath, encoding=enc)
+            return list(parse_show_config_itr(lines))
+        except UnicodeDecodeError:
+            pass  # Try the next encoding...
+
+    return []
+
+
+def parse_show_config_and_dump(inpath, outpath):
+    """
+    Similiar to the above :func:`parse_show_config` but save results as JSON
+    file (path: `outpath`).
+
+    :param inpath:
+        a str or :class:`pathlib.Path` object represents file path contains
+        'show full-configuration` or any other 'show ...' outputs
+    :param outpath: (JSON) file path to save parsed results
+
+    :return: A mapping object contains parsed results
+    :raises: IOError, OSError
+    """
+    configs = parse_show_config(inpath)
+    data = dict(configs=configs)
+    anyconfig.dump(data, outpath)
+
+    return data
+
+
+def load_configs(filepath):
+    """
+    :param filepath: (JSON) file path contains parsed results
+    :raises: IOError, OSError, TypeError, AttributeError
+    """
+    return anyconfig.load(filepath)
 
 # vim:sw=4:ts=4:et:
