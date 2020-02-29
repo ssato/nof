@@ -258,11 +258,11 @@ def load_configs(filepath):
     return anyconfig.load(filepath)
 
 
-def _val_or_vals(x):
+def _val_or_vals(obj):
     """
     :return: An item or a list of items
     """
-    return x[0] if len(x) == 1 else x
+    return obj[0] if len(obj) == 1 else obj
 
 
 def _make_edit_0(edit):
