@@ -250,7 +250,41 @@ def parse_show_config_and_dump(inpath, outpath):
     return data
 
 
-def _make_config_0(cnf):
+def load_configs(filepath):
+    """
+    :param filepath: (JSON) file path contains parsed results
+    :raises: IOError, OSError, TypeError, AttributeError
+    """
+    return anyconfig.load(filepath)
+
+
+def _val_or_vals(x):
+    """
+    :return: An item or a list of items
+    """
+    return x[0] if len(x) == 1 else x
+
+
+def _make_edit_0(edit):
+    """
+    Make a mapping object contains edit configurations.
+
+    :param edit:
+        A mapping object contains edit configurations loaded from parsed
+        configs, e.g. edit configurations of '1' in 'firewall policy'.
+    :return: A mapping object sorted and organized better than `edit`
+    """
+    unsets = [c["name"] for c in edit["children"] if c["type"] == "unset"]
+    sets = [(c["name"], _val_or_vals(c["values"]))
+            for c in edit["children"] if c["type"] == "set"]
+
+    if unsets:
+        return dict(sets + [("unset", unsets)])
+
+    return dict(sets)
+
+
+def _make_config_0(cnf, prefix):
     """
     Make a mapping object contains configurations by category.
 
@@ -259,28 +293,28 @@ def _make_config_0(cnf):
         parsed configs, e.g. configurations of 'firewall policy'
     :return: A mapping object sorted, modified and organized better than `cnf`
     """
-    name = cnf["name"]  # It should be exists.
-    configs = [dict((x["name"],
-                     dict(sets=dict((c["name"], c["values"]) for c
-                                    in x["children"] if c["type"] == "set"),
-                          unsets=[c["name"] for c in x["children"]
-                                  if c["type"] == "unset"]))
-               for x in cnf["children"])]
+    name = re.sub(prefix, '', cnf["name"])
+    configs = dict((e["name"], _make_edit_0(e)) for e in cnf["children"])
 
     return (name, configs)
 
 
-def load_firewall_configs(filepath):
+def make_sub_config_from_file(filepath, prefix=None):
     """
     :param filepath: (JSON) file path contains parsed results
+    :param prefix: Prefix to make sub group configurations
 
+    :return: Re-structured mapping object having sub group configurations
     :raises: IOError, OSError, TypeError, AttributeError
     """
-    cnfs = anyconfig.load(filepath)
-    fwcs = [x for x in cnfs.get("configs", [])
-            if x["type"] == "config" and x["name"].startswith("firewall")]
+    if prefix is None:
+        prefix = "firewall "
 
-    ret = dict(_make_config_0(c) for c in fwcs)
+    cnfs = load_configs(filepath)
+    fwcs = [x for x in cnfs.get("configs", [])
+            if x["type"] == "config" and x["name"].startswith(prefix)]
+
+    ret = dict(_make_config_0(c, prefix) for c in fwcs)
 
     return ret
 
