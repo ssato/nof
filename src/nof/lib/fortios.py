@@ -18,7 +18,7 @@ import re
 import anyconfig
 
 
-CONFIG_GROUPS = (CONFIG_GROUP_FIREWALL,
+CONFIG_GROUPS = (CONFIG_GROUP_FIREWALL,  # default
                  CONFIG_GROUP_ROUTER) = ("firewall", "router")
 
 EMPTY_RE = re.compile(r"^\s+$")
@@ -262,7 +262,8 @@ def make_group_configs(cnfs, group=None):
     :return: Re-structured mapping object having sub group configurations
     :raises: IOError, OSError, TypeError, AttributeError
     """
-    prefix = (group or "firewall") + ' '  # pattern ex. "firewall policy"
+    # pattern ex. "firewall policy"
+    prefix = (group or CONFIG_GROUPS[0]) + ' '
     fwcs = [x for x in cnfs.get("configs", [])
             if x["type"] == "config" and x["name"].startswith(prefix)]
 
