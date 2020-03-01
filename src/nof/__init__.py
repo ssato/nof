@@ -8,7 +8,7 @@ import flask
 import flask_bootstrap
 import flask_wtf.csrf
 
-from . import config, main
+from . import config, main, fortios
 
 
 def create_app(cnf_name="development"):
@@ -29,6 +29,9 @@ def create_app(cnf_name="development"):
 
     app.register_blueprint(main.APP)
     app.register_blueprint(main.API)
+
+    app.register_blueprint(fortios.APP)
+    app.register_blueprint(fortios.API)
 
     return app
 

@@ -20,6 +20,9 @@ import anyconfig
 
 CONFIG_GROUPS = (CONFIG_GROUP_FIREWALL,  # default
                  CONFIG_GROUP_ROUTER) = ("firewall", "router")
+FIREWALL_KEYS = ("action", "comments", "dstaddr", "dstintf",
+                 "logtraffic", "name", "schedule", "service",
+                 "srcaddr", "srcintf", "status", "uuid")
 
 EMPTY_RE = re.compile(r"^\s+$")
 COMMENT_RE = re.compile(r"^#(.*)$")
@@ -336,11 +339,26 @@ def parse_show_config_and_dump(inpath, outpath):
     return data
 
 
-def load_configs(filepath):
+def assert_group(group):
+    """
+    :param group: Group name of configurations
+    :raises: ValueError
+    """
+    if group not in CONFIG_GROUPS:
+        raise ValueError("Given {} is not valid group. Try other one from"
+                         " {}".format(group, ", ".join(CONFIG_GROUPS)))
+    return True
+
+
+def load_configs(filepath, group=None):
     """
     :param filepath: (JSON) file path contains parsed results
-    :raises: IOError, OSError, TypeError, AttributeError
+    :raises: IOError, OSError, TypeError, AttributeError, ValueError
     """
+    if group is not None:
+        assert_group(group)
+        filepath = group_config_path(filepath, group)
+
     return anyconfig.load(filepath)
 
 # vim:sw=4:ts=4:et:
