@@ -1,0 +1,65 @@
+{% extends "base.html" -%}
+
+{% block subtitle %}Firewall Policies: {{ filename | safe }}{% endblock -%}
+
+{% block styles %}
+{{ super() }}
+<!-- jquery DataTables: https://datatables.net/ -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.10.20/css/jquery.dataTables.min.css">
+{% endblock styles -%}
+
+{% block scripts %}
+{{ super() }}
+<!-- jquery DataTables: https://datatables.net/ -->
+<script type="text/javascript" src="https://cdn.datatables.net/1.10.20/js/jquery.dataTables.min.js"></script>
+<!-- custom -->
+<script type="text/javascript" src="{{ url_for('static', filename='js/fortios_firewall.js') }}"></script>
+<script type="text/javascript">
+/*
+ * ref. https://datatables.net/manual/ajax
+ * ref. https://datatables.net/reference/option/ajax.dataSrc
+ */
+$(document).ready(function() {
+  $('#firewall-policies-table').dataTable ({
+    "ajax": {
+      "url": "{{ firewall.policies.url }}",
+      "dataSrc": make_firewall_policy_maps(json.data),
+      "columns": [
+        {% for key in firewall.policies.keys -%}
+        {%     if loop.last -%}
+        { "data": "{{ key }}" }
+        {%     else -%}
+        { "data": "{{ key }}" }
+        {% endfor %}
+      ]
+      }
+    }
+  });
+});
+</script>
+{% endblock %}
+
+{% block page_content -%}
+<div id="firewall-policies" class="row">
+  <div class="col-sm-8 table-responsive">
+<!--
+.. seealso:: https://getbootstrap.com/docs/4.0/content/tables/
+-->
+    <!-- firewall.policy -->
+    <table id="firewall-policies-table" class="table table-striped table-bordered">
+      <thead>
+        <tr>
+        {% for key in firewall.policies.keys -%}
+          <th scope="col">{{ key | title }}</th>
+        {% endfor %}
+        </tr>
+      </thead>
+    </table>
+  </div>
+  <div class="col-sm-4 container-fluid" id="firewall-details">
+  </div>
+</div>
+{% endblock %}
+<!-- address, addrgrp, category, custom, group, policy, -->
+{# vim:sw=2:ts=2:et:
+-#}

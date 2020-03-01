@@ -1,0 +1,17 @@
+{% extends "base.html" -%}
+
+{% block page_content -%}
+<div>Firewall Policies Index</div>
+<ul id="fortios-firewall-policies">
+{%  for fname, furl in filenames %}
+<li>
+  <div>{{ fname }}:</div>
+  <div><a href="{{ furl }}">Firewall Policies from {{ fname }}</a></div>
+</li>
+{%  else %}
+<li>No data. Please go to <a href="{{ config_upload_url }}">Upload page</a>.</li>
+{%  endfor %}
+</ul>
+{% endblock %}
+{# vim:sw=2:ts=2:et:
+-#}
