@@ -18,6 +18,9 @@ import re
 import anyconfig
 
 
+CONFIG_GROUPS = (CONFIG_GROUP_FIREWALL,
+                 CONFIG_GROUP_ROUTER) = ("firewall", "router")
+
 EMPTY_RE = re.compile(r"^\s+$")
 COMMENT_RE = re.compile(r"^#(.*)$")
 
@@ -324,7 +327,7 @@ def parse_show_config_and_dump(inpath, outpath):
 
     anyconfig.dump(data, outpath)
 
-    for grp in ("firewall", "router"):
+    for grp in CONFIG_GROUPS:
         g_outpath = group_config_path(outpath, grp)
         g_cnfs = make_group_configs(data, grp)
         anyconfig.dump(g_cnfs, g_outpath)
