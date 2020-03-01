@@ -12,6 +12,7 @@ from __future__ import absolute_import
 
 import collections
 import itertools
+import os.path
 import re
 
 import anyconfig
@@ -223,9 +224,10 @@ def _make_edit_0(edit):
         configs, e.g. edit configurations of '1' in 'firewall policy'.
     :return: A mapping object sorted and organized better than `edit`
     """
-    unsets = [c["name"] for c in edit["children"] if c["type"] == "unset"]
+    unsets = [c["name"] for c in edit.get("children", [])
+              if c["type"] == "unset"]
     sets = [(c["name"], _val_or_vals(c["values"]))
-            for c in edit["children"] if c["type"] == "set"]
+            for c in edit.get("children", []) if c["type"] == "set"]
 
     if unsets:
         return dict(sets + [("unset", unsets)])
@@ -243,23 +245,21 @@ def _make_config_0(cnf, prefix):
     :return: A mapping object sorted, modified and organized better than `cnf`
     """
     name = re.sub(prefix, '', cnf["name"])
-    configs = dict((e["name"], _make_edit_0(e)) for e in cnf["children"])
+    configs = dict((e["name"], _make_edit_0(e))
+                   for e in cnf.get("children", []))
 
     return (name, configs)
 
 
-def make_sub_config_from_file(filepath, prefix=None):
+def make_group_configs(cnfs, group=None):
     """
-    :param filepath: (JSON) file path contains parsed results
-    :param prefix: Prefix to make sub group configurations
+    :param cnfs: {"configs": [<a mapping object holds configurations>]}
+    :param group: Group name of configurations
 
     :return: Re-structured mapping object having sub group configurations
     :raises: IOError, OSError, TypeError, AttributeError
     """
-    if prefix is None:
-        prefix = "firewall "
-
-    cnfs = load_configs(filepath)
+    prefix = (group or "firewall") + ' '  # pattern ex. "firewall policy"
     fwcs = [x for x in cnfs.get("configs", [])
             if x["type"] == "config" and x["name"].startswith(prefix)]
 
@@ -291,6 +291,17 @@ def parse_show_config(filepath):
     return []
 
 
+def group_config_path(filepath, group):
+    """
+    Compute the path of the group config file.
+
+    :param filepath: (JSON) file path contains parsed results
+    """
+    (outbn, outext) = os.path.splitext(filepath)
+
+    return "{}_{}{}".format(outbn, group, outext)
+
+
 def parse_show_config_and_dump(inpath, outpath):
     """
     Similiar to the above :func:`parse_show_config` but save results as JSON
@@ -306,7 +317,17 @@ def parse_show_config_and_dump(inpath, outpath):
     """
     configs = parse_show_config(inpath)
     data = dict(configs=configs)
+
+    outdir = os.path.dirname(outpath)
+    if not os.path.exists(outdir):
+        os.makedirs(outdir)
+
     anyconfig.dump(data, outpath)
+
+    for grp in ("firewall", "router"):
+        g_outpath = group_config_path(outpath, grp)
+        g_cnfs = make_group_configs(data, grp)
+        anyconfig.dump(g_cnfs, g_outpath)
 
     return data
 
