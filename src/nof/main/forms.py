@@ -1,6 +1,6 @@
 """HTML Forms.
 
-License: MIT
+SPDX-License-Identifier: MIT
 
 References:
   - Flask-WTF: https://flask-wtf.readthedocs.org

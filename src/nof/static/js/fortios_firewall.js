@@ -1,10 +1,11 @@
 /*
  * @param {Array} fwcs A mapping object holds firewall configurations
  */
-function make_firewall_policy_maps(fwcs) {
+function make_firewall_policy_maps(json) {
     /*
      * @seealso https://api.jquery.com/jQuery.map/
      */
+    const fwcs = json.data;
     const keys = ["action", "comments", "dstaddr", "dstintf", "logtraffic",
                   "name", "schedule", "service", "srcaddr", "srcintf",
                   "status", "uuid"];

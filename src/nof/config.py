@@ -1,6 +1,6 @@
 #
 # Copyright (C) 2020 Satoru SATOh <ssato@redhat.com>
-# License: MIT
+# SPDX-License-Identifier: MIT
 #
 # pylint: disable=too-few-public-methods
 """Default config

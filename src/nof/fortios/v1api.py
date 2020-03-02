@@ -1,7 +1,7 @@
 #
 # -*- coding: utf-8 -*-
 # Copyright (C) 2020 Satoru SATOH <ssato@redhat.com>.
-# License: MIT
+# SPDX-License-Identifier: MIT
 #
 """REST APIs. version 1.x
 """
