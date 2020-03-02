@@ -15,7 +15,7 @@ from ..lib import fortios
 def firewall_index():
     """Firewall index page
     """
-    config_upload_url = flask.url_for("app.upload_config")
+    config_upload_url = flask.url_for("app.config_upload")
 
     fns = [(fn, flask.url_for(".firewall_policies",
                               filename=fn))

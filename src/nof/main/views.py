@@ -112,14 +112,14 @@ def config_index():
     fns = itertools.chain(*(list_filenames("{}*.json".format(c))
                             for c in CONFIG_TYPES))
     flinks = [(fn, flask.url_for("api.get_config", filename=fn)) for fn in fns]
-    ulink = flask.url_for(".upload_config")
+    ulink = flask.url_for(".config_upload")
 
     return flask.render_template("config_index.html", flinks=flinks,
                                  ulink=ulink)
 
 
 @APP.route("/config/upload", methods=["GET", "POST"])
-def upload_config():
+def config_upload():
     """Upload configuration page.
     """
     form = ConfigUploadForm()
