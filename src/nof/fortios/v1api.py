@@ -5,6 +5,8 @@
 #
 """REST APIs. version 1.x
 """
+import os.path
+
 import flask
 
 from .globals import API
@@ -28,10 +30,11 @@ def get_group_config_file(group, filename):
     except ValueError as exc:
         return flask.jsonify(dict(error=dict(type="InvalidGroup",
                                              message=str(exc)))), 400
-                                           
-    filepath = utils.processed_filepath(filename, prefix=_PREFIX)
-    res = fortios.load_configs(filepath, group)
 
-    return flask.jsonify(res)
+    filepath = utils.processed_filepath(filename, prefix=_PREFIX)
+    g_path = fortios.group_config_path(filepath, group)
+
+    return flask.send_from_directory(os.path.dirname(g_path),
+                                     os.path.basename(g_path))
 
 # vim:sw=4:ts=4:et:
