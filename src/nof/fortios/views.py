@@ -6,9 +6,12 @@
 """
 import flask
 
-from .globals import APP
 from ..main import utils
 from ..lib import fortios
+from .globals import PREFIX
+
+
+APP = flask.Blueprint("fortios_app", __name__, url_prefix=PREFIX)
 
 
 @APP.route("/firewall", methods=["GET"])
@@ -17,8 +20,7 @@ def firewall_index():
     """
     config_upload_url = flask.url_for("app.config_upload")
 
-    fns = [(fn, flask.url_for(".firewall_policies",
-                              filename=fn))
+    fns = [(fn, flask.url_for(".firewall_policies", filename=fn))
            for fn in utils.list_filenames("fortios_*_firewall.json")]
 
     return flask.render_template("fortios_firewall_index.html",

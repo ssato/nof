@@ -6,13 +6,14 @@
 """REST APIs. version 1.x
 """
 import os.path
-
 import flask
 
-from .globals import API
 from ..lib import fortios
 from ..main import utils
+from .globals import API_PREFIX
 
+
+API = flask.Blueprint("fortios_api", __name__, url_prefix=API_PREFIX)
 
 _PREFIX = "fortios_"
 
