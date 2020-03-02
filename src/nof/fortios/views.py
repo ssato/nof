@@ -17,7 +17,7 @@ def firewall_index():
     """
     config_upload_url = flask.url_for("app.upload_config")
 
-    fns = [(fn, flask.url_for("firewall_policies",
+    fns = [(fn, flask.url_for(".firewall_policies",
                               filename=fn))
            for fn in utils.list_filenames("fortios_*_firewall.json")]
 
