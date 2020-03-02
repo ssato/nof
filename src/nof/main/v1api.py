@@ -9,9 +9,12 @@ import anyconfig
 import flask
 import werkzeug.utils
 
-from .globals import API
+from .globals import API_PREFIX
 from . import utils
 from ..lib import finder
+
+
+API = flask.Blueprint("api", __name__, url_prefix=API_PREFIX)
 
 
 def _get_graph(filename):

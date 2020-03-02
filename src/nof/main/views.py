@@ -12,7 +12,6 @@ import flask
 from .forms import (
     UploadForm, NetworkFinderForm, PathFinderForm, ConfigUploadForm
 )
-from .globals import APP
 from .utils import (
     upload_filepath, generate_node_link_data_from_graph_data, list_filenames,
     find_networks_from_graph, find_paths_from_graph,
@@ -20,6 +19,8 @@ from .utils import (
 )
 from ..globals import NODE_ANY, CONFIG_TYPES
 
+
+APP = flask.Blueprint("app", __name__)
 
 SUMMARIES = dict(index=u"NOF",
                  upload=u"Upload Network Graph data",
