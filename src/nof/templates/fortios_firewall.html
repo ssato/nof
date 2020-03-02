@@ -4,14 +4,17 @@
 
 {% block styles %}
 {{ super() }}
-<!-- jquery DataTables: https://datatables.net/ -->
-<link rel="stylesheet" href="https://cdn.datatables.net/1.10.20/css/jquery.dataTables.min.css">
+<!-- jquery DataTables:
+     - https://datatables.net/
+     - https://datatables.net/download/index
+-->
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/dt-1.10.20/datatables.min.css"/>
 {% endblock styles -%}
 
 {% block scripts %}
 {{ super() }}
 <!-- jquery DataTables: https://datatables.net/ -->
-<script type="text/javascript" src="https://cdn.datatables.net/1.10.20/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/v/dt/dt-1.10.20/datatables.min.js"></script>
 <!-- custom -->
 <script type="text/javascript" src="{{ url_for('static', filename='js/fortios_firewall.js') }}"></script>
 <script type="text/javascript">
@@ -23,17 +26,17 @@ $(document).ready(function() {
   $('#firewall-policies-table').dataTable ({
     "ajax": {
       "url": "{{ policies_url }}",
-      "dataSrc": make_firewall_policy_maps(json.data),
-      "columns": [
-        {% for key in policies_keys -%}
-        {%     if loop.last -%}
-        { "data": "{{ key }}" }
-        {%     else -%}
-        { "data": "{{ key }}" }
-        {% endfor %}
-      ]
-      }
-    }
+      "dataSrc": make_firewall_policy_maps(json)
+    },
+    "columns": [
+      {% for key in policies_keys -%}
+      {%     if loop.last -%}
+      { "data": "{{ key }}" }
+      {%     else -%}
+      { "data": "{{ key }}" },
+      {%     endif -%}
+      {% endfor %}
+    ]
   });
 });
 </script>
