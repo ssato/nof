@@ -6,5 +6,6 @@
 """
 from .views import APP
 from .v1api import API
+from .globals import PREFIX, API_PREFIX
 
 # vim:sw=4:ts=4:et:
