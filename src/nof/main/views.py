@@ -6,6 +6,7 @@
 """
 import itertools
 import os.path
+import os
 
 import flask
 
@@ -14,8 +15,8 @@ from .forms import (
 )
 from .utils import (
     upload_filepath, generate_node_link_data_from_graph_data, list_filenames,
-    find_networks_from_graph, find_paths_from_graph,
-    parse_config_and_dump_json_file
+    find_networks_from_graph, find_paths_from_graph, parse_config_and_save,
+    utils, is_valid_config_type
 )
 from ..globals import NODE_ANY, CONFIG_TYPES
 
@@ -110,9 +111,11 @@ def path_finder(filename):
 def config_index():
     """Top page for config uploads.
     """
-    fns = itertools.chain(*(list_filenames("{}*.json".format(c))
-                            for c in CONFIG_TYPES))
-    flinks = [(fn, flask.url_for("api.get_config", filename=fn)) for fn in fns]
+    cfns = ((c, list_filenames("{}/*.json".format(c))) for c in CONFIG_TYPES)
+    flss = [[(fn, flask.url_for("api.get_config", ctype=c, filename=fn))
+             for fn in fns] for c, fns in cfns]
+
+    flinks = itertools.chain(*flss)
     ulink = flask.url_for(".config_upload")
 
     return flask.render_template("config_index.html", flinks=flinks,
@@ -131,15 +134,20 @@ def config_upload():
         cnf_data = form.upload.data
         cnf_type = form.ctype.data
 
-        filepath = upload_filepath(cnf_data.filename)
+        assert is_valid_config_type(cnf_type)
+
+        filepath = upload_filepath(cnf_data.filename, cnf_type)
+        utils.ensure_dir_exists(filepath)
+
         filename = os.path.basename(filepath)
         cnf_data.save(filepath)
 
         try:
-            parse_config_and_dump_json_file(filename, ctype=cnf_type)
-        except (IOError, OSError, ValueError, RuntimeError):
+            parse_config_and_save(filename, cnf_type)
+        except (IOError, OSError, ValueError, RuntimeError) as exc:
             flask.flash(u"Failed to convert the data uploaded! "
-                        u"Please try again with other valid data files.")
+                        u"Please try again with other valid data files."
+                        u"The error was: " + str(exc))
             return flask.render_template("config_upload.html", **octxs)
 
         flask.flash(u"File was successfully uploaded and processed.")
