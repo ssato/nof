@@ -1,20 +1,29 @@
 /*
  * @param {Array} fwcs A mapping object holds firewall configurations
  */
-function make_firewall_policy_maps(json) {
+function make_firewall_policy_maps(fwcs) {
     /*
      * @seealso https://api.jquery.com/jQuery.map/
      */
-    const fwcs = json.data;
-    const keys = ["action", "comments", "dstaddr", "dstintf", "logtraffic",
-                  "name", "schedule", "service", "srcaddr", "srcintf",
-                  "status", "uuid"];
+    const keys = ["name",
+                  "srcaddr",
+                  "srcintf",
+                  "dstaddr",
+                  "dstintf",
+                  "service",
+                  "status",
+                  "action",
+                  "logtraffic",
+                  "comments",
+                  "schedule",
+                  "uuid"];
 
     let policies = $.map(fwcs["policy"], function (val, key) {
-        val["_id"] = key;
+        val["_id"] = val["name"] = key;
+        console.log(val); // debug
 
         for (let k in keys) {
-            if (val.get(k) == undefined) {
+            if (! (k in val)) {
                 val[k] = 'undef'; // default value
             }
         }
