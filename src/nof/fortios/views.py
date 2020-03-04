@@ -40,6 +40,6 @@ def firewall_policies(filename):
                         group="firewall", filename=filename)
     return flask.render_template("fortios_firewall.html",
                                  policies_url=url,
-                                 policies_keys=fortios.FIREWALL_KEYS)
+                                 policies_cols=fortios.FIREWALL_COLS)
 
 # vim:sw=4:ts=4:et:
