@@ -8,7 +8,7 @@ import flask
 
 from ..main import utils
 from ..lib import fortios
-from .globals import PREFIX
+from .globals import CTYPE, PREFIX
 
 
 APP = flask.Blueprint("fortios_app", __name__, url_prefix=PREFIX)
@@ -18,10 +18,14 @@ APP = flask.Blueprint("fortios_app", __name__, url_prefix=PREFIX)
 def firewall_index():
     """Firewall index page
     """
-    config_upload_url = flask.url_for("app.config_upload")
+    # FIXME: How to list original config files uploaded?
+    files = (utils.list_filenames(CTYPE + "/*." + ext) for ext
+             in ("txt", "log"))
 
     fns = [(fn, flask.url_for(".firewall_policies", filename=fn))
-           for fn in utils.list_filenames("fortios_*_firewall.json")]
+           for fn in files]
+
+    config_upload_url = flask.url_for("app.config_upload")
 
     return flask.render_template("fortios_firewall_index.html",
                                  filenames=fns,
