@@ -22,9 +22,18 @@ from .utils import ensure_dir_exists
 
 CONFIG_GROUPS = (CONFIG_GROUP_FIREWALL,  # default
                  CONFIG_GROUP_ROUTER) = ("firewall", "router")
-FIREWALL_KEYS = ("action", "comments", "dstaddr", "dstintf",
-                 "logtraffic", "name", "schedule", "service",
-                 "srcaddr", "srcintf", "status", "uuid")
+FIREWALL_KEYS = ("name",
+                 "uuid",
+                 "srcaddr",
+                 "srcintf",
+                 "dstaddr",
+                 "dstintf",
+                 "service",
+                 "status",
+                 "action",
+                 "logtraffic",
+                 "comments",
+                 "schedule")
 
 EMPTY_RE = re.compile(r"^\s+$")
 COMMENT_RE = re.compile(r"^#(.*)$")
