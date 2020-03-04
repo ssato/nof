@@ -39,6 +39,7 @@ def firewall_policies(filename):
     url = flask.url_for("fortios_api.get_group_config_file",
                         group="firewall", filename=filename)
     return flask.render_template("fortios_firewall.html",
+                                 summary="Firewall Policies",
                                  policies_url=url,
                                  policies_cols=fortios.FIREWALL_COLS)
 
