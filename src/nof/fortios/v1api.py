@@ -15,8 +15,6 @@ from .globals import API_PREFIX
 
 API = flask.Blueprint("fortios_api", __name__, url_prefix=API_PREFIX)
 
-_PREFIX = "fortios_"
-
 
 @API.route("/<string:group>/<path:filename>", methods=["GET"])
 def get_group_config_file(group, filename):
@@ -32,7 +30,8 @@ def get_group_config_file(group, filename):
         return flask.jsonify(dict(error=dict(type="InvalidGroup",
                                              message=str(exc)))), 400
 
-    filepath = utils.processed_filepath(filename, prefix=_PREFIX)
+    ctype = "fortios"
+    filepath = utils.processed_filepath(filename, ctype)
     g_path = fortios.group_config_path(filepath, group)
 
     return flask.send_from_directory(os.path.dirname(g_path),
