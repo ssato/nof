@@ -12,7 +12,7 @@ import os
 import flask
 import werkzeug.utils
 
-from ..lib import finder, configparsers
+from ..lib import finder, configparsers, utils
 from ..globals import NODE_ANY, CONFIG_TYPES
 
 
@@ -36,12 +36,16 @@ def list_filenames(pattern=None):
     return sorted(os.path.basename(f) for f in files)
 
 
-def upload_filepath(filename):
+def upload_filepath(filename, ctype=None):
     """
     :param filename: Uploaded file path
     """
     filename = werkzeug.utils.secure_filename(filename)
-    return os.path.join(uploaddir(), filename)
+
+    if ctype is None:
+        return os.path.join(uploaddir(), filename)
+
+    return os.path.join(uploaddir(), ctype, filename)
 
 
 @functools.lru_cache(maxsize=None)
@@ -124,13 +128,15 @@ def parse_config_and_dump_json_file(filename, ctype=None):
     Parse fortios 'show full-configuration' output and dump parsed results as
     JSON file.
     """
-    filepath = upload_filepath(filename)
-
     if ctype is None:
         ctype = CONFIG_TYPES[0]  # default
 
+    filepath = upload_filepath(filename, ctype)
+    utils.ensure_dir_exists(filepath)
+
     parse_fn = configparsers.PARSERS[ctype]
     outpath = processed_filepath(filename, prefix=ctype + '_')
+    utils.ensure_dir_exists(outpath)
 
     return parse_fn(filepath, outpath)
 
