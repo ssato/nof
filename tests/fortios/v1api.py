@@ -30,23 +30,29 @@ def _err_msg(resp, *args):
 class V1_API_10_Simple_TestCase(C.BluePrintTestCaseWithWorkdir):
 
     maxDiff = None
+    cleanup = False
 
     def test_10_get_group_config_file(self):
-        for filepath in C.test_res_files("fortios/firewall*.txt"):
+        ctype = "fortios"
+        group = "firewall"
+        fpaths = C.list_res_files("{}/{}*.txt".format(ctype, group))
+
+        for filepath in fpaths:
             filename = os.path.basename(filepath)
 
-            srcpath = U.upload_filepath(filename)
+            srcpath = U.upload_filepath(filename, ctype)
+            F.ensure_dir_exists(srcpath)
             shutil.copy(filepath, srcpath)
             assert os.path.exists(srcpath)
 
-            U.parse_config_and_dump_json_file(filename, "fortios")
+            U.parse_config_and_save(filename, ctype)
 
-            outpath = U.processed_filepath(filename, prefix="fortios_")
-            outpath_2 = F.group_config_path(outpath, "firewall")
+            outpath = U.processed_filepath(filename, ctype)
+            outpath_2 = F.group_config_path(outpath, group)
             self.assertTrue(os.path.exists(outpath), outpath)
             self.assertTrue(os.path.exists(outpath_2), outpath_2)
 
-            path = _url_path("firewall", filename)
+            path = _url_path(group, filename)
             resp = self.client.get(path)
 
             self.assertEqual(resp.status_code, 200,

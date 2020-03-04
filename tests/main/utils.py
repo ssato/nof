@@ -28,15 +28,20 @@ class TT_10_path_functions_TestCases(C.BluePrintTestCaseWithWorkdir):
         self.assertNotEqual(TT.upload_filepath(filename),
                             os.path.join(TT.uploaddir(), filename))
 
-    def test_30_processed_filename__wo_prefix(self):
+        filename = "foo.yml"
+        subdir = "bar"
+        self.assertEqual(TT.upload_filepath(filename, subdir),
+                         os.path.join(TT.uploaddir(), subdir, filename))
+
+    def test_30_processed_filename(self):
         filename = "a.yml"
         res = TT.processed_filename(filename)
         self.assertEqual(res, "a.json")
 
-    def test_32_processed_filename__w_prefix(self):
+    def test_32_processed_filename__w_ext(self):
         filename = "a.yml"
-        res = TT.processed_filename(filename, prefix="out_")
-        self.assertEqual(res, "out_a.json")
+        res = TT.processed_filename(filename, ext=".xml")
+        self.assertEqual(res, "a.xml")
 
 
 class TT_20_util_functions_TestCases(C.BluePrintTestCaseWithWorkdir):
@@ -94,15 +99,16 @@ class TT_20_util_functions_TestCases(C.BluePrintTestCaseWithWorkdir):
 
 class TT_30_parse_TestCases(C.BluePrintTestCaseWithWorkdir):
 
-    def test_10_parse_config_and_dump_json_file(self):
+    def test_10_parse_config_and_save(self):
         for ctype in ("fortios", ):
             for filepath in C.config_files("fortios"):
                 fname = os.path.basename(filepath)
-                outpath = TT.processed_filepath(fname, prefix=ctype + '_')
+                outpath = TT.processed_filepath(fname, ctype)
 
-                shutil.copy(filepath, TT.uploaddir())
-                TT.parse_config_and_dump_json_file(fname, ctype)
+                TT.utils.ensure_dir_exists(outpath)
+                shutil.copy(filepath, os.path.dirname(outpath))
 
+                TT.parse_config_and_save(fname, ctype)
                 self.assertTrue(os.path.exists(outpath))
 
 # vim:sw=4:ts=4:et:
