@@ -17,6 +17,8 @@ import re
 
 import anyconfig
 
+from .utils import ensure_dir_exists
+
 
 CONFIG_GROUPS = (CONFIG_GROUP_FIREWALL,  # default
                  CONFIG_GROUP_ROUTER) = ("firewall", "router")
@@ -306,7 +308,7 @@ def group_config_path(filepath, group):
     """
     (outbn, outext) = os.path.splitext(filepath)
 
-    return "{}_{}{}".format(outbn, group, outext)
+    return "{}/{}{}".format(outbn, group, outext)
 
 
 def parse_show_config_and_dump(inpath, outpath):
@@ -325,14 +327,13 @@ def parse_show_config_and_dump(inpath, outpath):
     configs = parse_show_config(inpath)
     data = dict(configs=configs)
 
-    outdir = os.path.dirname(outpath)
-    if not os.path.exists(outdir):
-        os.makedirs(outdir)
-
+    ensure_dir_exists(outpath)
     anyconfig.dump(data, outpath)
 
     for grp in CONFIG_GROUPS:
         g_outpath = group_config_path(outpath, grp)
+        ensure_dir_exists(g_outpath)
+
         g_cnfs = make_group_configs(data, grp)
         anyconfig.dump(g_cnfs, g_outpath)
 
