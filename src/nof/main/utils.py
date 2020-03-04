@@ -36,16 +36,17 @@ def list_filenames(pattern=None):
     return sorted(os.path.basename(f) for f in files)
 
 
-def upload_filepath(filename, ctype=None):
+def upload_filepath(filename, subdir=None):
     """
     :param filename: Uploaded file path
+    :param subdir: Sub dir to save file
     """
     filename = werkzeug.utils.secure_filename(filename)
 
-    if ctype is None:
+    if subdir is None:
         return os.path.join(uploaddir(), filename)
 
-    return os.path.join(uploaddir(), ctype, filename)
+    return os.path.join(uploaddir(), subdir, filename)
 
 
 @functools.lru_cache(maxsize=None)
