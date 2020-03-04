@@ -19,8 +19,8 @@ def firewall_index():
     """Firewall index page
     """
     # FIXME: How to list original config files uploaded?
-    files = (utils.list_filenames(CTYPE + "/*." + ext) for ext
-             in ("txt", "log"))
+    fnc = utils.list_filenames
+    files = fnc(CTYPE + "/*.txt") + fnc(CTYPE + "/*.log")
 
     fns = [(fn, flask.url_for(".firewall_policies", filename=fn))
            for fn in files]
