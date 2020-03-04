@@ -5,7 +5,9 @@
 """Globals
 """
 
-PREFIX = "/fortios"
+CTYPE = "fortios"
+
+PREFIX = "/" + CTYPE
 API_PREFIX = PREFIX + "/api/v1"
 
 # vim:sw=4:ts=4:et:
