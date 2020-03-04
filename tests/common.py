@@ -37,12 +37,16 @@ def resdir(self=__file__):
     return os.path.join(selfdir(self), "res")
 
 
+def test_res_files(pattern):
+    return sorted(glob.glob(os.path.join(resdir(), pattern)))
+
+
 def ok_yml_files():
-    return sorted(glob.glob(os.path.join(resdir(), "*__ok.yml")))
+    return test_res_files("*__ok.yml")
 
 
 def config_files(ctype):
-    return sorted(glob.glob(os.path.join(resdir(), ctype, "*.txt")))
+    return test_res_files(os.path.join(ctype, "*.txt"))
 
 
 def setup_workdir():
