@@ -24,7 +24,7 @@ CONFIG_GROUPS = (CONFIG_GROUP_FIREWALL,  # default
                  CONFIG_GROUP_ROUTER) = ("firewall", "router")
 
 FIREWALL_COLS = (dict(key="name", width="5%"),
-                 dict(key="uuid", width="5%"),
+                 dict(key="uuid", width="5%", hide=True),
                  dict(key="srcaddr", width="10%"),
                  dict(key="srcintf", width="5%"),
                  dict(key="dstaddr", width="10%"),

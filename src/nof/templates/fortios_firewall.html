@@ -30,8 +30,9 @@ $(document).ready(function() {
     },
     "columns": [
       {% for col in policies_cols -%}
-      { "data": "{{ col.key }}", "width": "{{ col.width }}"}
-      {%   if not loop.last %},{% endif %}
+      { "data": "{{ col.key }}", "width": "{{ col.width }}"
+        {% if col.hide | d(false) %}, "visible": false{% endif -%}
+        }{%   if not loop.last %},{% endif %}
       {% endfor %}
     ]
   });
