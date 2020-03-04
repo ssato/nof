@@ -37,16 +37,16 @@ def resdir(self=__file__):
     return os.path.join(selfdir(self), "res")
 
 
-def test_res_files(pattern):
+def list_res_files(pattern):
     return sorted(glob.glob(os.path.join(resdir(), pattern)))
 
 
 def ok_yml_files():
-    return test_res_files("*__ok.yml")
+    return list_res_files("*__ok.yml")
 
 
 def config_files(ctype):
-    return test_res_files(os.path.join(ctype, "*.txt"))
+    return list_res_files(os.path.join(ctype, "*.txt"))
 
 
 def setup_workdir():
@@ -73,12 +73,15 @@ class BluePrintTestCase(unittest.TestCase):
 class BluePrintTestCaseWithWorkdir(BluePrintTestCase):
     """Base class for app test cases need working dir.
     """
+    cleanup = True
+
     def setUp(self):
         self.workdir = os.environ["NOF_UPLOADDIR"] = setup_workdir()
         super(BluePrintTestCaseWithWorkdir, self).setUp()
 
     def tearDown(self):
         super(BluePrintTestCaseWithWorkdir, self).tearDown()
-        prune_workdir(self.workdir)
+        if self.cleanup:
+            prune_workdir(self.workdir)
 
 # vim:sw=4:ts=4:et:
