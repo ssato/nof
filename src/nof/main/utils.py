@@ -50,22 +50,29 @@ def upload_filepath(filename, subdir=None):
 
 
 @functools.lru_cache(maxsize=None)
-def processed_filename(filename, prefix=None):
+def processed_filename(filename, ext=None):
+    """
+    :param filename: Processed file name
+    :param ext: processed file's extension
+    """
+    if ext is None:
+        ext = ".json"
+
+    basename = werkzeug.utils.secure_filename(filename)
+    return os.path.splitext(basename)[0] + ext
+
+
+def processed_filepath(filename, subdir=None, **kwargs):
     """
     :param filename: Processed file path
+    :param subdir: Sub dir to save file
     """
-    if prefix is None:
-        prefix = ''
+    pfname = processed_filename(filename, **kwargs)
 
-    basename = os.path.splitext(werkzeug.utils.secure_filename(filename))[0]
-    return "{}{}.json".format(prefix, basename)
+    if subdir is None:
+        return os.path.join(uploaddir(), pfname)
 
-
-def processed_filepath(filename, prefix=None):
-    """
-    :param filename: Processed file path
-    """
-    return os.path.join(uploaddir(), processed_filename(filename, prefix))
+    return os.path.join(uploaddir(), subdir, pfname)
 
 
 def generate_node_link_data_from_graph_data(filename):
@@ -124,7 +131,7 @@ def find_paths_from_graph(filename, src_ip, dst_ip, node_type=None):
     return finder.find_paths(graph, src_ip, dst_ip, node_type=node_type)
 
 
-def parse_config_and_dump_json_file(filename, ctype=None):
+def parse_config_and_save(filename, ctype=None):
     """
     Parse fortios 'show full-configuration' output and dump parsed results as
     JSON file.
@@ -132,13 +139,20 @@ def parse_config_and_dump_json_file(filename, ctype=None):
     if ctype is None:
         ctype = CONFIG_TYPES[0]  # default
 
-    filepath = upload_filepath(filename, ctype)
+    filepath = upload_filepath(filename, subdir=ctype)
     utils.ensure_dir_exists(filepath)
 
     parse_fn = configparsers.PARSERS[ctype]
-    outpath = processed_filepath(filename, prefix=ctype + '_')
+    outpath = processed_filepath(filename, subdir=ctype)
     utils.ensure_dir_exists(outpath)
 
     return parse_fn(filepath, outpath)
+
+
+def is_valid_config_type(ctype):
+    """
+    :return: True if given `ctype` is a valid configuration type.
+    """
+    return ctype in list(configparsers.PARSERS.keys())
 
 # vim:sw=4:ts=4:et:
