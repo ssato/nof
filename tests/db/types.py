@@ -46,5 +46,6 @@ class TestCustomTypes(unittest.TestCase):
 
         net = session.query(Network).filter_by(addr=addr_1).first()
         self.assertTrue(net is net_1, net)
+        self.assertTrue(net.addr,  TT.ipaddress.ip_network(addr_1))
 
 # vim:sw=4:ts=4:et:
