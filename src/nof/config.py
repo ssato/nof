@@ -20,6 +20,7 @@ class Config():
     # .. seealso:: https://pythonhosted.org/Flask-Uploads/
     _datadir = "/var/lib/nof/"
     UPLOADED_FILES_DEST = os.path.join(_datadir, "uploads")
+    SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.path.join(_datadir, "main.db")
 
     # Limit the size of file to upload: 500 [MB]
     MAX_CONTENT_LENGTH = 500 * 1024 * 1024
@@ -28,9 +29,10 @@ class Config():
     def init_app(app):
         """Initialize application.
         """
-        key = "NOF_UPLOADDIR"
-        if key in os.environ:
-            app.UPLOADED_FILES_DEST = os.environ[key]
+        keys = ("NOF_UPLOADDIR", "SQLALCHEMY_DATABASE_URI")
+        for key in keys:
+            if key in os.environ:
+                setattr(app, key, os.environ[key])
 
 
 class DevelopmentConfig(Config):
@@ -39,6 +41,7 @@ class DevelopmentConfig(Config):
     """
     DEBUG = True
     UPLOADED_FILES_DEST = "/tmp/nof_uploads"
+    SQLALCHEMY_DATABASE_URI = "sqlite:////tmp/nof.db"
 
     if not os.path.exists(UPLOADED_FILES_DEST):
         os.mkdir(UPLOADED_FILES_DEST)
