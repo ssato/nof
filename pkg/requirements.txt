@@ -4,8 +4,10 @@ pyyaml
 networkx
 Flask
 Flask-Bootstrap
+Flask-SQLAlchemy
 # Temporal workarounds for https://github.com/maxcountryman/flask-uploads/issues/29
 # -e git+https://github.com/maxcountryman/flask-uploads/archive/f66d7dc93e684fa0a3a4350a38e41ae00483a796.zip#egg=Flask-Uploads
 # Flask-Uploads
 Flask-WTF
 Werkzeug == 0.16.0
+sqlalchemy-utils
