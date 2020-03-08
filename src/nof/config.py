@@ -22,6 +22,8 @@ class Config():
     UPLOADED_FILES_DEST = os.path.join(_datadir, "uploads")
     SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.path.join(_datadir, "main.db")
 
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+
     # Limit the size of file to upload: 500 [MB]
     MAX_CONTENT_LENGTH = 500 * 1024 * 1024
 
