@@ -39,7 +39,7 @@ def to_fortios_subnet(value):
     in config firewall section.
 
     >>> val = ipaddress.ip_interface("192.168.1.12/24")
-    >>> to_fortios_subnet(val_v)
+    >>> to_fortios_subnet(val)
     '192.168.1.12 255.255.255.0'
     >>> val = ipaddress.ip_interface("10.1.0.0/16")
     >>> to_fortios_subnet(val)
