@@ -22,7 +22,9 @@ ENV PYTHONPATH = .
 RUN dnf update -y && \
     dnf install -y python3-pip python3-pyyaml python3-flask; \
     dnf clean all
-RUN pip3 install anyconfig networkx Flask-Bootstrap Flask-WTF
+
+COPY pkg/requirements.txt .
+RUN pip3 install -r requirements.txt
 
 COPY src/nof/ nof/
 WORKDIR .
