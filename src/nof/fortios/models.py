@@ -28,11 +28,11 @@ class Firewall(DB.Model):
     info = DB.Column(DB.String(120))
 
     # https://flask-sqlalchemy.palletsprojects.com/en/2.x/models/#one-to-many-relationships
-    vdoms = DB.relationship("VDom")
+    vdoms = DB.relationship("VDom", lazy=True)
     interfaces = DB.relationship("Interface")
-    firewall_sercice_categories = DB.relationship("FirewallServiceCategory")
-    firewall_sercice_groups = DB.relationship("FirewallServiceGroup")
-    firewall_sercice_customs = DB.relationship("FirewallServiceCustom")
+    firewall_service_categories = DB.relationship("FirewallServiceCategory")
+    firewall_service_groups = DB.relationship("FirewallServiceGroup")
+    firewall_service_customs = DB.relationship("FirewallServiceCustom")
     firewall_addrgrps = DB.relationship("FirewallAddressGrp")
     firewall_addresses = DB.relationship("FirewallAddress")
     firewall_policies = DB.relationship("FirewallPolicy")
@@ -48,6 +48,8 @@ class VDom(DB.Model):
             next
         end
     """
+    __tablename__ = "vdom"
+
     id = DB.Column(DB.Integer, primary_key=True)  # ! Edit
     node_id = DB.Column(DB.Integer, DB.ForeignKey("firewall.id"))
     edit = DB.Column(DB.String(20), nullable=False)
@@ -70,13 +72,14 @@ class Interface(DB.Model):
             next
         end
     """
+    __tablename__ = "interface"
+
     id = DB.Column(DB.Integer, primary_key=True)
     node_id = DB.Column(DB.Integer, DB.ForeignKey("firewall.id"))
     edit = DB.Column(DB.String(40), nullable=False,
                      default=FW_ADDR_TYPES[0][0])
 
-    vdom_id = DB.Column(DB.Integer, DB.ForeignKey("vdom.id"),
-                        default=_VDOM_DEFAULT)
+    vdom_id = DB.Column(DB.Integer, DB.ForeignKey("vdom.id"))
     vdom = DB.relationship("VDom")
 
     type = DB.Column(DB.String(10), nullable=False)
@@ -125,7 +128,7 @@ class FirewallServiceGroup(DB.Model):
 
 
 class FirewallServiceCustom(DB.Model):
-    """firewall service category
+    """firewall service custom
     """
     id = DB.Column(DB.Integer, primary_key=True)
     node_id = DB.Column(DB.Integer, DB.ForeignKey("firewall.id"))
@@ -156,7 +159,7 @@ class FirewallAddressGrp(DB.Model):
 
     uuid = DB.Column(DB.String(40), nullable=False)
     comment = DB.Column(DB.String(50))  # Optional
-    member = DB.relationship("FirewallAddress", lazy=True)
+    member = DB.relationship("FirewallAddress")
 
 
 class FirewallAddress(DB.Model):
@@ -201,23 +204,23 @@ class FirewallPolicy(DB.Model):
 
     # firewall addrgrp or firewall address{,6}
     srcaddr_group_id = DB.Column(DB.Integer,
-                                 DB.ForeignKey("firewall_addresse_grp.id"))
+                                 DB.ForeignKey("firewall_address_grp.id"))
     srcaddr_group = DB.relationship("FirewallAddressGrp")
-    srcaddr_id = DB.Column(DB.Integer, DB.ForeignKey("firewall_addresse.id"))
+    srcaddr_id = DB.Column(DB.Integer, DB.ForeignKey("firewall_address.id"))
     srcaddr = DB.relationship("FirewallAddress")
 
     dstaddr_group_id = DB.Column(DB.Integer,
-                                 DB.ForeignKey("firewall_addresse_grp.id"))
+                                 DB.ForeignKey("firewall_address_grp.id"))
     dstaddr_group = DB.relationship("FirewallAddressGrp")
-    dstaddr_id = DB.Column(DB.Integer, DB.ForeignKey("firewall_addresse.id"))
+    dstaddr_id = DB.Column(DB.Integer, DB.ForeignKey("firewall_address.id"))
     dstaddr = DB.relationship("FirewallAddress")
 
     # firewwall service group or firewall_policy service custom
     serivce_group_id = DB.Column(DB.Integer,
-                                 DB.ForeignKey("firewall_sercice_groups.id"))
+                                 DB.ForeignKey("firewall_service_group.id"))
     serivce_group = DB.relationship("FirewallServiceGroup")
     serivce_custom_id = DB.Column(DB.Integer,
-                                  DB.ForeignKey("firewall_sercice_custom.id"))
+                                  DB.ForeignKey("firewall_service_custom.id"))
     serivce_custom = DB.relationship("FirewallServiceCustom")
 
     logtraffic = DB.Column(DB.String(10))
