@@ -19,6 +19,18 @@ FW_ADDR_TYPES = ((u"ipmask", u"IPMask"), (u"iprange", u"IPRange"))
 FW_ACTION_TYPES = ((u"accept", "Accept"), (u"deny", "Deny"),
                    (u"learn", "Learn"), (u"ipsec", "IPSec"))
 
+# pylint: disable=line-too-long
+# https://help.fortinet.com/fos60hlp/60/Content/FortiOS/fortigate-networking/Interfaces/Administrative%20access.htm
+# pylint: enable=line-too-long
+FW_IFACE_ACCESS_TYPES = (("ping", "PING access"), ("https", "HTTPS access"),
+                         ("http", "HTTP access"), ("ssh", "SSH access"),
+                         ("snmp", "SNMP access"), ("telnet", "TELNET access"),
+                         ("fgfm", "FortiManager access"),
+                         ("radius-acct", "RADIUS accounting access"),
+                         ("probe-response", "Probe access"),
+                         ("capwap", "CAPWAP access"),
+                         ("ftm", "FortiToken Mobile Push access"))
+
 _VDOM_DEFAULT = "root"
 
 BASE = sqlalchemy.ext.declarative.declarative_base()
@@ -67,6 +79,15 @@ class VDom(DB.Model):
                         nullable=False)
 
 
+class AllowedAccessTypes(DB.Model):
+    """
+    "system interface".allowaccess
+    """
+    id = DB.Column(DB.Integer, primary_key=True)
+    type = DB.Column(sqlalchemy_utils.ChoiceType(FW_IFACE_ACCESS_TYPES),
+                     nullable=False, default=FW_IFACE_ACCESS_TYPES[0][0])
+
+
 class Interface(DB.Model):
     """config system itnerface
 
@@ -97,7 +118,11 @@ class Interface(DB.Model):
 
     type = DB.Column(DB.String(10), nullable=False)
     vlanforward = DB.Column(DB.String(10))
-    allowaccess = DB.Column(DB.String(40))
+
+    # .. todo::
+    # allowaccess = DB.relationship("AllowedAccessTypes")
+    allowaccess = DB.Column(DB.String(100))
+
     alias = DB.Column(DB.String(20))
     mode = DB.Column(DB.String(10))
     status = DB.Column(DB.String(10))
@@ -202,8 +227,13 @@ class FirewallAddress(DB.Model):
                         nullable=False)
 
     uuid = DB.Column(DB.String(40), nullable=False)
+
+    # pylint: disable=line-too-long
+    # https://sqlalchemy-utils.readthedocs.io/en/latest/data_types.html#module-sqlalchemy_utils.types.choice
+    # pylint: enable=line-too-long
     type = DB.Column(sqlalchemy_utils.ChoiceType(FW_ADDR_TYPES),
                      nullable=False, default=FW_ADDR_TYPES[0][0])
+
     comment = DB.Column(DB.String(120))
     associated_interface_id = DB.Column(DB.Integer,
                                         DB.ForeignKey("interface.id"))
