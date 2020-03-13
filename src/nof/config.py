@@ -52,7 +52,7 @@ class DevelopmentConfig(Config):
                                os.path.join(NOF_DATA_DIR_FOR_TESTS, "main.db"))
 
     if not os.path.exists(UPLOADED_FILES_DEST):
-        os.mkdir(UPLOADED_FILES_DEST)
+        os.makedirs(UPLOADED_FILES_DEST)
 
 
 class TestingConfig(Config):
