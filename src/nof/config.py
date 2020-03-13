@@ -7,8 +7,13 @@
 """
 from __future__ import absolute_import
 
+import os.path
 import os
 import uuid
+
+
+NOF_DATA_DIR = "/var/lib/nof"
+NOF_DATA_DIR_FOR_TESTS = "/tmp/nof"
 
 
 class Config():
@@ -18,7 +23,7 @@ class Config():
     WTF_CSRF_ENABLED = True
 
     # .. seealso:: https://pythonhosted.org/Flask-Uploads/
-    _datadir = "/var/lib/nof/"
+    _datadir = NOF_DATA_DIR
     UPLOADED_FILES_DEST = os.path.join(_datadir, "uploads")
     SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.path.join(_datadir, "main.db")
 
@@ -42,8 +47,9 @@ class DevelopmentConfig(Config):
     Config for development.
     """
     DEBUG = True
-    UPLOADED_FILES_DEST = "/tmp/nof_uploads"
-    SQLALCHEMY_DATABASE_URI = "sqlite:////tmp/nof.db"
+    UPLOADED_FILES_DEST = os.path.join(NOF_DATA_DIR_FOR_TESTS, "uploads")
+    SQLALCHEMY_DATABASE_URI = ("sqlite:///" +
+                               os.path.join(NOF_DATA_DIR_FOR_TESTS, "main.db"))
 
     if not os.path.exists(UPLOADED_FILES_DEST):
         os.mkdir(UPLOADED_FILES_DEST)
