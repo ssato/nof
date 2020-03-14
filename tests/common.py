@@ -8,13 +8,13 @@ import os.path
 import os
 import shutil
 import tempfile
-import unittest
 
 try:
     from unittest import SkipTest
 except ImportError:
     from nose.plugins.skip import SkipTest
 
+import flask_testing
 import nof
 
 
@@ -57,17 +57,11 @@ def prune_workdir(workdir):
     shutil.rmtree(workdir)
 
 
-class BluePrintTestCase(unittest.TestCase):
+class BluePrintTestCase(flask_testing.TestCase):
     """Base class for app test cases.
     """
-    def setUp(self):
-        self.app = nof.create_app("testing")  # debug, disable CSRF, etc.
-        self.app_context = self.app.app_context()
-        self.app_context.push()
-        self.client = self.app.test_client()
-
-    def tearDown(self):
-        self.app_context.pop()
+    def create_app(self):
+        return nof.create_app("testing")  # debug, disable CSRF, etc.
 
 
 class BluePrintTestCaseWithWorkdir(BluePrintTestCase):
