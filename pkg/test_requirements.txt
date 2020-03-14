@@ -8,3 +8,4 @@ nose
 pycodestyle<2.4.0
 pylint
 pylint_flask_sqlalchemy
+Flask-Testing
