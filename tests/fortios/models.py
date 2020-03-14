@@ -15,15 +15,6 @@ class Models_10_TestCase(C.BluePrintTestCaseWithWorkdir):
     maxDiff = None
     cleanup = False
 
-    def setUp(self):
-        super(Models_10_TestCase, self).setUp()
-        # with self.app.app_context():
-        # nof.db.DB.create_all()
-
-    def tearDown(self):
-        super(Models_10_TestCase, self).tearDown()
-        C.prune_workdir(nof.config.NOF_DATA_DIR_FOR_TESTS)
-
     def test_10_insert_model_data(self):
         C.skip_test()  # .. todo::
 
