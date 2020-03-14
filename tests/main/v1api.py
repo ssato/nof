@@ -55,7 +55,7 @@ class V1_API_10_Simple_TestCase(C.BluePrintTestCaseWithWorkdir):
             path = _url_path("graph", filename)
             resp = self.client.post(path, data=data, headers=headers)
 
-            self.assertEqual(resp.status_code, 201, resp.data)
+            self.assertStatus(resp, 201, resp.data)
 
             outpath = nof.main.utils.processed_filepath(filename)
             outdata = anyconfig.load(outpath)
