@@ -68,6 +68,7 @@ class BluePrintTestCaseWithWorkdir(BluePrintTestCase):
     """Base class for app test cases need working dir.
     """
     cleanup = True
+    workdir = None
 
     def create_app(self):
         self.workdir = os.environ["NOF_DATA_DIR"] = setup_workdir()
