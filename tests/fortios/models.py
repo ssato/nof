@@ -80,11 +80,12 @@ class Models_10_TestCase(C.BluePrintTestCaseWithWorkdir):
         addr_4 = TT.FirewallAddress(edit="apple", uuid=C.uuid_gen(),
                                     type="wildcard-fqdn",
                                     wildcard_fqdn="*.apple.com")
-        addr_5 = TT.FirewallAddress(edit="N_10.0.1.0", uuid=C.uuid_gen(),
+        addr_5 = TT.FirewallAddress(edit="NET_10.0.1.0", uuid=C.uuid_gen(),
                                     comment="Management Network",
                                     associated_interface=iface_1,
                                     subnet="10.0.1.0 255.255.255.0")
-        addr_6 = TT.FirewallAddress(edit="H_192.168.122.1", uuid=C.uuid_gen(),
+        addr_6 = TT.FirewallAddress(edit="HOST_192.168.122.1",
+                                    uuid=C.uuid_gen(),
                                     comment="Libvirt_Default_GW",
                                     associated_interface=iface_2,
                                     subnet="192.168.122.1 255.255.255.0")
