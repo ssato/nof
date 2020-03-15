@@ -15,7 +15,7 @@ def create_app(cnf_name="development"):
     """
     :param cnf_name: Config name, e.g. "development"
     """
-    cnf = config.CNF[cnf_name]
+    cnf = config.get_config(cnf_name)
 
     app = flask.Flask(__name__)
     app.config.from_object(cnf)

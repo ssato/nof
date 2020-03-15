@@ -11,9 +11,7 @@ import os.path
 import os
 import uuid
 
-
-NOF_DATA_DIR = "/var/lib/nof"
-NOF_DATA_DIR_FOR_TESTS = "/tmp/nof"
+from .utils import uploaddir, database_url
 
 
 class Config():
@@ -22,24 +20,26 @@ class Config():
     SECRET_KEY = os.environ.get('SECRET_KEY') or str(uuid.uuid4())
     WTF_CSRF_ENABLED = True
 
-    # .. seealso:: https://pythonhosted.org/Flask-Uploads/
-    _datadir = NOF_DATA_DIR
-    UPLOADED_FILES_DEST = os.path.join(_datadir, "uploads")
-    SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.path.join(_datadir, "main.db")
-
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # Limit the size of file to upload: 500 [MB]
     MAX_CONTENT_LENGTH = 500 * 1024 * 1024
 
-    @staticmethod
-    def init_app(app):
+    def __init__(self, datadir=None):
+        """Initialize defaults
+        """
+        # pylint: disable=invalid-name
+        # .. seealso:: https://pythonhosted.org/Flask-Uploads/
+        self.UPLOADED_FILES_DEST = uploaddir(datadir)
+        self.SQLALCHEMY_DATABASE_URI = database_url(datadir)
+        # pylint: enable=invalid-name
+
+    def init_app(self, app):
         """Initialize application.
         """
         keys = ("NOF_UPLOADDIR", "SQLALCHEMY_DATABASE_URI")
         for key in keys:
-            if key in os.environ:
-                setattr(app, key, os.environ[key])
+            setattr(app, key, getattr(self, key))
 
 
 class DevelopmentConfig(Config):
@@ -47,15 +47,15 @@ class DevelopmentConfig(Config):
     Config for development.
     """
     DEBUG = True
-    UPLOADED_FILES_DEST = os.path.join(NOF_DATA_DIR_FOR_TESTS, "uploads")
-    SQLALCHEMY_DATABASE_URI = ("sqlite:///" +
-                               os.path.join(NOF_DATA_DIR_FOR_TESTS, "main.db"))
 
-    if not os.path.exists(UPLOADED_FILES_DEST):
-        os.makedirs(UPLOADED_FILES_DEST)
+    def init_app(self, app):
+        """Ensure workdir exists.
+        """
+        if not os.path.exists(self.UPLOADED_FILES_DEST):
+            os.makedirs(self.UPLOADED_FILES_DEST)
 
 
-class TestingConfig(Config):
+class TestingConfig(DevelopmentConfig):
     """
     Config for testing.
     """
@@ -67,15 +67,18 @@ class ProductionConfig(Config):
     """
     Config for production.
     """
-
-    @classmethod
-    def init_app(cls, app):
-        Config.init_app(app)
+    TESTING = False
 
 
-CNF = dict(development=DevelopmentConfig,
-           testing=TestingConfig,
-           production=ProductionConfig,
-           default=DevelopmentConfig)
+def get_config(name="development"):
+    """
+    :return: An instance of *Config
+    """
+    cnfs = dict(development=DevelopmentConfig,
+                testing=TestingConfig,
+                production=ProductionConfig,
+                default=DevelopmentConfig)
+
+    return cnfs[name]()
 
 # vim:sw=4:ts=4:et:
