@@ -144,6 +144,16 @@ def Node_to_dict(node):
                 children=node.children)
 
 
+def _process_comment(content):
+    """
+    Parse comment content, make a mapping objects and return it.
+
+    :param content: A str represents a comment
+    :return: A mapping object made by parsing a comment
+    """
+    return dict(kv.split('=') for kv in content.split(':'))
+
+
 def parse_show_config_itr(lines):
     """
     Parse 'config xxxxx xxxx' .. 'end'.
@@ -153,6 +163,9 @@ def parse_show_config_itr(lines):
     counter = itertools.count()
     state = ST_OTHER
     configs = []  # stack holds nested config objects
+
+    # A dict holds comments; There are not so many comments.
+    comments = dict(comments=[])
 
     def id_gen():
         """ID generator"""
@@ -164,7 +177,13 @@ def parse_show_config_itr(lines):
 
         matched = COMMENT_RE.match(line)
         if matched:
-            yield dict(type="comment", content=matched.groups()[0])  # TBD
+            content = matched.groups()[0].strip()
+            comments["comments"].append(content)
+            try:
+                comments.update(_process_comment(content))
+            except ValueError:
+                continue  # content does not contain structured data.
+            continue
 
         if state == ST_OTHER:
             matched = CONFIG_START_RE.match(line)
@@ -224,6 +243,10 @@ def parse_show_config_itr(lines):
 
                 config = make_Node(matched, id_gen)
                 configs.append(config)  # push config
+
+    if comments["comments"]:
+        comments["type"] = comments["name"] = "comment"  # TBD
+        yield comments
 
 
 def _val_or_vals(obj):

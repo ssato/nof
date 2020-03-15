@@ -81,9 +81,21 @@ class TT_10_Simple_Function_TestCases(unittest.TestCase):
             for cnf, exp in zip(res, res_exp):
                 self.assertEqual(cnf, exp, cnf)
 
-    def test_90_parse_show_config_and_dump__simple_config_set(self):
-        for inp_path, exp_path in _inp_and_exp_result_files():
-            res = TT.parse_show_config_and_dump(inp_path, exp_path)
+
+class TT_20_Function_with_IO_TestCases(C.BluePrintTestCaseWithWorkdir):
+
+    maxDiff = None
+
+    def _result_files(self):
+        inputs = glob.glob(os.path.join(C.resdir(), "fortios", "*.txt"))
+        for inp_path in sorted(inputs):
+            out_path = os.path.join(self.workdir,
+                                    os.path.basename(inp_path) + ".json")
+            yield (inp_path, out_path, inp_path + ".exp.json")
+
+    def test_10_parse_show_config_and_dump__simple_config_set(self):
+        for inp_path, out_path, exp_path in self._result_files():
+            res = TT.parse_show_config_and_dump(inp_path, out_path)
 
             self.assertTrue(os.path.exists(exp_path))
             res_exp = TT.anyconfig.load(exp_path)
