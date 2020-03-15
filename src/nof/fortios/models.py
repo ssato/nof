@@ -107,8 +107,7 @@ class Interface(DB.Model):
     __tablename__ = "interface"
 
     id = DB.Column(DB.Integer, primary_key=True)
-    edit = DB.Column(DB.String(40), nullable=False,
-                     default=FW_ADDR_TYPES[0][0])
+    edit = DB.Column(DB.String(40), nullable=False)
 
     node_id = DB.Column(DB.Integer, DB.ForeignKey("firewall.id"),
                         nullable=False)
@@ -126,8 +125,10 @@ class Interface(DB.Model):
     alias = DB.Column(DB.String(20))
     mode = DB.Column(DB.String(10))
     status = DB.Column(DB.String(10))
+    dedicated_to = DB.Column(DB.String(20))
     snmp_index = DB.Column(DB.Integer, nullable=False)
     ip = DB.Column(custom_types.FortiosSubnetType)
+    trust_ip_1 = DB.Column(custom_types.FortiosSubnetType)
 
 
 class FirewallServiceCategory(DB.Model):
@@ -150,6 +151,16 @@ class FirewallServiceCategory(DB.Model):
                         nullable=False)
 
 
+# many-to-many
+FSG_FAS = DB.Table(
+    "fsg_fas", DB.metadata,
+    DB.Column("custom_id", DB.Integer,
+              DB.ForeignKey("firewall_service_custom.id")),
+    DB.Column("group_id", DB.Integer,
+              DB.ForeignKey("firewall_service_group.id"))
+)
+
+
 class FirewallServiceGroup(DB.Model):
     """firewall service group
 
@@ -167,6 +178,10 @@ class FirewallServiceGroup(DB.Model):
 
     node_id = DB.Column(DB.Integer, DB.ForeignKey("firewall.id"),
                         nullable=False)
+
+    member = DB.relationship("FirewallServiceCustom", secondary=FSG_FAS,
+                             lazy="subquery",
+                             backref=DB.backref("firewall_service_groups"))
 
 
 class FirewallServiceCustom(DB.Model):
@@ -235,6 +250,8 @@ class FirewallAddress(DB.Model):
                      nullable=False, default=FW_ADDR_TYPES[0][0])
 
     comment = DB.Column(DB.String(120))
+    wildcard_fqdn = DB.Column(DB.String(80))
+
     associated_interface_id = DB.Column(DB.Integer,
                                         DB.ForeignKey("interface.id"))
     associated_interface = DB.relationship("Interface")
@@ -285,12 +302,12 @@ class FirewallPolicy(DB.Model):
     dstaddr = DB.relationship("FirewallAddress", foreign_keys=[dstaddr_id])
 
     # firewwall service group or firewall_policy service custom
-    serivce_group_id = DB.Column(DB.Integer,
+    service_group_id = DB.Column(DB.Integer,
                                  DB.ForeignKey("firewall_service_group.id"))
-    serivce_group = DB.relationship("FirewallServiceGroup")
-    serivce_custom_id = DB.Column(DB.Integer,
+    service_group = DB.relationship("FirewallServiceGroup")
+    service_custom_id = DB.Column(DB.Integer,
                                   DB.ForeignKey("firewall_service_custom.id"))
-    serivce_custom = DB.relationship("FirewallServiceCustom")
+    service_custom = DB.relationship("FirewallServiceCustom")
 
     logtraffic = DB.Column(DB.String(10))
     schedule = DB.Column(DB.String(10), default="always")
