@@ -3,33 +3,28 @@
 # SPDX-License-Identifier: MIT
 #
 # pylint: disable=missing-docstring, invalid-name
-import nof
-import nof.config
 import nof.db
-import nof.lib.fortios as F
+import nof.fortios as TT
+
 from .. import common as C
 
 
 class Models_10_TestCase(C.BluePrintTestCaseWithWorkdir):
 
     maxDiff = None
-    cleanup = False
 
     def test_10_insert_model_data(self):
-        C.skip_test()  # .. todo::
+        firewall = TT.Firewall(name="abc012", info="fortios test node")
 
-        nof.db.DB.create_all()
-        firewall = F.Firewall(name="abc012", info="fortios test node")
-
-        vdom = F.VDom()
+        vdom = TT.VDom()
         firewall.vdoms.append(vdom)
 
-        iface = nof.fortios.Interface(vdom=vdom, type="physical",
-                                      vlanforward="enable",
-                                      allowaccess="ping",
-                                      alias="Libvirt_Default_GW",
-                                      snmp_index=9,
-                                      ip="192.168.122.1 255.255.255.0")
+        iface = TT.Interface(vdom=vdom, type="physical",
+                             vlanforward="enable",
+                             allowaccess="ping",
+                             alias="Libvirt_Default_GW",
+                             snmp_index=9,
+                             ip="192.168.122.1 255.255.255.0")
         firewall.interfaces.append(iface)
 
         # with self.app.app_context():
