@@ -78,4 +78,17 @@ class BluePrintTestCaseWithWorkdir(BluePrintTestCase):
         if self.cleanup:
             prune_workdir(self.workdir)
 
+
+class BluePrintTestCaseWithDB(BluePrintTestCaseWithWorkdir):
+    """
+    https://pythonhosted.org/Flask-Testing/#testing-with-sqlalchemy
+    """
+
+    def setUp(self):
+        nof.db.DB.create_all()
+
+    def tearDown(self):
+        nof.db.DB.session.remove()
+        nof.db.DB.drop_all()
+
 # vim:sw=4:ts=4:et:
