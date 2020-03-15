@@ -22,6 +22,7 @@ import nof
 def uuid_gen():
     return str(uuid.uuid4())
 
+
 def skip_test():
     raise SkipTest
 
