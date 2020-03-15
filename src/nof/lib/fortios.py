@@ -177,9 +177,8 @@ def parse_show_config_itr(lines):
                 comments.update(_process_comment(content))
             except ValueError:
                 continue  # content does not contain structured data.
-            continue
 
-        if state == ST_OTHER:
+        elif state == ST_OTHER:
             matched = CONFIG_START_RE.match(line)
             if matched:
                 state = ST_IN_CONFIG
