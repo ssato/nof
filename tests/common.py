@@ -8,6 +8,7 @@ import os.path
 import os
 import shutil
 import tempfile
+import uuid
 
 try:
     from unittest import SkipTest
@@ -17,6 +18,9 @@ except ImportError:
 import flask_testing
 import nof
 
+
+def uuid_gen():
+    return str(uuid.uuid4())
 
 def skip_test():
     raise SkipTest
