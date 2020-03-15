@@ -118,10 +118,9 @@ def make_end_re(indent, _type=None):
     return re.compile(r"^" + indent + end)
 
 
-def make_Node(matched, id_gen, _type=None):
+def make_Node(matched, _type=None):
     """
     :param matched: :class:`re.Match` object holding the config line info
-    :param id_gen: Any callable to generate unique ID of this node object
     :param _type: Node type
 
     :return: A collections.namedtuple object has a config or edit info
@@ -133,14 +132,14 @@ def make_Node(matched, id_gen, _type=None):
     end_re = make_end_re(indent, _type)
 
     Node = collections.namedtuple(_type.title(),
-                                  ("name", "id", "type", "end_re", "children"))
-    return Node(name=name, id=id_gen(), type=_type, end_re=end_re, children=[])
+                                  ("name", "type", "end_re", "children"))
+    return Node(name=name, type=_type, end_re=end_re, children=[])
 
 
 def Node_to_dict(node):
     """Convert a Node namedtuple object to a dict.
     """
-    return dict(name=node.name, _id=node.id, type=node.type,
+    return dict(name=node.name, type=node.type,
                 children=node.children)
 
 
@@ -160,16 +159,11 @@ def parse_show_config_itr(lines):
 
     :param lines: An iterator yields each lines in the configuration outputs
     """
-    counter = itertools.count()
     state = ST_OTHER
     configs = []  # stack holds nested config objects
 
     # A dict holds comments; There are not so many comments.
     comments = dict(comments=[])
-
-    def id_gen():
-        """ID generator"""
-        return next(counter)
 
     for line in lines:
         if EMPTY_RE.match(line):
@@ -190,7 +184,7 @@ def parse_show_config_itr(lines):
             if matched:
                 state = ST_IN_CONFIG
 
-                config = make_Node(matched, id_gen)
+                config = make_Node(matched)
                 configs.append(config)  # push config
 
         elif state == ST_IN_CONFIG:
@@ -198,7 +192,7 @@ def parse_show_config_itr(lines):
             if matched:
                 state = ST_IN_EDIT
 
-                edit = make_Node(matched, id_gen, _type=NT_EDIT)
+                edit = make_Node(matched, _type=NT_EDIT)
                 configs.append(edit)  # push edit
                 continue
 
@@ -241,7 +235,7 @@ def parse_show_config_itr(lines):
             if matched:
                 state = ST_IN_CONFIG
 
-                config = make_Node(matched, id_gen)
+                config = make_Node(matched)
                 configs.append(config)  # push config
 
     if comments["comments"]:
