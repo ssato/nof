@@ -99,8 +99,9 @@ class Models_10_TestCase(C.BluePrintTestCaseWithWorkdir):
 
         addr_grp_1 = TT.FirewallAddressGrp(edit="GAFA", uuid=C.uuid_gen(),
                                            comment="GAFA")
-        addr_grp_2 = TT.FirewallAddressGrp(edit="GAFA", uuid=C.uuid_gen(),
-                                           comment="GAFA")
+        addr_grp_2 = TT.FirewallAddressGrp(edit="Management Network",
+                                           uuid=C.uuid_gen(),
+                                           comment="Management Network")
         addr_grp_1.member.append(addr_1)
         addr_grp_1.member.append(addr_2)
         addr_grp_1.member.append(addr_3)
