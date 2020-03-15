@@ -69,9 +69,9 @@ class BluePrintTestCaseWithWorkdir(BluePrintTestCase):
     """
     cleanup = True
 
-    def setUp(self):
-        self.workdir = os.environ["NOF_UPLOADDIR"] = setup_workdir()
-        super(BluePrintTestCaseWithWorkdir, self).setUp()
+    def create_app(self):
+        self.workdir = os.environ["NOF_DATA_DIR"] = setup_workdir()
+        return super(BluePrintTestCaseWithWorkdir, self).create_app()
 
     def tearDown(self):
         super(BluePrintTestCaseWithWorkdir, self).tearDown()
