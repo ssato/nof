@@ -108,7 +108,8 @@ class Models_10_TestCase(C.BluePrintTestCaseWithWorkdir):
         addr_grp_2.member.append(addr_5)
         firewall.firewall_addrgrps.append(addr_grp_1)
 
-        policy_1 = TT.FirewallPolicy(edit="block GAFA", uuid=C.uuid_gen(),
+        policy_1 = TT.FirewallPolicy(edit="Allow GAFA access",
+                                     uuid=C.uuid_gen(),
                                      srcintf=iface_1, dstintf=iface_2,
                                      srcaddr_group=addr_grp_2,
                                      dstaddr_group=addr_grp_1,
