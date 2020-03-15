@@ -13,21 +13,19 @@ LABEL org.label-schema.schema-version="1.0" \
     org.opencontainers.image.licenses="MIT" \
     org.opencontainers.image.created="@BUILD_DATE@"
 
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV FLASK_APP nof
-ENV FLASK_ENV "development"
-ENV FLASK_DEBUG True
-ENV PYTHONPATH = .
-
 RUN dnf update -y && \
     dnf install -y python3-pip python3-pyyaml python3-flask; \
     dnf clean all
 
-COPY pkg/requirements.txt .
+COPY requirements.txt .
 RUN pip3 install -r requirements.txt
 
-COPY src/nof/ nof/
-WORKDIR .
+COPY src/ app/
+WORKDIR /app
+
+ENV PYTHONDONTWRITEBYTECODE=1 FLASK_APP="nof" \
+    FLASK_ENV="development" FLASK_DEBUG=True \
+    PYTHONPATH=/app/
 
 EXPOSE 5000
-CMD flask run --host=0.0.0.0
+CMD FLASK_APP=nof flask run --host=0.0.0.0
