@@ -37,7 +37,7 @@ class Config():
     def init_app(self, app):
         """Initialize application.
         """
-        keys = ("NOF_UPLOADDIR", "SQLALCHEMY_DATABASE_URI")
+        keys = ("UPLOADED_FILES_DEST", "SQLALCHEMY_DATABASE_URI")
         for key in keys:
             setattr(app, key, getattr(self, key))
 
@@ -47,12 +47,6 @@ class DevelopmentConfig(Config):
     Config for development.
     """
     DEBUG = True
-
-    def init_app(self, app):
-        """Ensure workdir exists.
-        """
-        if not os.path.exists(self.UPLOADED_FILES_DEST):
-            os.makedirs(self.UPLOADED_FILES_DEST)
 
 
 class TestingConfig(DevelopmentConfig):
@@ -68,6 +62,12 @@ class ProductionConfig(Config):
     Config for production.
     """
     TESTING = False
+
+    def init_app(self, app):
+        """Ensure workdir exists.
+        """
+        if not os.path.exists(self.UPLOADED_FILES_DEST):
+            os.makedirs(self.UPLOADED_FILES_DEST)
 
 
 def get_config(name="development"):
