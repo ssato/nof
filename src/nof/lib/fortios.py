@@ -22,6 +22,14 @@ from .utils import ensure_dir_exists
 
 CONFIG_GROUPS = (CONFIG_GROUP_FIREWALL,  # default
                  CONFIG_GROUP_ROUTER) = ("firewall", "router")
+CNF_GRPS = dict(firewall=("vdom", "system interface",
+                          "firewall service category",
+                          "firewall service group",
+                          "firewall service custom",
+                          "firewall addrgrp",
+                          "firewall address",
+                          "firewall policy"),
+                system="system *")
 
 FIREWALL_COLS = (dict(key="name", width="5%"),
                  dict(key="uuid", width="5%", hide=True),
@@ -136,11 +144,56 @@ def make_Node(matched, _type=None):
     return Node(name=name, type=_type, end_re=end_re, children=[])
 
 
-def Node_to_dict(node):
-    """Convert a Node namedtuple object to a dict.
+CNF_NAME = CNF_TYPE = "config"
+EDIT_NAME = EDIT_TYPE = "edit"
+
+
+def _process_vals(vals):
     """
-    return dict(name=node.name, type=node.type,
-                children=node.children)
+    :param vals: None or a single value in a list of a list
+
+    >>> _process_vals(None)
+    None
+    >>> _process_vals([])
+    []
+    >>> _process_vals([0])
+    0
+    >>> _process_vals(["0", "1"])
+    ['1', '2']
+    """
+    if vals is None or not vals:
+        return vals
+
+    if len(vals) == 1:  # single value in a list
+        return vals[0]
+
+    return vals
+
+
+def Node_to_dict(node, verbose=False):
+    """Convert a Node namedtuple object to a dict.
+
+    :param verbose: return verbose dict if True
+    """
+    if verbose:
+        return dict(name=node.name, type=node.type, children=node.children)
+
+    ccnfs = [c for c in node.children if CNF_NAME in c]  # config in children
+    cedits = [e for e in node.children if EDIT_NAME in e]  # edit in children
+
+    # set or unset in children
+    cmaps = dict((x["name"], _process_vals(x.get("values", None)))
+                 for x in node.children if x.get("type") in ("set", "unset"))
+    if ccnfs:
+        cmaps["configs"] = ccnfs
+
+    if cedits:
+        cmaps["edits"] = cedits
+
+    if node.type == EDIT_TYPE:
+        return dict(edit=node.name, **cmaps)
+
+    return dict(config=node.name, **cmaps)
 
 
 def _process_comment(content):
@@ -153,11 +206,12 @@ def _process_comment(content):
     return dict(kv.split('=') for kv in content.split(':'))
 
 
-def parse_show_config_itr(lines):
+def parse_show_config_itr(lines, verbose=False):
     """
     Parse 'config xxxxx xxxx' .. 'end'.
 
     :param lines: An iterator yields each lines in the configuration outputs
+    :param verbose: return verbose result if True
     """
     state = ST_OTHER
     configs = []  # stack holds nested config objects
@@ -198,7 +252,7 @@ def parse_show_config_itr(lines):
             assert configs[-1].type == NT_CONFIG, configs[-1]
             matched = configs[-1].end_re.match(line)
             if matched:
-                config = Node_to_dict(configs.pop())  # pop config
+                config = Node_to_dict(configs.pop(), verbose)
 
                 if not configs:  # It's a top level object.
                     state = ST_OTHER
@@ -220,7 +274,7 @@ def parse_show_config_itr(lines):
             if matched:
                 state = ST_IN_CONFIG
 
-                edit = Node_to_dict(configs.pop())
+                edit = Node_to_dict(configs.pop(), verbose)
                 configs[-1].children.append(edit)
                 continue
 
@@ -238,51 +292,9 @@ def parse_show_config_itr(lines):
                 configs.append(config)  # push config
 
     if comments["comments"]:
-        comments["type"] = comments["name"] = "comment"  # TBD
+        if verbose:
+            comments["type"] = comments["name"] = "comment"  # TBD
         yield comments
-
-
-def _val_or_vals(obj):
-    """
-    :return: An item or a list of items
-    """
-    return obj[0] if len(obj) == 1 else obj
-
-
-def _make_edit_0(edit):
-    """
-    Make a mapping object contains edit configurations.
-
-    :param edit:
-        A mapping object contains edit configurations loaded from parsed
-        configs, e.g. edit configurations of '1' in 'firewall policy'.
-    :return: A mapping object sorted and organized better than `edit`
-    """
-    unsets = [c["name"] for c in edit.get("children", [])
-              if c["type"] == "unset"]
-    sets = [(c["name"], _val_or_vals(c["values"]))
-            for c in edit.get("children", []) if c["type"] == "set"]
-
-    if unsets:
-        return dict(sets + [("unset", unsets)])
-
-    return dict(sets)
-
-
-def _make_config_0(cnf, prefix):
-    """
-    Make a mapping object contains configurations by category.
-
-    :param cnf:
-        A mapping object contains configurations of a category loaded from
-        parsed configs, e.g. configurations of 'firewall policy'
-    :return: A mapping object sorted, modified and organized better than `cnf`
-    """
-    name = re.sub(prefix, '', cnf["name"])
-    configs = dict((e["name"], _make_edit_0(e))
-                   for e in cnf.get("children", []))
-
-    return (name, configs)
 
 
 def make_group_configs(cnfs, group=None):
@@ -293,23 +305,25 @@ def make_group_configs(cnfs, group=None):
     :return: Re-structured mapping object having sub group configurations
     :raises: IOError, OSError, TypeError, AttributeError
     """
-    # pattern ex. "firewall policy"
-    prefix = (group or CONFIG_GROUPS[0]) + ' '
-    fwcs = [x for x in cnfs.get("configs", [])
-            if x["type"] == "config" and x["name"].startswith(prefix)]
+    fwcs = dict()
+    cnf_names = CNF_GRPS.get(group, [])  # (name_0, ..) or glob pattern
 
-    ret = dict(_make_config_0(c, prefix) for c in fwcs)
+    if cnf_names:
+        fwcs = dict((c["config"].lower(), c) for c in cnfs.get("configs", [])
+                    if (c.get("config", '').startswith(cnf_names.replace('*',
+                                                                         ''))
+                        if '*' in cnf_names else c.get("config") in cnf_names))
+    return fwcs
 
-    return ret
 
-
-def parse_show_config(filepath):
+def parse_show_config(filepath, verbose=False):
     """
     Parse 'show full-configuration output and returns a list of parsed configs.
 
     :param filepath:
         a str or :class:`pathlib.Path` object represents file path contains
         'show full-configuration` or any other 'show ...' outputs
+    :param verbose: return verbose result if True
 
     :return:
         A list of configs (mapping objects) or [] (no data or something went
@@ -319,7 +333,7 @@ def parse_show_config(filepath):
     for enc in ("utf-8", "shift-jis"):
         try:
             lines = open(filepath, encoding=enc)
-            return list(parse_show_config_itr(lines))
+            return list(parse_show_config_itr(lines, verbose))
         except UnicodeDecodeError:
             pass  # Try the next encoding...
 
@@ -337,7 +351,7 @@ def group_config_path(filepath, group):
     return "{}/{}{}".format(outbn, group, outext)
 
 
-def parse_show_config_and_dump(inpath, outpath):
+def parse_show_config_and_dump(inpath, outpath, verbose=False):
     """
     Similiar to the above :func:`parse_show_config` but save results as JSON
     file (path: `outpath`).
@@ -346,22 +360,27 @@ def parse_show_config_and_dump(inpath, outpath):
         a str or :class:`pathlib.Path` object represents file path contains
         'show full-configuration` or any other 'show ...' outputs
     :param outpath: (JSON) file path to save parsed results
+    :param verbose: save verbose result if True
 
     :return: A mapping object contains parsed results
     :raises: IOError, OSError
     """
-    configs = parse_show_config(inpath)
+    configs = parse_show_config(inpath, verbose)
     data = dict(configs=configs)
 
     ensure_dir_exists(outpath)
     anyconfig.dump(data, outpath)
 
-    for grp in CONFIG_GROUPS:
+    if verbose:
+        return data
+
+    for grp in CNF_GRPS.keys():
         g_outpath = group_config_path(outpath, grp)
         ensure_dir_exists(g_outpath)
 
         g_cnfs = make_group_configs(data, grp)
-        anyconfig.dump(g_cnfs, g_outpath)
+        if g_cnfs:
+            anyconfig.dump(g_cnfs, g_outpath)
 
     return data
 
