@@ -30,20 +30,6 @@ CNF_GRPS = dict(firewall=("vdom", "system interface",
                 system="system *",
                 user="user *")
 
-FIREWALL_COLS = (dict(key="name", width="5%"),
-                 dict(key="uuid", width="5%", hide=True),
-                 dict(key="srcaddr", width="10%"),
-                 dict(key="srcintf", width="5%"),
-                 dict(key="dstaddr", width="10%"),
-                 dict(key="dstintf", width="5%"),
-                 dict(key="service", width="10%"),
-                 dict(key="status", width="3%"),
-                 dict(key="action", width="3%"),
-                 dict(key="logtraffic", width="3%"),
-                 dict(key="comments", width="5%"),
-                 dict(key="schedule", width="5%"))
-
-
 def make_group_configs(cnfs, group=None):
     """
     :param cnfs: {"configs": [<a mapping object holds configurations>]}
