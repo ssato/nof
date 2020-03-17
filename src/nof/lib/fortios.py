@@ -17,8 +17,6 @@ import anyconfig
 from .utils import ensure_dir_exists
 
 
-CONFIG_GROUPS = (CONFIG_GROUP_FIREWALL,  # default
-                 CONFIG_GROUP_ROUTER) = ("firewall", "router")
 CNF_GRPS = dict(firewall=("vdom", "system interface",
                           "firewall service category",
                           "firewall service group",
@@ -131,7 +129,7 @@ def assert_group(group):
     :param group: Group name of configurations
     :raises: ValueError
     """
-    if group not in CONFIG_GROUPS:
+    if group not in CNF_GRPS:
         raise ValueError("Given {} is not valid group. Try other one from"
                          " {}".format(group, ", ".join(CONFIG_GROUPS)))
     return True
