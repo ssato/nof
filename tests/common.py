@@ -17,6 +17,7 @@ except ImportError:
 
 import flask_testing
 import nof
+import nof.utils
 
 
 def uuid_gen():
@@ -77,6 +78,10 @@ class BluePrintTestCaseWithWorkdir(BluePrintTestCase):
 
     def create_app(self):
         self.workdir = os.environ["NOF_DATA_DIR"] = setup_workdir()
+        udir = nof.utils.uploaddir(self.workdir)
+        if not os.path.exists(udir):
+            os.makedirs(udir)
+
         return super(BluePrintTestCaseWithWorkdir, self).create_app()
 
     def tearDown(self):
