@@ -19,10 +19,13 @@ def _try_match_and_proc(line, reg, proc_fn):
         raise ValueError("Not match! line={}".format(line))
 
 
-def _inp_and_exp_result_files():
+def _result_files(workdir):
     inputs = glob.glob(os.path.join(C.resdir(), "fortios", "*.txt"))
     for inp_path in sorted(inputs):
-        yield (inp_path, inp_path + ".exp.json")
+        exp_path = os.path.join(inp_path + ".exp", "ref.json")
+        out_path = os.path.join(workdir, os.path.basename(inp_path) + ".json")
+        yield (inp_path, out_path, exp_path)
+
 
 
 class TT_10_Simple_Function_TestCases(unittest.TestCase):
@@ -71,10 +74,10 @@ class TT_10_Simple_Function_TestCases(unittest.TestCase):
             self.assertEqual(res, exp)
 
     def test_80_parse_show_config__simple_config_set(self):
-        for inp_path, exp_path in _inp_and_exp_result_files():
+        for inp_path, _out_path, exp_path in _result_files("/tmp"):
             res = TT.parse_show_config(inp_path)
 
-            self.assertTrue(os.path.exists(exp_path))
+            self.assertTrue(os.path.exists(exp_path), exp_path)
             res_exp = TT.anyconfig.load(exp_path)["configs"]
 
             self.assertEqual(len(res), len(res_exp))
@@ -86,15 +89,8 @@ class TT_20_Function_with_IO_TestCases(C.BluePrintTestCaseWithWorkdir):
 
     maxDiff = None
 
-    def _result_files(self):
-        inputs = glob.glob(os.path.join(C.resdir(), "fortios", "*.txt"))
-        for inp_path in sorted(inputs):
-            out_path = os.path.join(self.workdir,
-                                    os.path.basename(inp_path) + ".json")
-            yield (inp_path, out_path, inp_path + ".exp.json")
-
     def test_10_parse_show_config_and_dump__simple_config_set(self):
-        for inp_path, out_path, exp_path in self._result_files():
+        for inp_path, out_path, exp_path in _result_files(self.workdir):
             res = TT.parse_show_config_and_dump(inp_path, out_path)
 
             self.assertTrue(os.path.exists(exp_path))
