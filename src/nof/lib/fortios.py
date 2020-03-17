@@ -346,9 +346,7 @@ def group_config_path(filepath, group):
 
     :param filepath: (JSON) file path contains parsed results
     """
-    (outbn, outext) = os.path.splitext(filepath)
-
-    return "{}/{}{}".format(outbn, group, outext)
+    return os.path.join(os.path.dirname(filepath), group + ".json")
 
 
 def parse_show_config_and_dump(inpath, outpath, verbose=False):
