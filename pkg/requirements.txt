@@ -1,5 +1,6 @@
 setuptools
 anyconfig
+click
 pyyaml
 networkx
 Flask
