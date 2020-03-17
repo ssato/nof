@@ -26,7 +26,11 @@ CNF_GRPS = dict(firewall=("vdom", "system interface",
                           "firewall addrgrp",
                           "firewall address",
                           "firewall policy"),
-                system="system *")
+                log="log *",
+                report="report *",
+                router="router *",
+                system="system *",
+                user="user *")
 
 FIREWALL_COLS = (dict(key="name", width="5%"),
                  dict(key="uuid", width="5%", hide=True),
