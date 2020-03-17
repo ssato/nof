@@ -66,6 +66,8 @@ def prune_workdir(workdir):
 class BluePrintTestCase(flask_testing.TestCase):
     """Base class for app test cases.
     """
+    maxDiff = None
+
     def create_app(self):
         return nof.create_app("testing")  # debug, disable CSRF, etc.
 
