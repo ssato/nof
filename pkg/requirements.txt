@@ -1,5 +1,6 @@
 setuptools
 anyconfig
+anyconfig-fortios-backend
 click
 pyyaml
 networkx
