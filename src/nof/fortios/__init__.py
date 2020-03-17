@@ -5,6 +5,7 @@
 # flake8: noqa: F401
 """app main.
 """
+from .cli import CLI
 from .views import APP
 from .v1api import API
 from .globals import PREFIX, API_PREFIX

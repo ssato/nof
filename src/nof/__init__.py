@@ -32,6 +32,9 @@ def create_app(cnf_name="development"):
     app.register_blueprint(main.APP)
     app.register_blueprint(main.API)
 
+    # >= 1.1:
+    # app.register_blueprint(fortios.CLI)
+    app.cli.add_command(fortios.CLI)
     app.register_blueprint(fortios.APP)
     app.register_blueprint(fortios.API)
 
