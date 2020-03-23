@@ -74,6 +74,9 @@ def get_config(name="development"):
     """
     :return: An instance of *Config
     """
+    if name in ("development", "testing"):
+        os.environ["NOF_DATA_DIR"] = "/tmp/nof/"
+
     cnfs = dict(development=DevelopmentConfig,
                 testing=TestingConfig,
                 production=ProductionConfig,
