@@ -7,7 +7,6 @@
 import flask
 
 from ..main import utils
-from ..lib import fortios
 from .globals import CTYPE, PREFIX
 
 
