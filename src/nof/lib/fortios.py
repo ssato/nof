@@ -117,7 +117,7 @@ def assert_group(group):
     """
     if group not in CNF_GRPS:
         raise ValueError("Given {} is not valid group. Try other one from"
-                         " {}".format(group, ", ".join(CONFIG_GROUPS)))
+                         " {}".format(group, ", ".join(CNF_GRPS.keys())))
     return True
 
 
