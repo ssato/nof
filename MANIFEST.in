@@ -5,5 +5,6 @@ include README.rst
 include tox.ini
 include pkg/*.*
 include setup.*
+include requirements.txt
 recursive-include src *.py *.css *.js *.html
 recursive-include tests *.py *.yml *.txt *.json
