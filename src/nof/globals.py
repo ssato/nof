@@ -10,6 +10,7 @@ PACKAGE = "nof"
 AUTHOR = "Satoru SATOH <ssato@redhat.com>"
 VERSION = "0.1.0"
 
+NOF_DATA_DIR = "/var/lib/nof"
 
 NODE_TYPES = (NODE_ANY, NODE_NET, NODE_ROUTER, NODE_FIREWALL, NODE_SWITCH,
               NODE_HOST) \

@@ -13,6 +13,19 @@ from .globals import CTYPE, PREFIX
 
 APP = flask.Blueprint("fortios_app", __name__, url_prefix=PREFIX)
 
+FIREWALL_COLS = (dict(key="name", width="5%"),
+                 dict(key="uuid", width="5%", hide=True),
+                 dict(key="srcaddr", width="10%"),
+                 dict(key="srcintf", width="5%"),
+                 dict(key="dstaddr", width="10%"),
+                 dict(key="dstintf", width="5%"),
+                 dict(key="service", width="10%"),
+                 dict(key="status", width="3%"),
+                 dict(key="action", width="3%"),
+                 dict(key="logtraffic", width="3%"),
+                 dict(key="comments", width="5%"),
+                 dict(key="schedule", width="5%"))
+
 
 @APP.route("/firewall", methods=["GET"])
 def firewall_index():
@@ -41,6 +54,6 @@ def firewall_policies(filename):
     return flask.render_template("fortios_firewall.html",
                                  summary="Firewall Policies",
                                  policies_url=url,
-                                 policies_cols=fortios.FIREWALL_COLS)
+                                 policies_cols=FIREWALL_COLS)
 
 # vim:sw=4:ts=4:et:

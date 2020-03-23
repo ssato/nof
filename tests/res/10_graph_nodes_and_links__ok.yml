@@ -1,9 +1,9 @@
 ---
 nodes:
-  - id: 1
-    name: net_A
+  - id: 1  # Node ID: 1..
+    name: net_A  # Node Name
     type: network  # net[work_segment] | firewall | ...
-    addr: 10.0.1.0/24
+    addr: 10.0.1.0/24  # IP Address
 
   - id: 2
     name: FW_A
@@ -55,6 +55,7 @@ nodes:
     type: host
     addr: 192.168.1.10
 
+# Relations map between each nodes; A pair of node IDs connect each other.
 edges:
   - [1, 2]
   - [2, 7]

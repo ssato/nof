@@ -16,9 +16,6 @@ def _show_dict(dict):
 
 class TT_10_path_functions_TestCases(C.BluePrintTestCaseWithWorkdir):
 
-    def test_10_uploaddir(self):
-        self.assertEqual(TT.uploaddir(), self.workdir)
-
     def test_20_upload_filepath(self):
         filename = "foo.yml"
         self.assertEqual(TT.upload_filepath(filename),

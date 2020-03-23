@@ -18,10 +18,11 @@ from ..globals import NODE_ANY, CONFIG_TYPES
 
 def uploaddir():
     """
+    .. seealso:: nof.utils.uploaddir
+
     :return: absolute path to the upload dir
     """
-    return os.getenv("NOF_UPLOADDIR",
-                     flask.current_app.config["UPLOADED_FILES_DEST"])
+    return flask.current_app.config["UPLOADED_FILES_DEST"]
 
 
 def list_filenames(pattern=None):

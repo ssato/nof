@@ -21,7 +21,7 @@ def get_group_config_file(group, filename):
     """
     Get group configuration file
 
-    :param group: Configuration group name, see ..lib.fortios.CONFIG_GROUPS
+    :param group: Configuration group name, see ..lib.fortios.CNF_GRPS
     :param filename: Original configuration filename uploaded
     """
     try:

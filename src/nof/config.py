@@ -7,8 +7,11 @@
 """
 from __future__ import absolute_import
 
+import os.path
 import os
 import uuid
+
+from .utils import uploaddir, database_url
 
 
 class Config():
@@ -17,20 +20,26 @@ class Config():
     SECRET_KEY = os.environ.get('SECRET_KEY') or str(uuid.uuid4())
     WTF_CSRF_ENABLED = True
 
-    # .. seealso:: https://pythonhosted.org/Flask-Uploads/
-    _datadir = "/var/lib/nof/"
-    UPLOADED_FILES_DEST = os.path.join(_datadir, "uploads")
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # Limit the size of file to upload: 500 [MB]
     MAX_CONTENT_LENGTH = 500 * 1024 * 1024
 
-    @staticmethod
-    def init_app(app):
+    def __init__(self, datadir=None):
+        """Initialize defaults
+        """
+        # pylint: disable=invalid-name
+        # .. seealso:: https://pythonhosted.org/Flask-Uploads/
+        self.UPLOADED_FILES_DEST = uploaddir(datadir)
+        self.SQLALCHEMY_DATABASE_URI = database_url(datadir)
+        # pylint: enable=invalid-name
+
+    def init_app(self, app):
         """Initialize application.
         """
-        key = "NOF_UPLOADDIR"
-        if key in os.environ:
-            app.UPLOADED_FILES_DEST = os.environ[key]
+        keys = ("UPLOADED_FILES_DEST", "SQLALCHEMY_DATABASE_URI")
+        for key in keys:
+            setattr(app, key, getattr(self, key))
 
 
 class DevelopmentConfig(Config):
@@ -38,13 +47,9 @@ class DevelopmentConfig(Config):
     Config for development.
     """
     DEBUG = True
-    UPLOADED_FILES_DEST = "/tmp/nof_uploads"
-
-    if not os.path.exists(UPLOADED_FILES_DEST):
-        os.mkdir(UPLOADED_FILES_DEST)
 
 
-class TestingConfig(Config):
+class TestingConfig(DevelopmentConfig):
     """
     Config for testing.
     """
@@ -56,15 +61,24 @@ class ProductionConfig(Config):
     """
     Config for production.
     """
+    TESTING = False
 
-    @classmethod
-    def init_app(cls, app):
-        Config.init_app(app)
+    def init_app(self, app):
+        """Ensure workdir exists.
+        """
+        if not os.path.exists(self.UPLOADED_FILES_DEST):
+            os.makedirs(self.UPLOADED_FILES_DEST)
 
 
-CNF = dict(development=DevelopmentConfig,
-           testing=TestingConfig,
-           production=ProductionConfig,
-           default=DevelopmentConfig)
+def get_config(name="development"):
+    """
+    :return: An instance of *Config
+    """
+    cnfs = dict(development=DevelopmentConfig,
+                testing=TestingConfig,
+                production=ProductionConfig,
+                default=DevelopmentConfig)
+
+    return cnfs[name]()
 
 # vim:sw=4:ts=4:et:
