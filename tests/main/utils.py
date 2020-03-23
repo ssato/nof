@@ -10,8 +10,8 @@ import nof.main.utils as TT
 from .. import common as C
 
 
-def _show_dict(dict):
-    return ", ".join("'{!s}': '{!s}'".format(*kv) for kv in dict.items())
+def _show_dict(dic):
+    return ", ".join("'{!s}': '{!s}'".format(*kv) for kv in dic.items())
 
 
 class TT_10_path_functions_TestCases(C.BluePrintTestCaseWithWorkdir):
