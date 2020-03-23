@@ -2,7 +2,8 @@
 # Copyright (C) 2020 Satoru SATOH <ssato@redhat.com>.
 # SPDX-License-Identifier: MIT
 #
-# pylint: disable=too-few-public-methods
+# .. note:: pylint, etc. cannot find SQLAlchemy's members.
+# pylint: disable=too-few-public-methods,no-member
 """Models
 
 ref. https://flask-sqlalchemy.palletsprojects.com/en/2.x/models/
