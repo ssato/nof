@@ -18,8 +18,6 @@ import networkx
 import networkx.readwrite.json_graph
 
 
-NOF_DATA_DIR = "/var/lib/nof"
-
 NODE_TYPES = (NODE_ANY, NODE_NET, NODE_ROUTER, NODE_FIREWALL, NODE_SWITCH,
               NODE_HOST) \
            = ("any", "network", "firewall", "router", "switch", "host")
