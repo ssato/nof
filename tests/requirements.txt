@@ -7,5 +7,6 @@ nose
 # module 'pycodestyle' has no attribute 'break_around_binary_operator, etc.
 pycodestyle<2.4.0
 pylint
-pylint_flask_sqlalchemy
+pylint-flask
+pylint-flask-sqlalchemy
 Flask-Testing
