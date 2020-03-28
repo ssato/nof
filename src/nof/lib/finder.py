@@ -17,7 +17,12 @@ import anyconfig
 import networkx
 import networkx.readwrite.json_graph
 
-from ..globals import NODE_TYPES, NODE_ANY, NODE_NET
+
+NOF_DATA_DIR = "/var/lib/nof"
+
+NODE_TYPES = (NODE_ANY, NODE_NET, NODE_ROUTER, NODE_FIREWALL, NODE_SWITCH,
+              NODE_HOST) \
+           = ("any", "network", "firewall", "router", "switch", "host")
 
 
 def is_net_node(node):

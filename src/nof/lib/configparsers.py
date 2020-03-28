@@ -9,11 +9,11 @@ r"""Parse collection
    - initial checkin
 """
 from __future__ import absolute_import
-
 from . import fortios
 
 
-# .. seealso:: ..globals.CONFIG_TYPES
+CONFIG_TYPES = (CONFIG_FORTIOS, ) \
+             = ("fortios", )
 PARSERS = dict(fortios=fortios.parse_show_config_and_dump)
 
 # vim:sw=4:ts=4:et:
