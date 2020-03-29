@@ -30,6 +30,7 @@ CNF_GRPS = dict(firewall=("vdom", "system interface",
                 system="system *",
                 user="user *")
 
+
 def make_group_configs(cnfs, group=None):
     """
     :param cnfs: {"configs": [<a mapping object holds configurations>]}
