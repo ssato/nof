@@ -91,9 +91,9 @@ def find_networks_by_addr(filename, ip):
     :param ip: IP address
     """
     graph = _load_graph_by_filename(filename)
-    networks = finder.find_networks_by_addr(graph, ip)
+    res = finder.find_networks_or_ipsets_by_addr(graph, ip)
 
-    return flask.jsonify(networks)
+    return flask.jsonify(res)
 
 
 @API.route("/node_link_paths/<path:filename>/<string:src_ip>/<string:dst_ip>",

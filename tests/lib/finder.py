@@ -79,48 +79,50 @@ class TT_30_find_network_nodes_by_addr_TestCases(unittest.TestCase):
     ng_ips = NG_IPS
 
     nets = [dict(type=TT.NODE_NET,
-                 addr=TT.ipaddress.ip_network(ip)) for ip
+                 addrs=[TT.ipaddress.ip_network(ip)]) for ip
             in ("10.0.1.0/24", "10.0.0.0/8", "192.168.1.0/24")]
 
     nodes = nets + [dict(type=None), dict(type=True),
-                    dict(type="host", addr="10.0.1.1")]
+                    dict(type="host", addrs=["10.0.1.1"])]
 
     def test_10_find_network_nodes_by_addr__not_found(self):
         for ip in self.ok_ips + self.ng_ips:
-            res = TT.find_network_nodes_by_addr([], ip)
+            res = TT.find_network_or_ipset_nodes_by_addr([], ip)
             self.assertFalse(res)
             self.assertEqual(res, [])
 
         for ip in self.ng_ips:
-            res = TT.find_network_nodes_by_addr(self.nodes, ip)
+            res = TT.find_network_or_ipset_nodes_by_addr(self.nodes, ip)
             self.assertFalse(res)
             self.assertEqual(res, [])
 
     def test_12_find_network_nodes_by_addr__found_1(self):
-        res = TT.find_network_nodes_by_addr(self.nodes, self.ok_ips[-1])
-
+        res = TT.find_network_or_ipset_nodes_by_addr(self.nodes,
+                                                     self.ok_ips[-1])
         self.assertNotEqual(res, [])
-        self.assertTrue(isinstance(res[0]["addr"], TT.ipaddress.IPv4Network))
+        self.assertTrue(isinstance(res[0]["addrs"][0],
+                        TT.ipaddress.IPv4Network))
         self.assertTrue(TT.is_net_node(res[0]))
         self.assertEqual(res[0], self.nets[-1])
 
     def test_14_find_network_nodes_by_addr__found_some(self):
-        res = TT.find_network_nodes_by_addr(self.nodes, self.ok_ips[0])
-
+        res = TT.find_network_or_ipset_nodes_by_addr(self.nodes,
+                                                     self.ok_ips[0])
         self.assertNotEqual(res, [])
         self.assertEqual(res, self.nets[:-1])
 
     def test_20_find_network_nodes_by_addr__found(self):
         for ip in self.ng_ips:
-            res = TT.find_network_node_by_addr(self.nodes, ip)
+            res = TT.find_network_or_ipset_node_by_addr(self.nodes, ip)
             self.assertTrue(res is None)
 
     def test_22_find_network_nodes_by_addr__found(self):
         for ip, net in zip(self.ok_ips, self.nets):
-            res = TT.find_network_node_by_addr(self.nodes, ip)
+            res = TT.find_network_or_ipset_node_by_addr(self.nodes, ip)
 
             self.assertTrue(res is not None)
-            self.assertTrue(isinstance(res["addr"], TT.ipaddress.IPv4Network))
+            self.assertTrue(isinstance(res["addrs"][0],
+                            TT.ipaddress.IPv4Network))
             self.assertEqual(res, net)
 
 
@@ -130,35 +132,36 @@ class With_Test_Resource_TestCase(unittest.TestCase):
     graph = TT.load(filepath)
 
 
-class TT_40_find_networks_by_addr_TestCases(With_Test_Resource_TestCase):
+class TT_40_find_networks_addr_TestCases(With_Test_Resource_TestCase):
 
-    def test_10_find_networks_by_addr__not_found(self):
+    def test_10_find_networks_or_ipsets_by_addr__not_found(self):
         for ip in NG_IPS:
-            res = TT.find_networks_by_addr(self.graph, ip)
+            res = TT.find_networks_or_ipsets_by_addr(self.graph, ip)
             self.assertEqual(res, [])
 
-    def test_20_find_networks_by_addr__found_1(self):
+    def test_20_find_networks_or_ipsets_by_addr__found_1(self):
         # .. seealso:: tests/res/10_graph_nodes_and_links__ok.yml
         ip = "192.168.1.2"
-        res = TT.find_networks_by_addr(self.graph, ip)
+        res = TT.find_networks_or_ipsets_by_addr(self.graph, ip)
 
         self.assertNotEqual(res, [])
         self.assertEqual(len(res), 1)
 
         net = res[0]
         self.assertEqual(net["type"], TT.NODE_NET)
-        self.assertEqual(net["addr"], "192.168.1.0/24")
+        self.assertTrue(net["addrs"])
+        self.assertEqual(net["addrs"][0], "192.168.1.0/24")
 
-    def test_30_find_networks_by_addr__found_some(self):
+    def test_30_find_networks_or_ipsets_by_addr__found_some(self):
         # .. seealso:: tests/res/10_graph_nodes_and_links__ok.yml
         ip = "10.0.1.254"
         nets = ["10.0.1.0/24", "10.0.0.0/8"]
-        res = TT.find_networks_by_addr(self.graph, ip)
+        res = TT.find_networks_or_ipsets_by_addr(self.graph, ip)
 
         self.assertNotEqual(res, [])
         self.assertTrue(len(res) > 1)
 
-        res_nets = [n["addr"] for n in res]
+        res_nets = list(itertools.chain(*[n["addrs"] for n in res]))
         self.assertTrue(all(n in res_nets for n in nets))
         self.assertEqual(res_nets[0], nets[0], res_nets)
         self.assertEqual(res_nets, nets, res_nets)
@@ -189,12 +192,12 @@ class TT_50_find_paths_TestCases(With_Test_Resource_TestCase):
         self.assertTrue(len(res), 1)
 
         path = res[0]
-        self.assertEqual(path[0]["addr"], "192.168.1.0/24", path)
+        self.assertEqual(path[0]["addrs"][0], "192.168.1.0/24", path)
 
         # set node_type matches result's node type
         res = TT.find_paths(self.graph, src, dst, node_type=G.NODE_NET)
         path = res[0]
-        self.assertEqual(path[0]["addr"], "192.168.1.0/24", path)
+        self.assertEqual(path[0]["addrs"][0], "192.168.1.0/24", path)
 
         # set node_type does not match result's node type
         res = TT.find_paths(self.graph, src, dst, node_type=G.NODE_HOST)
@@ -213,7 +216,7 @@ class TT_50_find_paths_TestCases(With_Test_Resource_TestCase):
 
         exp_nets = ("10.0.1.0/24", "192.168.1.0/24")
         exp_hosts = ("10.0.1.254", "10.0.0.1")
-        paddrs = [x["addr"] for x in path]
+        paddrs = list(itertools.chain(*[x["addrs"] for x in path]))
 
         self.assertTrue(all(n in paddrs for n in exp_nets), paddrs)
         self.assertTrue(all(n in paddrs for n in exp_hosts), paddrs)

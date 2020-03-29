@@ -80,8 +80,9 @@ class TT_20_util_functions_TestCases(C.BluePrintTestCaseWithWorkdir):
         n_1 = "10.0.1.0/24"
         n_2 = "192.168.1.0/24"
 
-        self.assertEqual(n_1, res_1[0][0]["addr"], repr(res_1))
-        self.assertEqual(n_2, res_2[0][-1]["addr"], repr(res_2[0][-1]["addr"]))
+        self.assertEqual(n_1, res_1[0][0]["addrs"][0], repr(res_1))
+        self.assertEqual(n_2, res_2[0][-1]["addrs"][0],
+                         repr(res_2[0][-1]["addrs"][0]))
 
     def test_30_list_filenames(self):
         for filepath in C.ok_yml_files():

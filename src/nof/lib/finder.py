@@ -10,17 +10,25 @@ r"""Network objects finding APIs.
 """
 from __future__ import absolute_import
 
+import functools
 import ipaddress
-import operator
 
 import anyconfig
 import networkx
 import networkx.readwrite.json_graph
 
 
-NODE_TYPES = (NODE_ANY, NODE_NET, NODE_ROUTER, NODE_FIREWALL, NODE_SWITCH,
-              NODE_HOST) \
-           = ("any", "network", "firewall", "router", "switch", "host")
+# Network node is an object have some attributes.
+# - id: int, Unique node ID
+# - type: str, see the definition of NODE_TYPES
+# - addr_type: net or ipset
+# - addrs: A list of str represents any IP address or network
+# - description: str, some descriptions about the node (option)
+# - notes: str, some notes about the node (option)
+NODE_TYPES = (NODE_ANY, NODE_NET, NODE_IPSET, NODE_HOST,
+              NODE_ROUTER, NODE_SWITCH, NODE_FIREWALL) \
+           = ("any", "network", "ipset", "host",
+              "router", "switch", "firewall")
 
 
 def is_net_node(node):
@@ -30,49 +38,71 @@ def is_net_node(node):
     return node.get("type", None) == NODE_NET
 
 
-def _to_ip_or_net_node_itr(node):
+def _to_net_node_itr(node):
     """
-    :param node: A dict should have 'addr' key and any IP address value
-    :yield: (key, <ip_or_net_address_object> or original val)
+    :param node:
+        A mapping object represents a network node should have 'addrs' key and
+        any IP address value.
+
+    :yield: (key, [<ip_or_net_address_object>] or original val)
     """
     for key, val in node.items():
-        if key == "addr":
+        if key == "addrs":
             if is_net_node(node):
-                yield (key, ipaddress.ip_network(val))
+                yield (key, [ipaddress.ip_network(i) for i in val])
             else:
-                yield (key, ipaddress.ip_address(val))
+                yield (key, [ipaddress.ip_address(i) for i in val])
         else:
             yield (key, val)
 
 
-def to_ip_or_net_nodes(nodes):
+def _to_net_node_dicts_itr(nodes):
     """
     :param nodes:
-        A list of dicts should have 'addr' key and represents some network
-        objects like network, host, switch, router and firewall
-    :return: [{'addr': <ip_or_net_address_object>, ...}]
+        A list of mapping objects should have 'addrs' key and represents some
+        network objects like network, host, switch, router and firewall
+
+    :yield: A mapping object rerepsesnts that network node
     """
-    return [dict(_to_ip_or_net_node_itr(n)) for n in nodes]
+    for idx, node in enumerate(nodes):
+        ndic = dict(_to_net_node_itr(node))
+
+        if "id" not in ndic:
+            ndic["id"] = idx
+
+        yield ndic
+
+
+def to_net_nodes(nodes):
+    """
+    :param nodes:
+        A list of mapping objects should have 'addrs' key and represents some
+        network objects like network, host, switch, router and firewall
+    :return: [{'addrs': [<ip_or_net_address_object>], ...}]
+    """
+    return list(_to_net_node_dicts_itr(nodes))
 
 
 def _to_ext_native_node_dicts_itr(nodes):
     """
-    :param nodes: [{'addr': <ip_or_net_address_object>, ...}]
+    :param nodes: [{'addrs': <ip_or_net_address_object>, ...}]
     :yield: <a_node_dict_only_having_native_values>
     """
     for node in nodes:
-        node["addr"] = str(node["addr"])
-        node["type_id"] = NODE_TYPES.index(node["type"])
-        node["class"] = "node {0[type]}".format(node)
-        node["label"] = "{0[name]}: {0[addr]}".format(node)
+        ndic = dict(**node)
 
-        yield node
+        ndic["addrs"] = [str(i) for i in node["addrs"]]
+        ndic["type_id"] = NODE_TYPES.index(node["type"])
+        ndic["class"] = "node {0[type]}".format(node)
+        ndic["label"] = "{0[name]} ({0[type]})".format(node)
+
+        yield ndic
 
 
 def to_ext_native_dicts(nodes):
     """
-    :param nodes: [{'addr': <ip_or_net_address_object>, ...}]
-    :return: [{'addr': ip_addr_string, ...}]
+    :param nodes: [{'addrs': <ip_or_net_address_object>, ...}]
+    :return: [{'addrs': [ip_addr_string], ...}]
     """
     return list(_to_ext_native_node_dicts_itr(nodes))
 
@@ -80,7 +110,7 @@ def to_ext_native_dicts(nodes):
 def list_nodes_from_graph(graph):
     """
     :param graph: A networkx.Graph object
-    :return: [{'addr': <ip_or_net_address_object>, ...}]
+    :return: [{'addrs': [<ip_or_net_address_object>], ...}]
     """
     return [graph.nodes[idx] for idx in graph.nodes]
 
@@ -94,7 +124,7 @@ def load(graph_filepath, **ac_args):
     :return: An instance of networkx.Graph
     """
     data = anyconfig.load(graph_filepath, **ac_args)
-    nodes = to_ip_or_net_nodes(data["nodes"])
+    nodes = to_net_nodes(data["nodes"])
     edges = data["edges"]
 
     graph = networkx.Graph()
@@ -127,9 +157,9 @@ def save_as_node_link(graph, outpath, **json_dump_opts):
     anyconfig.dump(json_data, outpath, ac_parser="json", **json_dump_opts)
 
 
-def _find_network_nodes_by_addr_itr(nodes, addr):
+def _find_network_or_ipset_nodes_by_addr_itr(nodes, addr):
     """
-    :param nodes: {'addr': <ip_or_net_address_object>, 'type': ..., ...}
+    :param nodes: {'addrs': [<ip_or_net_address_object>], 'type': ..., ...}
     :param addr:
         An instance of :class:`ipaddress.IPv4Address` or
         :class:`ipaddress.IPv6Address`, or str represents an ip address
@@ -143,21 +173,54 @@ def _find_network_nodes_by_addr_itr(nodes, addr):
         addr = ipaddress.ip_address(addr)
 
     for node in nodes:
-        if not is_net_node(node):
-            continue
+        ntype = node["type"]
 
-        net = node["addr"]
-        # FIXME
-        # assert isinstance(net, net_types), (
-        #    "node: {!r}, node['addr']: {!r}".format(node, net))
-        if not isinstance(net, net_types):
-            net = ipaddress.ip_network(net)
+        if ntype == NODE_NET:
+            for net in node["addrs"]:
+                if not isinstance(net, net_types):
+                    net = ipaddress.ip_network(net)
 
-        if addr in net:
-            yield node
+                if addr in net:
+                    yield node
+
+        elif ntype == NODE_IPSET:
+            for ip in node["addrs"]:
+                if not isinstance(net, addr_types):
+                    ip = ipaddress.ip_address(ip)
+
+                if ip == addr:
+                    yield node
 
 
-def find_network_nodes_by_addr(nodes, addr):
+def cmp_network_or_ipset_nodes(lhs, rhs):
+    """
+    rules:
+      - NODE_IPSET >> NODE_NET
+      - NODE_IPSET: Smaller number of IPs is "bigger"
+      - NODE_NET: Smaller segment is "bigger", e.g. 192.168.1.0/24 >>
+        192.168.0.0/16
+
+    :param lhs: {'addr': <ip_or_net_address_object>, 'type': ..., ...}
+    :param rhs: likewise
+    """
+    (lhs_t, rhs_t) = (lhs["type"], rhs["type"])
+
+    if lhs_t == rhs_t:
+        if lhs["addrs"] == rhs["addrs"]:
+            return 0
+
+        if lhs_t == NODE_IPSET:
+            # Less IPs is "bigger".
+            return len(rhs["addrs"]) - len(lhs["addrs"])
+
+        # e.g. IPv4Network("192.168.0.0/16") < IPv4Network("192.168.1.0/24")
+        return -1 if lhs["addrs"][0] < rhs["addrs"][0] else 1
+
+    # NODE_NET < NODE_IPSET
+    return -1 if lhs_t == NODE_NET else 1
+
+
+def find_network_or_ipset_nodes_by_addr(nodes, addr):
     """
     :param nodes: {'addr': <ip_or_net_address_object>, 'type': ..., ...}
     :param addr:
@@ -169,12 +232,12 @@ def find_network_nodes_by_addr(nodes, addr):
 
     .. note:: 10.0.0.0/8 < 10.1.1.0/24 in ipaddress
     """
-    return sorted(_find_network_nodes_by_addr_itr(nodes, addr),
-                  key=operator.itemgetter("addr"),
+    return sorted(_find_network_or_ipset_nodes_by_addr_itr(nodes, addr),
+                  key=functools.cmp_to_key(cmp_network_or_ipset_nodes),
                   reverse=True)
 
 
-def find_network_node_by_addr(nodes, addr):
+def find_network_or_ipset_node_by_addr(nodes, addr):
     """
     :param nodes: a mapping object has key, addr
     :param addr: ipaddress.ip_address object or a string represents IP address
@@ -182,11 +245,11 @@ def find_network_node_by_addr(nodes, addr):
 
     .. seealso:: `find_network_nodes_by_addr`
     """
-    nets = find_network_nodes_by_addr(nodes, addr)
+    nets = find_network_or_ipset_nodes_by_addr(nodes, addr)
     return nets[0] if nets else None
 
 
-def find_networks_by_addr(graph, ip):
+def find_networks_or_ipsets_by_addr(graph, ip):
     """
     :param graph: networkx.Graph object to find paths from
     :param ip: ipaddress.ip_address object or a string represents IP address
@@ -195,11 +258,11 @@ def find_networks_by_addr(graph, ip):
     :raises: ValueError if given ip is not an IP address string
     """
     nodes = list_nodes_from_graph(graph)
-    nets = find_network_nodes_by_addr(nodes, ip)
+    nets = find_network_or_ipset_nodes_by_addr(nodes, ip)
     return to_ext_native_dicts(nets)
 
 
-def find_network_by_addr(graph, ip):
+def find_network_or_ipset_by_addr(graph, ip):
     """
     :param graph: networkx.Graph object to find paths from
     :param ip: ipaddress.ip_address object or a string represents IP address
@@ -207,7 +270,7 @@ def find_network_by_addr(graph, ip):
     :return: A smallest network node should contain the given `ip` or None
     :raises: ValueError if given ip is not an IP address string
     """
-    nets = find_networks_by_addr(graph, ip)
+    nets = find_networks_or_ipsets_by_addr(graph, ip)
     if nets:
         return nets[0]
 
@@ -233,15 +296,13 @@ def find_paths(graph, src, dst, node_type=False, **nx_opts):
     src_ip = ipaddress.ip_address(src)
     dst_ip = ipaddress.ip_address(dst)
 
-    src_net = find_network_node_by_addr(nodes, src_ip)
-    dst_net = find_network_node_by_addr(nodes, dst_ip)
-
-    if not node_type:
-        node_type = NODE_ANY
+    src_net = find_network_or_ipset_node_by_addr(nodes, src_ip)
+    dst_net = find_network_or_ipset_node_by_addr(nodes, dst_ip)
 
     if src_net and dst_net:
         if src_net == dst_net:
-            if node_type in (NODE_ANY, NODE_NET):
+            if not node_type or (node_type and node_type != NODE_ANY and
+                                 src_net["type"] == node_type):
                 return [to_ext_native_dicts([src_net])]
 
             return []
@@ -251,7 +312,7 @@ def find_paths(graph, src, dst, node_type=False, **nx_opts):
         res = [[src_net] + [n for n in nodes if n["id"] in ns] + [dst_net]
                for ns in nss]
 
-        if node_type != NODE_ANY:
+        if node_type and node_type != NODE_ANY:
             res = [[n for n in ns if n["type"] == node_type] for ns in res]
 
         return [to_ext_native_dicts(ns) for ns in res]

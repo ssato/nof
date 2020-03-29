@@ -112,8 +112,8 @@ class V1_API_20_Network_TestCase(C.BluePrintTestCaseWithWorkdir):
         self.assertTrue(resp.data)
         data = anyconfig.loads(resp.data, ac_parser="json")
 
-        self.assertEqual(data[0]["addr"], "10.0.1.0/24", data[0])
-        self.assertEqual(data[1]["addr"], "10.0.0.0/8", data[1])
+        self.assertEqual(data[0]["addrs"][0], "10.0.1.0/24", data[0])
+        self.assertEqual(data[1]["addrs"][0], "10.0.0.0/8", data[1])
 
 
 class V1_API_30_Paths_TestCase(C.BluePrintTestCaseWithWorkdir):
@@ -169,7 +169,7 @@ class V1_API_30_Paths_TestCase(C.BluePrintTestCaseWithWorkdir):
 
             n_1 = "10.0.1.0/24"
             n_2 = "192.168.1.0/24"
-            addrs = set(x["addr"] for x in res)
+            addrs = set(x["addrs"][0] for x in res)
 
             self.assertTrue(n_1 in addrs, res)
             self.assertTrue(n_2 in addrs, res)

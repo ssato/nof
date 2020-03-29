@@ -13,7 +13,7 @@ import flask
 import werkzeug.utils
 
 from ..lib import finder, configparsers, utils
-from ..globals import NODE_ANY, CONFIG_TYPES
+from ..globals import CONFIG_TYPES
 
 
 def uploaddir():
@@ -101,7 +101,7 @@ def _load_graph_by_filename(filename):
     return finder.load(filepath, ac_parser="yaml")
 
 
-def find_networks_from_graph(filename, ip):
+def find_networks_or_ipsets_from_graph(filename, ip):
     """
     :param filename: Original YAML file name
     :param ip: A string represents an IP address
@@ -110,7 +110,7 @@ def find_networks_from_graph(filename, ip):
     :raises: ValueError if given `ip` is not an IP address string
     """
     graph = _load_graph_by_filename(filename)
-    networks = finder.find_networks_by_addr(graph, ip)
+    networks = finder.find_networks_or_ipsets_by_addr(graph, ip)
 
     return networks
 
@@ -124,11 +124,7 @@ def find_paths_from_graph(filename, src_ip, dst_ip, node_type=None):
     :return: A list of lists of nodes in the found paths
     :raises: ValueError if given src and/or dst is not an IP address string
     """
-    if node_type is None:
-        node_type = NODE_ANY
-
     graph = _load_graph_by_filename(filename)
-
     return finder.find_paths(graph, src_ip, dst_ip, node_type=node_type)
 
 

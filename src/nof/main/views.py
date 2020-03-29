@@ -15,8 +15,8 @@ from .forms import (
 )
 from .utils import (
     upload_filepath, generate_node_link_data_from_graph_data, list_filenames,
-    find_networks_from_graph, find_paths_from_graph, parse_config_and_save,
-    utils, is_valid_config_type
+    find_networks_or_ipsets_from_graph, find_paths_from_graph,
+    parse_config_and_save, utils, is_valid_config_type
 )
 from ..globals import NODE_ANY, CONFIG_TYPES
 
@@ -70,14 +70,15 @@ def network_finder(filename):
     form = NetworkFinderForm(flask.request.form)
 
     nlink_url = flask.url_for("api.get_node_link", filename=filename)
-    networks = []
+    nets_or_ipsets = []
 
     if form.validate_on_submit():
         ip = form.ip.data
-        networks = find_networks_from_graph(filename, ip)
+        nets_or_ipsets = find_networks_or_ipsets_from_graph(filename, ip)
 
     return flask.render_template("finder_network.html", form=form,
-                                 filename=filename, networks=networks,
+                                 filename=filename,
+                                 nets_or_ipsets=nets_or_ipsets,
                                  node_link_url=nlink_url,
                                  summary=SUMMARIES["finder"])
 
