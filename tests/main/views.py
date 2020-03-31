@@ -25,10 +25,7 @@ class Views_TestCase(C.BluePrintTestCaseWithWorkdir):
     def test_10_index(self):
         self._assert_txt_in_resp_data("index", "/")
 
-    def test_20_upload__get(self):
-        self._assert_txt_in_resp_data("upload", "/upload")
-
-    def test_30_upload__post(self):
+    def test_20_index_upload__post(self):
         C.skip_test()  # TODO
 
         for filepath in C.ok_yml_files():
@@ -38,7 +35,7 @@ class Views_TestCase(C.BluePrintTestCaseWithWorkdir):
             upfile = WD.FileStorage(stream=open(filepath, "rb"),
                                     filename=filename,
                                     content_type="application/yaml")
-            resp = self.client.post("/upload", data=dict(files=upfile),
+            resp = self.client.post("/", data=dict(files=upfile),
                                     content_type="multipart/form-data")
 
             self.assertEqual(resp.status_code, 200, resp)
