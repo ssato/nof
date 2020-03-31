@@ -24,25 +24,22 @@ from ..globals import NODE_ANY, CONFIG_TYPES
 APP = flask.Blueprint("app", __name__)
 
 SUMMARIES = dict(index=u"NOF",
-                 upload=u"Upload Network Graph data",
                  finder=u"Find Network Objects")
 
+TEMPLATES = dict(index="index.html")
 
-@APP.route("/", methods=["GET"])
+
+@APP.route("/", methods=["GET", "POST"])
 def index():
-    """Top page.
-    """
-    filenames = list_filenames("*.yml")
-    return flask.render_template("index.html", filenames=filenames)
-
-
-@APP.route("/upload", methods=["GET", "POST"])
-def upload():
-    """Upload page.
+    """Index page show the list of uploaded files and upload form.
     """
     form = UploadForm()
-    filename = None
-    octxs = dict(form=form, summary=SUMMARIES["upload"])
+    tmpl = TEMPLATES["index"]
+    summary = SUMMARIES["index"]
+
+    filename = None  # It will be set later.
+    filenames = list_filenames("*.yml")
+    octxs = dict(form=form, filenames=filenames, summary=summary)
 
     if form.validate_on_submit():
         yml_data = form.upload.data
@@ -55,12 +52,12 @@ def upload():
         except (IOError, OSError, ValueError, RuntimeError):
             flask.flash(u"Failed to convert the YAML data uploaded! "
                         u"Please try again with other valid data files.")
-            return flask.render_template("upload.html", **octxs)
+            return flask.render_template(tmpl, **octxs)
 
-        flask.flash(u"File was successfully uploaded and converted.")
-        return flask.redirect(flask.url_for(".index", filename=filename))
+        msg = u"File was successfully uploaded and converted."
+        return flask.render_template(tmpl, filename=filename, msg=msg, **octxs)
 
-    return flask.render_template("upload.html", filename=filename, **octxs)
+    return flask.render_template(tmpl, filename=filename, **octxs)
 
 
 @APP.route("/finder/networks/<path:filename>", methods=['GET', 'POST'])
