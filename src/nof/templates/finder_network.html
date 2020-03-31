@@ -5,7 +5,7 @@
       {%- if nets_or_ipsets -%}
       <ul>
       {%-   for ni in nets_or_ipsets %}
-        <li>ID: #{{ loop.index }}
+        <li>ID: #{{ loop.index }}:
           <div class="row path-node node-{{ ni.type }}">
             <span class="text-primary">#{{ ni.id }}: {{ ni.name }}</span>
             <ul>{% for addr in ni.addrs -%}

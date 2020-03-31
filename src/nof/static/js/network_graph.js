@@ -5,10 +5,12 @@
 /*
  *
  * globals:
- * - networks :: {'id':, 'addr': <ip_addr>, 'label':, ...}
+ * - networks :: {'id':, 'addrs': [<ip_addr>], 'label':, ...}
  *
  */
 function render_node_link(data, width=700, height=700) {
+  console.log(network_addresses);
+  console.log(node_path_0_addrs);
   console.log(data); // {nodes, links}
 
   const radius = function (d) {
@@ -67,7 +69,7 @@ function render_node_link(data, width=700, height=700) {
     node_info.html("<div class='row text-primary'>#" + d.id + ": " + d.name + "</div>" +
                    "<ul class='row text-secondary'>" +
                    "  <li>type: " + d.type + "</li>" +
-                   "  <li>address: " + d.addr + "</li>" +
+                   "  <li>address: " + d.addrs.join(", ") + "</li>" +
                    "</ul>");
   };
 
@@ -100,8 +102,8 @@ function render_node_link(data, width=700, height=700) {
     .join("circle")
       .attr("r", radius)
       .attr("class", function (d) {
-        if (network_addresses.includes(d.addr) ||
-            node_path_0_addrs.includes(d.addr)) {
+        if (network_addresses.some(addr => d.addrs.includes(addr)) ||
+            node_path_0_addrs.some(addr => d.addrs.includes(addr))) {
           return d.class + " found";
         } else {
           return d.class;
