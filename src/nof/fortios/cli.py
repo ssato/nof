@@ -4,6 +4,7 @@
 #
 """fortios related custom CLI commands.
 """
+import logging
 import os.path
 import os
 
@@ -17,6 +18,8 @@ from ..lib import fortios
 # https://flask.palletsprojects.com/en/1.0.x/cli/#custom-commands
 # CLI_ = flask.Blueprint("fortios_cli", __name__, cli_group="fortios")
 CLI = flask.cli.AppGroup("fortios")
+
+LOG = logging.getLogger(__name__)
 
 
 @CLI.command("parse", with_appcontext=False)
@@ -35,5 +38,16 @@ def parse(config_path, output):
         os.makedirs(outdir)
 
     fortios.parse_show_config_and_dump(config_path, output)
+
+
+@CLI.command("gen_network", with_appcontext=False)
+@click.argument("config_files", type=click.Path(exists=True), nargs=-1)
+@click.option("-o", "--output", type=click.Path())
+def generate_network_yml(config_files, output=None):
+    """
+    Generate network YAML file to find paths later, from parsed fortigate
+    config files.
+    """
+    fortios.make_and_save_network_graph_from_configs(config_files, output)
 
 # vim:sw=4:ts=4:et:
