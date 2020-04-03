@@ -15,13 +15,13 @@ function render_node_link(data, width=700, height=700) {
 
   const radius = function (d) {
     if (d.type == "network") {
-      return 10;
+      return 7;
     }
     else if (d.type == "firewall" || d.type == "router" || d.type == "switch") {
-      return 8;
+      return 5;
     }
     else {
-      return 7;
+      return 4;
     }
   }
 
@@ -78,13 +78,16 @@ function render_node_link(data, width=700, height=700) {
 
   const simulation = d3.forceSimulation(nodes)
       .force("link", d3.forceLink(links).id(d => d.id))
-      .force("charge", d3.forceManyBody()
-                         .strength(-50))
+      .force("charge", d3.forceManyBody() // ref. https://github.com/d3/d3-force#many-body
+                         .strength(-30)
+                         .distanceMax(300))
       .force("center", d3.forceCenter(width / 2, height / 2));
 
   const svg = d3.select("svg")
+                .classed("svg-container", true)
                 .attr("viewBox", "0 0 " + width + " " + height)
-                .attr("preserveAspectRatio", "xMidYMid meet");
+                .attr("preserveAspectRatio", "xMidYMid meet")
+                .attr('class', 'svg-content-responsive');
 
   const link = svg.append("g")
       .attr("stroke", "#999")
