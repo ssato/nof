@@ -2,12 +2,30 @@
  *
  * ref. http://www.htmq.com/color/websafe216.shtml
  */
+/* ref. https://stackoverflow.com/questions/16265123/resize-svg-when-window-is-resized-in-d3-js
+ */
 #main-svg {
   /*
   margin: 10px;
   border: medium solid #c0c0c0;
   */
 }
+/*
+.svg-container {
+  display: inline-block;
+  position: relative;
+  width: 100%;
+  padding-bottom: 100%;
+  vertical-align: top;
+  overflow: hidden;
+}
+
+.svg-content-responsive {
+  display: inline-block;
+  top: 10px;
+  left: 0;
+}
+*/
 
 .node {
   stroke: #000033;
