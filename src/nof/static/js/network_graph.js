@@ -15,10 +15,10 @@ function render_node_link(data, width=700, height=700) {
 
   const radius = function (d) {
     if (d.type == "network") {
-      return 16;
+      return 10;
     }
     else if (d.type == "firewall" || d.type == "router" || d.type == "switch") {
-      return 10;
+      return 8;
     }
     else {
       return 7;
