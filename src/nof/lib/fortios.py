@@ -10,6 +10,10 @@ r"""Parse fortios configuration
 """
 from __future__ import absolute_import
 
+import collections.abc
+import ipaddress
+import itertools
+import logging
 import os.path
 
 import anyconfig
@@ -29,6 +33,8 @@ CNF_GRPS = dict(firewall=("vdom", "system interface",
                 router="router *",
                 system="system *",
                 user="user *")
+
+LOG = logging.getLogger(__name__)
 
 
 def make_group_configs(cnfs, group=None):
@@ -132,5 +138,197 @@ def load_configs(filepath, group=None):
         filepath = group_config_path(filepath, group)
 
     return anyconfig.load(filepath)
+
+
+def cnf_by_name(fwcnfs, name):
+    """
+    :param fwcnfs: A list of fortios config objects
+    :param name: Name of the configuration
+    :return: A list of config edits or None
+    """
+    ret = [c for c in fwcnfs if c.get("config") == name]
+    if ret:
+        return ret[0]  # It should have an item only.
+
+    return None
+
+
+def cnf_edits_by_name(fwcnfs, name):
+    """
+    :param fwcnfs: A list of fortios config objects
+    :param name: Name of the configuration has edits
+    :return: A list of config edits or None
+    """
+    cnf = cnf_by_name(fwcnfs, name)
+    if cnf:
+        return cnf.get("edits", None)
+
+    return None
+
+
+def network_prefix(net_addr):
+    """
+    >>> net = ipaddress.ip_network("192.168.122.0/24")
+    >>> network_prefix(net)
+    24
+    """
+    return int(net_addr.compressed.split('/')[-1])
+
+
+def summarize_networks(*net_addrs, prefix=None):
+    """
+    Degenerate and summarize given network addresses. For example,
+
+    >>> net1 = ipaddress.ip_network("192.168.122.0/25")
+    >>> net2 = ipaddress.ip_network("192.168.122.128/25")
+    >>> net3 = ipaddress.ip_network("10.1.0.0/16")
+    >>> summarize_networks(net1, net2)
+    IPv4Network('192.168.122.0/24')
+    >>> summarize_networks(net1, net2, mask=16)
+    IPv4Network('192.168.0.0/16')
+    >>> summarize_networks(net1, net3)
+    >>> summarize_networks(net1, net3, prefix=1)
+    """
+    if prefix is None:
+        prefix_len = min(network_prefix(n) for n in net_addrs)
+
+        # try to find the smallest network.
+        for diff in range(prefix_len):
+            cnet = net_addrs[0].supernet(prefixlen_diff=diff)
+            if all(n.supernet(prefixlen_diff=diff) == cnet for n in net_addrs):
+                return cnet
+    else:
+        cnet = net_addrs[0].supernet(new_prefix=prefix)
+        if all(n.supernet(new_prefix=prefix) == cnet for n in net_addrs):
+            return cnet
+
+    return None
+
+
+def interface_ip_addrs_from_configs(fwcnfs):
+    """
+    :param fwcnfs: A list of fortios config objects
+    :return: A list of interface IP addresses (IPv*Address objects)
+    """
+    for iface in cnf_edits_by_name(fwcnfs, "system interface"):
+        if "ip" not in iface:
+            continue  # IP address is not assigned to this interface.
+
+        ip_netmask = iface["ip"]
+        try:
+            # Which is better? ipaddress.ip_address can validate the ip but ...
+            # ipaddress.ip_interface("{}/{}".format(*ip_netmask))
+            yield ipaddress.ip_address(ip_netmask[0])
+        except ValueError:  # Invalid IP address, etc.
+            LOG.warning("Found invalid IP address/mask: "
+                        "{} / {}".format(*ip_netmask))
+
+
+def firewall_networks_from_configs(fwcnfs):
+    """
+    :param fwcnfs: A list of fortios config objects
+    :return: A list of network addresses (IPv*Network objects)
+    """
+    for edit in cnf_edits_by_name(fwcnfs, "firewall address"):
+        if "subnet" not in edit:
+            continue  # It is not subnet and may be iprange, etc.
+
+        subnet = edit["subnet"]  # (network_or_host_ip_addr, netmask)
+        try:
+            maybe_net = ipaddress.ip_network("{}/{}".format(*subnet))
+            if maybe_net.num_addresses > 1:  # It's network.
+                yield maybe_net
+        except ValueError:  # Invalid IP address, etc.
+            LOG.warning("Found invalid address/mask: "
+                        "{} / {}".format(*subnet))
+
+
+def extract_network_data_from_configs(config_files):
+    """
+    Load network related data from parsed fortigate config files.
+
+    :param config_files: A list of fortios' config files parsed
+    """
+    cntr = itertools.count()
+    net_seen = set()      # {IP*Network}
+    net_id_seen = dict()  # {IP*Network: int}
+
+    for cpath in config_files:
+        try:
+            cnfs = load_configs(cpath)
+        except (IOError, OSError, ValueError) as exc:
+            LOG.warning("{}: Something goes wrong with {}. "
+                        "Ignore it.".format(exc, cpath))
+            continue
+
+        if not cnfs:
+            LOG.warning("No data was found in {}".format(cpath))
+            continue
+
+        node_id = next(cntr)
+        fwcnfs = cnfs["configs"]
+
+        gcnf = (cnf_by_name(fwcnfs, "system global") or
+                cnf_by_name(fwcnfs, "global"))
+        if not gcnf:
+            LOG.warning("No global configs were found: " + cpath)
+            continue
+
+        name = gcnf.get("hostname",
+                        "unknown-{!s}".format(node_id)).lower()
+
+        # interfaces
+        addrs = list(interface_ip_addrs_from_configs(fwcnfs))
+        if addrs:
+            # firewall node
+            yield dict(id=node_id, name=name, type="firewall",
+                       addrs=[str(a) for a in addrs])
+
+        # firewall address
+        for net in firewall_networks_from_configs(fwcnfs):
+            # network nodes
+            if net in net_seen:
+                net_id = net_id_seen[net]
+            else:
+                net_id = next(cntr)
+
+                net_seen.add(net)
+                net_id_seen[net] = net_id
+
+                yield dict(id=net_id, name=str(net), type="network",
+                           addrs=[str(net)])
+
+            # firewall <-> network link
+            yield [node_id, net_id]
+
+
+def make_network_graph_from_configs(config_files):
+    """
+    Load network related data from parsed fortigate config files.
+
+    :param config_files: A list of fortios' config files parsed
+    """
+    nodes_and_edges = list(extract_network_data_from_configs(config_files))
+    nodes = [x for x in nodes_and_edges
+             if isinstance(x, collections.abc.Mapping)]
+    edges = [x for x in nodes_and_edges
+             if isinstance(x, collections.abc.Sequence)]
+
+    return dict(nodes=nodes, edges=edges)
+
+
+def make_and_save_network_graph_from_configs(config_files, output=None):
+    """
+    Load network related data from parsed fortigate config files.
+
+    :param config_files: A list of fortios' config files parsed
+    :param output: Output file path
+    """
+    nodes_links = make_network_graph_from_configs(config_files)
+
+    if output is None:
+        output = os.path.join(os.path.dirname(config_files[0]), "output.yml")
+
+    anyconfig.dump(nodes_links, output)
 
 # vim:sw=4:ts=4:et:
