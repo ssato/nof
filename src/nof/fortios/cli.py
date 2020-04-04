@@ -42,12 +42,16 @@ def parse(config_path, output):
 
 @CLI.command("gen_network", with_appcontext=False)
 @click.argument("config_files", type=click.Path(exists=True), nargs=-1)
+@click.option("-p", "--prefix", type=int,
+              help="Max network prefix to summarize")
 @click.option("-o", "--output", type=click.Path())
-def generate_network_yml(config_files, output=None):
+def generate_network_yml(config_files, output=None,
+                         prefix=fortios.NET_MAX_PREFIX):
     """
     Generate network YAML file to find paths later, from parsed fortigate
     config files.
     """
-    fortios.make_and_save_network_graph_from_configs(config_files, output)
+    fortios.make_and_save_network_graph_from_configs(config_files, output,
+                                                     max_prefix=prefix)
 
 # vim:sw=4:ts=4:et:
