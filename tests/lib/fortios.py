@@ -39,6 +39,19 @@ class TT_10_Simple_Function_TestCases(unittest.TestCase):
             res = TT.parse_show_config(inp_path)
             self.assertEqual(res, exp)
 
+    def test_50_hostname_from_configs(self):
+        hostname = "nof-test-1"
+        css = [[dict(config="system global", hostname=hostname)],
+               [dict(config="global", hostname=hostname)]]
+        for cnfs in css:
+            self.assertEqual(TT.hostname_from_configs(cnfs), hostname)
+
+        with self.assertRaises(ValueError):
+            TT.hostname_from_configs([])
+
+        cnfs = [dict(config="system global")]
+        self.assertEqual(TT.hostname_from_configs(cnfs), None)
+
 
 class TT_20_Function_with_IO_TestCases(C.BluePrintTestCaseWithWorkdir):
 
