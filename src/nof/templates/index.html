@@ -2,8 +2,7 @@
 
 {% block page_content -%}
 {% if msg | d(false) %}<div class="alert alert-primary" role="alert">{{ msg }}</div>{% endif %}
-<div class="pb-5">{{ wtf.quick_form(form) }}</div>
-<div>Index</div>
+<div>Networks</div>
 <ul id="graph_files">
 {%  for fname in filenames %}
 <li>
@@ -19,6 +18,7 @@
 <li>No data. Please upload a network YAML data from the above form.</li>
 {%  endfor %}
 </ul>
+<div class="pb-5">{{ wtf.quick_form(form) }}</div>
 {% endblock %}
 {# vim:sw=2:ts=2:et:
 -#}
