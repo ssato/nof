@@ -209,6 +209,26 @@ def summarize_networks(*net_addrs, prefix=None):
     return None
 
 
+def hostname_from_configs(fwcnfs):
+    """
+    Detect hostname of the fortigate node from its '[system ]global'
+    configuration.
+
+    :param fwcnfs: A list of fortios config objects
+    :raises:
+        ValueError if given data does not contain global configuration to find
+        hostname
+    :return: hostname str or None (if hostname was not found)
+    """
+    gcnf = (cnf_by_name(fwcnfs, "system global") or
+            cnf_by_name(fwcnfs, "global"))
+
+    if not gcnf:  # I guess that it shsould happen.
+        raise ValueError("No global configs were found. Is it correct data?")
+
+    return gcnf.get("hostname", '').lower() or None
+
+
 def interface_ip_addrs_from_configs(fwcnfs):
     """
     :param fwcnfs: A list of fortios config objects
