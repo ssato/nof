@@ -51,7 +51,7 @@ def generate_network_yml(config_files, output=None,
     Generate network YAML file to find paths later, from parsed fortigate
     config files.
     """
-    fortios.make_and_save_network_graph_from_configs(config_files, output,
-                                                     max_prefix=prefix)
+    fortios.dump_networks_from_config_files(config_files, output,
+                                            max_prefix=prefix)
 
 # vim:sw=4:ts=4:et:

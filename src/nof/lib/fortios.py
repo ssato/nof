@@ -253,7 +253,7 @@ def firewall_networks_from_configs(fwcnfs, max_prefix=NET_MAX_PREFIX):
                         "{} / {}".format(*subnet))
 
 
-def extract_network_data_from_configs(config_files, max_prefix=NET_MAX_PREFIX):
+def parse_config_files(config_files, max_prefix=NET_MAX_PREFIX):
     """
     Load network related data from parsed fortigate config files.
 
@@ -313,7 +313,7 @@ def extract_network_data_from_configs(config_files, max_prefix=NET_MAX_PREFIX):
             yield [node_id, net_id]
 
 
-def make_network_graph_from_configs(config_files, max_prefix=NET_MAX_PREFIX):
+def make_networks_from_config_files(config_files, max_prefix=NET_MAX_PREFIX):
     """
     Load network related data from parsed fortigate config files.
 
@@ -322,8 +322,7 @@ def make_network_graph_from_configs(config_files, max_prefix=NET_MAX_PREFIX):
 
     :return: A mapping object, {nodes: [node], edges: [edge]}
     """
-    nodes_and_edges = list(extract_network_data_from_configs(config_files,
-                                                             max_prefix))
+    nodes_and_edges = list(parse_config_files(config_files, max_prefix))
     nodes = [x for x in nodes_and_edges
              if isinstance(x, collections.abc.Mapping)]
     edges = [x for x in nodes_and_edges
@@ -332,8 +331,8 @@ def make_network_graph_from_configs(config_files, max_prefix=NET_MAX_PREFIX):
     return dict(nodes=nodes, edges=edges)
 
 
-def make_and_save_network_graph_from_configs(config_files, output=None,
-                                             max_prefix=NET_MAX_PREFIX):
+def dump_networks_from_config_files(config_files, output=None,
+                                    max_prefix=NET_MAX_PREFIX):
     """
     Load network related data from parsed fortigate config files.
 
@@ -341,7 +340,7 @@ def make_and_save_network_graph_from_configs(config_files, output=None,
     :param output: Output file path
     :param max_prefix: Max prefix for networks
     """
-    nodes_links = make_network_graph_from_configs(config_files,
+    nodes_links = make_networks_from_config_files(config_files,
                                                   max_prefix=max_prefix)
 
     if output is None:
