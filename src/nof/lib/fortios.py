@@ -36,6 +36,8 @@ CNF_GRPS = dict(firewall=("vdom", "system interface",
 
 LOG = logging.getLogger(__name__)
 
+NET_MAX_PREFIX = 24
+
 
 def make_group_configs(cnfs, group=None):
     """
@@ -168,6 +170,8 @@ def cnf_edits_by_name(fwcnfs, name):
 
 def network_prefix(net_addr):
     """
+    :param net_addr: IPv*Network object
+
     >>> net = ipaddress.ip_network("192.168.122.0/24")
     >>> network_prefix(net)
     24
@@ -224,9 +228,11 @@ def interface_ip_addrs_from_configs(fwcnfs):
                         "{} / {}".format(*ip_netmask))
 
 
-def firewall_networks_from_configs(fwcnfs):
+def firewall_networks_from_configs(fwcnfs, max_prefix=NET_MAX_PREFIX):
     """
     :param fwcnfs: A list of fortios config objects
+    :param max_prefix: Max prefix for networks
+
     :return: A list of network addresses (IPv*Network objects)
     """
     for edit in cnf_edits_by_name(fwcnfs, "firewall address"):
@@ -237,17 +243,22 @@ def firewall_networks_from_configs(fwcnfs):
         try:
             maybe_net = ipaddress.ip_network("{}/{}".format(*subnet))
             if maybe_net.num_addresses > 1:  # It's network.
+                # Replace it with its supernet (larger network segment).
+                if network_prefix(maybe_net) > max_prefix:
+                    maybe_net = maybe_net.supernet(new_prefix=max_prefix)
+
                 yield maybe_net
         except ValueError:  # Invalid IP address, etc.
             LOG.warning("Found invalid address/mask: "
                         "{} / {}".format(*subnet))
 
 
-def extract_network_data_from_configs(config_files):
+def extract_network_data_from_configs(config_files, max_prefix=NET_MAX_PREFIX):
     """
     Load network related data from parsed fortigate config files.
 
     :param config_files: A list of fortios' config files parsed
+    :param max_prefix: Max prefix for networks
     """
     cntr = itertools.count()
     net_seen = set()      # {IP*Network}
@@ -285,7 +296,7 @@ def extract_network_data_from_configs(config_files):
                        addrs=[str(a) for a in addrs])
 
         # firewall address
-        for net in firewall_networks_from_configs(fwcnfs):
+        for net in firewall_networks_from_configs(fwcnfs, max_prefix):
             # network nodes
             if net in net_seen:
                 net_id = net_id_seen[net]
@@ -302,13 +313,17 @@ def extract_network_data_from_configs(config_files):
             yield [node_id, net_id]
 
 
-def make_network_graph_from_configs(config_files):
+def make_network_graph_from_configs(config_files, max_prefix=NET_MAX_PREFIX):
     """
     Load network related data from parsed fortigate config files.
 
     :param config_files: A list of fortios' config files parsed
+    :param max_prefix: Max prefix for networks
+
+    :return: A mapping object, {nodes: [node], edges: [edge]}
     """
-    nodes_and_edges = list(extract_network_data_from_configs(config_files))
+    nodes_and_edges = list(extract_network_data_from_configs(config_files,
+                                                             max_prefix))
     nodes = [x for x in nodes_and_edges
              if isinstance(x, collections.abc.Mapping)]
     edges = [x for x in nodes_and_edges
@@ -317,14 +332,17 @@ def make_network_graph_from_configs(config_files):
     return dict(nodes=nodes, edges=edges)
 
 
-def make_and_save_network_graph_from_configs(config_files, output=None):
+def make_and_save_network_graph_from_configs(config_files, output=None,
+                                             max_prefix=NET_MAX_PREFIX):
     """
     Load network related data from parsed fortigate config files.
 
     :param config_files: A list of fortios' config files parsed
     :param output: Output file path
+    :param max_prefix: Max prefix for networks
     """
-    nodes_links = make_network_graph_from_configs(config_files)
+    nodes_links = make_network_graph_from_configs(config_files,
+                                                  max_prefix=max_prefix)
 
     if output is None:
         output = os.path.join(os.path.dirname(config_files[0]), "output.yml")
