@@ -76,7 +76,7 @@ def list_configs_from_config_data(cnf, filepath=None):
     return cnf["configs"]
 
 
-def config_by_name(fwcnfs, name, regexp=False):
+def config_by_name(fwcnfs, name, regexp=False, only_first=True):
     """
     .. note::
        Even if there are more than one matched results were found, it returns
@@ -85,6 +85,7 @@ def config_by_name(fwcnfs, name, regexp=False):
     :param fwcnfs: A list of fortios config objects
     :param name: Name of the configuration
     :param regexp: Use regular expression in name
+    :param only_first: Return the first item in the result only
 
     :return: A list of config edits or None
     """
@@ -94,7 +95,8 @@ def config_by_name(fwcnfs, name, regexp=False):
         res = [c for c in fwcnfs if c.get("config") == name]
 
     if res:
-        return res[0]  # It should have an item only.
+        # It should have an item only in most cases.
+        return res[0] if only_first else res
 
     return None
 
@@ -125,10 +127,9 @@ def hostname_from_configs(fwcnfs):
         hostname
     :return: hostname str or None (if hostname was not found)
     """
-    gcnf = (config_by_name(fwcnfs, "system global") or
-            config_by_name(fwcnfs, "global"))
+    gcnf = config_by_name(fwcnfs, ".*global", regexp=True)
 
-    if not gcnf:  # I guess that it shsould happen.
+    if not gcnf:  # I assume that it shsould not happen.
         raise ValueError("No global configs were found. Is it correct data?")
 
     return gcnf.get("hostname", '').lower() or None
