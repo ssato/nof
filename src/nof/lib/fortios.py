@@ -76,6 +76,21 @@ def list_configs_from_config_data(cnf, filepath=None):
     return cnf["configs"]
 
 
+def resolve_config_name(cnfs, name):
+    """
+    :param cnfs: A list of fortios config objects
+    :param name: Name of the configuration
+
+    :return: A list of strings represent configs
+    """
+    found = [c["config"] for c in cnfs if re.match(name, c.get("config", ""))]
+
+    if found:
+        return found
+
+    return []
+
+
 def config_by_name(fwcnfs, name, regexp=False, only_first=True):
     """
     .. note::
