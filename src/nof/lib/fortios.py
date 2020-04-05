@@ -58,7 +58,7 @@ def make_group_configs(cnfs, group=None):
     return fwcs
 
 
-def list_configs_from_config_data(cnf, filepath):
+def list_configs_from_config_data(cnf, filepath=None):
     """
     :param cnf: Config data loaded or parsed log.
     :raises: ValueError, TypeError
@@ -69,7 +69,7 @@ def list_configs_from_config_data(cnf, filepath):
     if not isinstance(cnf, collections.abc.Mapping):
         raise TypeError("Invalid typed data was found in {}".format(filepath))
 
-    if not "configs" in cnf:
+    if "configs" not in cnf:
         raise ValueError("Configs were not found in {}".format(filepath))
 
     return cnf["configs"]
