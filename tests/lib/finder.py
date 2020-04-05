@@ -101,7 +101,7 @@ class TT_30_find_network_nodes_by_addr_TestCases(unittest.TestCase):
                                                      self.ok_ips[-1])
         self.assertNotEqual(res, [])
         self.assertTrue(isinstance(res[0]["addrs"][0],
-                        TT.ipaddress.IPv4Network))
+                                   TT.ipaddress.IPv4Network))
         self.assertTrue(TT.is_net_node(res[0]))
         self.assertEqual(res[0], self.nets[-1])
 
@@ -122,7 +122,7 @@ class TT_30_find_network_nodes_by_addr_TestCases(unittest.TestCase):
 
             self.assertTrue(res is not None)
             self.assertTrue(isinstance(res["addrs"][0],
-                            TT.ipaddress.IPv4Network))
+                                       TT.ipaddress.IPv4Network))
             self.assertEqual(res, net)
 
 

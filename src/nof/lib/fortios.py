@@ -244,8 +244,7 @@ def interface_ip_addrs_from_configs(fwcnfs):
             # ipaddress.ip_interface("{}/{}".format(*ip_netmask))
             yield ipaddress.ip_address(ip_netmask[0])
         except ValueError:  # Invalid IP address, etc.
-            LOG.warning("Found invalid IP address/mask: "
-                        "{} / {}".format(*ip_netmask))
+            LOG.warning("Found invalid IP address/mask: %s/%s", *ip_netmask)
 
 
 def firewall_networks_from_configs(fwcnfs, max_prefix=NET_MAX_PREFIX):
@@ -269,8 +268,7 @@ def firewall_networks_from_configs(fwcnfs, max_prefix=NET_MAX_PREFIX):
 
                 yield maybe_net
         except ValueError:  # Invalid IP address, etc.
-            LOG.warning("Found invalid address/mask: "
-                        "{} / {}".format(*subnet))
+            LOG.warning("Found invalid address/mask: %s/%s", *subnet)
 
 
 def parse_config_files(config_files, max_prefix=NET_MAX_PREFIX):
@@ -288,12 +286,12 @@ def parse_config_files(config_files, max_prefix=NET_MAX_PREFIX):
         try:
             cnfs = load_configs(cpath)
         except (IOError, OSError, ValueError) as exc:
-            LOG.warning("{}: Something goes wrong with {}. "
-                        "Ignore it.".format(exc, cpath))
+            LOG.warning("%r: Something goes wrong with %s. "
+                        "Ignore it.", exc, cpath)
             continue
 
         if not cnfs:
-            LOG.warning("No data was found in {}".format(cpath))
+            LOG.warning("No data was found in %s", cpath)
             continue
 
         node_id = next(cntr)
@@ -302,7 +300,7 @@ def parse_config_files(config_files, max_prefix=NET_MAX_PREFIX):
         gcnf = (config_by_name(fwcnfs, "system global") or
                 config_by_name(fwcnfs, "global"))
         if not gcnf:
-            LOG.warning("No global configs were found: " + cpath)
+            LOG.warning("No global configs were found: %s", cpath)
             continue
 
         name = gcnf.get("hostname",

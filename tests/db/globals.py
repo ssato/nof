@@ -17,7 +17,7 @@ class Test(C.BluePrintTestCaseWithWorkdir):
         C.skip_test()  # TODO
 
         query = sqlalchemy.sql.text("PRAGMA foreign_keys")
-        res = [r for r in nof.db.DB.session.execute(query)]
+        res = list(nof.db.DB.session.execute(query))
         self.assertTrue(res[0][0], 1)  # It should be set to true.
 
 # vim:sw=4:ts=4:et:

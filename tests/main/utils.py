@@ -89,9 +89,9 @@ class TT_20_util_functions_TestCases(C.BluePrintTestCaseWithWorkdir):
             shutil.copy(filepath, TT.uploaddir())
 
         res = TT.list_filenames()
-        exp = sorted(os.path.basename(f) for f in C.ok_yml_files())
-
         self.assertTrue(len(res) >= len(C.ok_yml_files()))
+
+        # exp = sorted(os.path.basename(f) for f in C.ok_yml_files())
         # self.assertEqual(res, exp, res)
 
 
