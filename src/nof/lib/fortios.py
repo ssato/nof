@@ -142,7 +142,7 @@ def load_configs(filepath, group=None):
     return anyconfig.load(filepath)
 
 
-def cnf_by_name(fwcnfs, name):
+def config_by_name(fwcnfs, name):
     """
     :param fwcnfs: A list of fortios config objects
     :param name: Name of the configuration
@@ -155,13 +155,13 @@ def cnf_by_name(fwcnfs, name):
     return None
 
 
-def cnf_edits_by_name(fwcnfs, name):
+def edits_by_name(fwcnfs, name):
     """
     :param fwcnfs: A list of fortios config objects
     :param name: Name of the configuration has edits
     :return: A list of config edits or None
     """
-    cnf = cnf_by_name(fwcnfs, name)
+    cnf = config_by_name(fwcnfs, name)
     if cnf:
         return cnf.get("edits", None)
 
@@ -220,8 +220,8 @@ def hostname_from_configs(fwcnfs):
         hostname
     :return: hostname str or None (if hostname was not found)
     """
-    gcnf = (cnf_by_name(fwcnfs, "system global") or
-            cnf_by_name(fwcnfs, "global"))
+    gcnf = (config_by_name(fwcnfs, "system global") or
+            config_by_name(fwcnfs, "global"))
 
     if not gcnf:  # I guess that it shsould happen.
         raise ValueError("No global configs were found. Is it correct data?")
@@ -234,7 +234,7 @@ def interface_ip_addrs_from_configs(fwcnfs):
     :param fwcnfs: A list of fortios config objects
     :return: A list of interface IP addresses (IPv*Address objects)
     """
-    for iface in cnf_edits_by_name(fwcnfs, "system interface"):
+    for iface in edits_by_name(fwcnfs, "system interface"):
         if "ip" not in iface:
             continue  # IP address is not assigned to this interface.
 
@@ -255,7 +255,7 @@ def firewall_networks_from_configs(fwcnfs, max_prefix=NET_MAX_PREFIX):
 
     :return: A list of network addresses (IPv*Network objects)
     """
-    for edit in cnf_edits_by_name(fwcnfs, "firewall address"):
+    for edit in edits_by_name(fwcnfs, "firewall address"):
         if "subnet" not in edit:
             continue  # It is not subnet and may be iprange, etc.
 
@@ -299,8 +299,8 @@ def parse_config_files(config_files, max_prefix=NET_MAX_PREFIX):
         node_id = next(cntr)
         fwcnfs = cnfs["configs"]
 
-        gcnf = (cnf_by_name(fwcnfs, "system global") or
-                cnf_by_name(fwcnfs, "global"))
+        gcnf = (config_by_name(fwcnfs, "system global") or
+                config_by_name(fwcnfs, "global"))
         if not gcnf:
             LOG.warning("No global configs were found: " + cpath)
             continue
