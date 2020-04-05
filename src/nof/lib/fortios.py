@@ -78,6 +78,10 @@ def list_configs_from_config_data(cnf, filepath=None):
 
 def config_by_name(fwcnfs, name, regexp=False):
     """
+    .. note::
+       Even if there are more than one matched results were found, it returns
+       the first one only.
+
     :param fwcnfs: A list of fortios config objects
     :param name: Name of the configuration
     :param regexp: Use regular expression in name
@@ -85,23 +89,25 @@ def config_by_name(fwcnfs, name, regexp=False):
     :return: A list of config edits or None
     """
     if regexp:
-        res = [c for c in fwcnfs if re.match(name, c.get("config"))]
-        return res
+        res = [c for c in fwcnfs if re.match(name, c.get("config", ""))]
     else:
-        ret = [c for c in fwcnfs if c.get("config") == name]
-        if ret:
-            return ret[0]  # It should have an item only.
+        res = [c for c in fwcnfs if c.get("config") == name]
+
+    if res:
+        return res[0]  # It should have an item only.
 
     return None
 
 
-def edits_by_name(fwcnfs, name):
+def edits_by_name(fwcnfs, name, regexp=False):
     """
     :param fwcnfs: A list of fortios config objects
     :param name: Name of the configuration has edits
+    :param regexp: Use regular expression in name
+
     :return: A list of config edits or None
     """
-    cnf = config_by_name(fwcnfs, name)
+    cnf = config_by_name(fwcnfs, name, regexp=regexp)
     if cnf:
         return cnf.get("edits", None)
 
