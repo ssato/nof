@@ -15,6 +15,7 @@ import ipaddress
 import itertools
 import logging
 import os.path
+import re
 
 import anyconfig
 
@@ -75,15 +76,21 @@ def list_configs_from_config_data(cnf, filepath=None):
     return cnf["configs"]
 
 
-def config_by_name(fwcnfs, name):
+def config_by_name(fwcnfs, name, regexp=False):
     """
     :param fwcnfs: A list of fortios config objects
     :param name: Name of the configuration
+    :param regexp: Use regular expression in name
+
     :return: A list of config edits or None
     """
-    ret = [c for c in fwcnfs if c.get("config") == name]
-    if ret:
-        return ret[0]  # It should have an item only.
+    if regexp:
+        res = [c for c in fwcnfs if re.match(name, c.get("config"))]
+        return res
+    else:
+        ret = [c for c in fwcnfs if c.get("config") == name]
+        if ret:
+            return ret[0]  # It should have an item only.
 
     return None
 
