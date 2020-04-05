@@ -58,6 +58,23 @@ def make_group_configs(cnfs, group=None):
     return fwcs
 
 
+def list_configs_from_config_data(cnf, filepath):
+    """
+    :param cnf: Config data loaded or parsed log.
+    :raises: ValueError, TypeError
+    """
+    if not cnf:
+        raise ValueError("No expected data was found in {}".format(filepath))
+
+    if not isinstance(cnf, collections.abc.Mapping):
+        raise TypeError("Invalid typed data was found in {}".format(filepath))
+
+    if not "configs" in cnf:
+        raise ValueError("Configs were not found in {}".format(filepath))
+
+    return cnf["configs"]
+
+
 def config_by_name(fwcnfs, name):
     """
     :param fwcnfs: A list of fortios config objects
@@ -187,17 +204,11 @@ def load_configs(filepath, group=None):
 
     try:
         cnf = anyconfig.load(filepath)
+        return list_configs_from_config_data(cnf, filepath)
+
     except (IOError, OSError, ValueError) as exc:
         raise ValueError("{!r}: Something goes wrong with {}. "
                          "Ignore it.".format(exc, filepath))
-
-    if not cnf:
-        raise ValueError("No expected data was found in {}".format(filepath))
-
-    if not isinstance(cnf, collections.abc.Mapping):
-        raise TypeError("Invalid typed data was found in {}".format(filepath))
-
-    return cnf.get("configs", None)
 
 
 def network_prefix(net_addr):
@@ -298,8 +309,7 @@ def parse_config_files(config_files, max_prefix=NET_MAX_PREFIX):
         try:
             fwcnfs = load_configs(cpath)
         except (ValueError, TypeError) as exc:
-            LOG.warning("%r: Something goes wrong with %s. "
-                        "Ignore it.", exc, cpath)
+            LOG.warning(str(exc))
             continue
 
         node_id = next(cntr)
