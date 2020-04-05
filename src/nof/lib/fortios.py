@@ -58,6 +58,52 @@ def make_group_configs(cnfs, group=None):
     return fwcs
 
 
+def config_by_name(fwcnfs, name):
+    """
+    :param fwcnfs: A list of fortios config objects
+    :param name: Name of the configuration
+    :return: A list of config edits or None
+    """
+    ret = [c for c in fwcnfs if c.get("config") == name]
+    if ret:
+        return ret[0]  # It should have an item only.
+
+    return None
+
+
+def edits_by_name(fwcnfs, name):
+    """
+    :param fwcnfs: A list of fortios config objects
+    :param name: Name of the configuration has edits
+    :return: A list of config edits or None
+    """
+    cnf = config_by_name(fwcnfs, name)
+    if cnf:
+        return cnf.get("edits", None)
+
+    return None
+
+
+def hostname_from_configs(fwcnfs):
+    """
+    Detect hostname of the fortigate node from its '[system ]global'
+    configuration.
+
+    :param fwcnfs: A list of fortios config objects
+    :raises:
+        ValueError if given data does not contain global configuration to find
+        hostname
+    :return: hostname str or None (if hostname was not found)
+    """
+    gcnf = (config_by_name(fwcnfs, "system global") or
+            config_by_name(fwcnfs, "global"))
+
+    if not gcnf:  # I guess that it shsould happen.
+        raise ValueError("No global configs were found. Is it correct data?")
+
+    return gcnf.get("hostname", '').lower() or None
+
+
 def parse_show_config(filepath):
     """
     Parse 'show full-configuration output and returns a list of parsed configs.
@@ -154,32 +200,6 @@ def load_configs(filepath, group=None):
     return cnf.get("configs", None)
 
 
-def config_by_name(fwcnfs, name):
-    """
-    :param fwcnfs: A list of fortios config objects
-    :param name: Name of the configuration
-    :return: A list of config edits or None
-    """
-    ret = [c for c in fwcnfs if c.get("config") == name]
-    if ret:
-        return ret[0]  # It should have an item only.
-
-    return None
-
-
-def edits_by_name(fwcnfs, name):
-    """
-    :param fwcnfs: A list of fortios config objects
-    :param name: Name of the configuration has edits
-    :return: A list of config edits or None
-    """
-    cnf = config_by_name(fwcnfs, name)
-    if cnf:
-        return cnf.get("edits", None)
-
-    return None
-
-
 def network_prefix(net_addr):
     """
     :param net_addr: IPv*Network object
@@ -219,26 +239,6 @@ def summarize_networks(*net_addrs, prefix=None):
             return cnet
 
     return None
-
-
-def hostname_from_configs(fwcnfs):
-    """
-    Detect hostname of the fortigate node from its '[system ]global'
-    configuration.
-
-    :param fwcnfs: A list of fortios config objects
-    :raises:
-        ValueError if given data does not contain global configuration to find
-        hostname
-    :return: hostname str or None (if hostname was not found)
-    """
-    gcnf = (config_by_name(fwcnfs, "system global") or
-            config_by_name(fwcnfs, "global"))
-
-    if not gcnf:  # I guess that it shsould happen.
-        raise ValueError("No global configs were found. Is it correct data?")
-
-    return gcnf.get("hostname", '').lower() or None
 
 
 def interface_ip_addrs_from_configs(fwcnfs):
