@@ -133,13 +133,25 @@ def assert_group(group):
 def load_configs(filepath, group=None):
     """
     :param filepath: (JSON) file path contains parsed results
-    :raises: IOError, OSError, TypeError, AttributeError, ValueError
+    :raises: ValueError, TypeError
     """
     if group is not None:
         assert_group(group)
         filepath = group_config_path(filepath, group)
 
-    return anyconfig.load(filepath)
+    try:
+        cnf = anyconfig.load(filepath)
+    except (IOError, OSError, ValueError) as exc:
+        raise ValueError("{!r}: Something goes wrong with {}. "
+                         "Ignore it.".format(exc, filepath))
+
+    if not cnf:
+        raise ValueError("No expected data was found in {}".format(filepath))
+
+    if not isinstance(cnf, collections.abc.Mapping):
+        raise TypeError("Invalid typed data was found in {}".format(filepath))
+
+    return cnf.get("configs", None)
 
 
 def config_by_name(fwcnfs, name):
@@ -284,18 +296,13 @@ def parse_config_files(config_files, max_prefix=NET_MAX_PREFIX):
 
     for cpath in config_files:
         try:
-            cnfs = load_configs(cpath)
-        except (IOError, OSError, ValueError) as exc:
+            fwcnfs = load_configs(cpath)
+        except (ValueError, TypeError) as exc:
             LOG.warning("%r: Something goes wrong with %s. "
                         "Ignore it.", exc, cpath)
             continue
 
-        if not cnfs:
-            LOG.warning("No data was found in %s", cpath)
-            continue
-
         node_id = next(cntr)
-        fwcnfs = cnfs["configs"]
 
         gcnf = (config_by_name(fwcnfs, "system global") or
                 config_by_name(fwcnfs, "global"))
