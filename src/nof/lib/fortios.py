@@ -304,14 +304,11 @@ def parse_config_files(config_files, max_prefix=NET_MAX_PREFIX):
 
         node_id = next(cntr)
 
-        gcnf = (config_by_name(fwcnfs, "system global") or
-                config_by_name(fwcnfs, "global"))
-        if not gcnf:
-            LOG.warning("No global configs were found: %s", cpath)
+        try:
+            name = hostname_from_configs(fwcnfs)
+        except ValueError as exc:
+            LOG.warning("%r: %s", exc, cpath)
             continue
-
-        name = gcnf.get("hostname",
-                        "unknown-{!s}".format(node_id)).lower()
 
         # interfaces
         addrs = list(interface_ip_addrs_from_configs(fwcnfs))
