@@ -313,7 +313,7 @@ def summarize_networks(*net_addrs, prefix=None):
     >>> net3 = ipaddress.ip_network("10.1.0.0/16")
     >>> summarize_networks(net1, net2)
     IPv4Network('192.168.122.0/24')
-    >>> summarize_networks(net1, net2, mask=16)
+    >>> summarize_networks(net1, net2, prefix=16)
     IPv4Network('192.168.0.0/16')
     >>> summarize_networks(net1, net3)
     >>> summarize_networks(net1, net3, prefix=1)
