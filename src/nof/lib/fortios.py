@@ -11,6 +11,7 @@ r"""Parse fortios configuration
 from __future__ import absolute_import
 
 import collections.abc
+import datetime
 import ipaddress
 import itertools
 import logging
@@ -34,6 +35,17 @@ CNF_GRPS = dict(firewall=("vdom", "system interface",
                 router="router *",
                 system="system *",
                 user="user *")
+
+CNF_NAMES = (".*global",
+             "system.*",
+             "firewall service category",
+             "firewall service group",
+             "firewall service custom",
+             "firewall addrgrp",
+             "firewall address",
+             "firewall policy")
+
+METADATA_FILENAME = "metadata.json"
 
 LOG = logging.getLogger(__name__)
 
@@ -182,7 +194,24 @@ def group_config_path(filepath, group):
     return os.path.join(os.path.dirname(filepath), group + ".json")
 
 
-def parse_show_config_and_dump(inpath, outpath):
+def config_filename(name, ext="json"):
+    """
+    >>> config_filename("system global")
+    'system_global.json'
+    >>> config_filename('system replacemsg webproxy "deny"')
+    'system_replacemsg_webproxy_deny.json'
+    """
+    cname = re.sub(r"[\"']", '', re.sub("[- ]+", '_', name))
+    return "{}.{}".format(cname, ext)
+
+
+def timestamp():
+    """Generate timestamp string.
+    """
+    return datetime.datetime.now().strftime("%F %T")
+
+
+def parse_show_config_and_dump(inpath, outpath, cnames=CNF_NAMES):
     """
     Similiar to the above :func:`parse_show_config` but save results as JSON
     file (path: `outpath`).
@@ -199,6 +228,30 @@ def parse_show_config_and_dump(inpath, outpath):
 
     ensure_dir_exists(outpath)
     anyconfig.dump(data, outpath)
+
+    cnfs = list_configs_from_config_data(data, filepath=inpath)
+    try:
+        hostname = hostname_from_configs(cnfs)
+    except ValueError as exc:
+        LOG.warning("%r: %s", exc, inpath)
+        hostname = False
+
+    if hostname:  # It should have this in most cases.
+        outdir = os.path.join(os.path.dirname(outpath), hostname)
+
+        anyconfig.dump(dict(timestamp=timestamp(), hostname=hostname,
+                            origina_data=inpath),
+                       os.path.join(outdir, METADATA_FILENAME))
+
+        for cname in cnames:
+            for name in resolve_config_name(cnfs, cname):
+                cnf = edits_by_name(cnfs, name)
+                if cnf is None:  # It should have edits but configs.
+                    cnf = config_by_name(cnfs, name)
+
+                if cnf:
+                    opath = os.path.join(outdir, config_filename(name))
+                    anyconfig.dump(cnf, opath)
 
     for grp in CNF_GRPS:
         g_outpath = group_config_path(outpath, grp)
