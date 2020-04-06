@@ -376,7 +376,7 @@ def firewall_networks_from_configs(fwcnfs, max_prefix=NET_MAX_PREFIX):
             LOG.warning("Found invalid address/mask: %s/%s", *subnet)
 
 
-def parse_config_files(config_files, max_prefix=NET_MAX_PREFIX):
+def collect_net_info_from_files(config_files, max_prefix=NET_MAX_PREFIX):
     """
     Load network related data from parsed fortigate config files.
 
@@ -436,7 +436,8 @@ def make_networks_from_config_files(config_files, max_prefix=NET_MAX_PREFIX):
 
     :return: A mapping object, {nodes: [node], edges: [edge]}
     """
-    nodes_and_edges = list(parse_config_files(config_files, max_prefix))
+    nodes_and_edges = list(collect_net_info_from_files(config_files,
+                                                       max_prefix))
     nodes = [x for x in nodes_and_edges
              if isinstance(x, collections.abc.Mapping)]
     edges = [x for x in nodes_and_edges
