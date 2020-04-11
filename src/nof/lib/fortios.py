@@ -88,42 +88,129 @@ def list_configs_from_config_data(cnf, filepath=None):
     return cnf["configs"]
 
 
-def resolve_config_name(cnfs, name):
+def configs_by_name_0(cnfs, name, regexp=False):
     """
-    :param cnfs: A list of fortios config objects
+    :param cnfs: A list of fortios config objects, [{"config": ...}]
     :param name: Name of the configuration
+    :param regexp: Use regular expression in name
 
-    :return: A list of strings represent configs
+    :return: A list of config edits or [] (not found)
     """
-    found = [c["config"] for c in cnfs if re.match(name, c.get("config", ""))]
+    if regexp:
+        res = [c for c in cnfs if re.match(name, c.get("config", ""))]
+    else:
+        res = [c for c in cnfs if c.get("config") == name]
 
-    if found:
-        return found
-
-    return []
+    return res
 
 
-def config_by_name(fwcnfs, name, regexp=False, only_first=True):
+def vdom_names_itr(cnfs):
     """
-    .. note::
-       Even if there are more than one matched results were found, it returns
-       the first one only.
+    :param cnfs: A list of fortios config objects, [{"config": ...}]
+    :param list_names: List vdoms with names
+
+    :return: True if vdoms are found in given configurations
+    """
+    for vcnf in configs_by_name_0(cnfs, "vdom"):
+        if "edits" in vcnf:
+            if all(e for e in vcnf["edits"] if "configs" not in e):
+                for vdom in vcnf["edits"]:
+                    yield vdom["edit"]  # It's the vdom name.
+
+
+def has_vdom(cnfs):
+    """
+    :param cnfs: A list of fortios config objects, [{"config": ...}]
+    :return: True if vdoms are found in given configurations
+    """
+    return bool(configs_by_name_0(cnfs, "vdom"))
+
+
+def configs_by_name(fwcnfs, name, regexp=False, vdom=None):
+    """
+    Structure of fwcnfs:
+
+    [{"config": "vdom",   # VDom list
+      "edits": [
+        {"edit": "root"},
+        ...
+      ]},
+     {"config": "global",  # Global configurations
+      "configs": [
+        {"config": "system global", ... },
+        ...
+      ]},
+     {"comments": [ ... ]},  # Comments
+     {"config": "vdom",  # Configurations in each VDoms
+      "edits": [         # especially 'root' vdom.
+        {"edit": "root",
+         "configs": [
+            {"config": "system settings", ...},
+            ...
+        ]}
+      ]}
+    ]
+
+    or
+
+    [{"config": ...}]
 
     :param fwcnfs: A list of fortios config objects
     :param name: Name of the configuration
     :param regexp: Use regular expression in name
-    :param only_first: Return the first item in the result only
+    :param vdom: vdom to search configurations from [root]
 
-    :return: A list of config edits or None
+    :return: A list of configs or []
     """
-    if regexp:
-        res = [c for c in fwcnfs if re.match(name, c.get("config", ""))]
-    else:
-        res = [c for c in fwcnfs if c.get("config") == name]
+    # Handle some special cases first.
+    if name in ("vdom", "global"):
+        return configs_by_name_0(fwcnfs, name, regexp=False)
 
-    if res:
+    if not has_vdom(fwcnfs):
+        return configs_by_name_0(fwcnfs, name, regexp=regexp)
+
+    # Items other than "vdom" need search from the children.
+    gcnfs = configs_by_name_0(fwcnfs, "global", regexp=False)
+    if gcnfs:
+        gcnfs = gcnfs[0].get("configs", [])  # len(gcnfs) should be 1
+
+    # exclude config contains vdom list
+    vcnfs = [c for c in configs_by_name_0(fwcnfs, "vdom", regexp=False)
+             if "edits" in c and any(e for e in c["edits"] if "configs" in e)]
+
+    # {"config": "vdom", "edits": [{"edit": "root", "configs": [...]}]}
+    if vcnfs:
+        vedits = vcnfs[0]["edits"]  # len(vcnfs) should be 1.
+        if vdom:
+            ccnfs = (e["configs"] for e in vedits
+                     if "configs" in e and e.get("edit") == vdom)
+        else:
+            ccnfs = (e["configs"] for e in vedits if "configs" in e)
+
+        ccnfs = itertools.chain.from_iterable(ccnfs)
+        cnfs = itertools.chain(gcnfs, ccnfs)
+
+        return configs_by_name_0(cnfs, name, regexp=regexp)
+
+    return configs_by_name_0(gcnfs, name, regexp=regexp)
+
+
+def config_by_name(fwcnfs, name, regexp=False):
+    """
+    .. note::
+       Even if there are more than one matched results were found, it returns
+       the first item only.
+
+    :param fwcnfs: A list of fortios config objects
+    :param name: Name of the configuration
+    :param regexp: Use regular expression in name
+
+    :return: A list of config having edits or None
+    """
+    cnfs = configs_by_name(fwcnfs, name, regexp=regexp)
+    if cnfs:
         # It should have an item only in most cases.
-        return res[0] if only_first else res
+        return cnfs[0]
 
     return None
 
@@ -134,13 +221,13 @@ def edits_by_name(fwcnfs, name, regexp=False):
     :param name: Name of the configuration has edits
     :param regexp: Use regular expression in name
 
-    :return: A list of config edits or None
+    :return: A list of config edits or []
     """
     cnf = config_by_name(fwcnfs, name, regexp=regexp)
     if cnf:
-        return cnf.get("edits", None)
+        return cnf.get("edits", [])
 
-    return None
+    return []
 
 
 def hostname_from_configs(fwcnfs):
@@ -239,27 +326,27 @@ def parse_show_config_and_dump(inpath, outpath, cnames=CNF_NAMES):
     if hostname:  # It should have this in most cases.
         outdir = os.path.join(os.path.dirname(outpath), hostname)
 
+        vdoms = list(vdom_names_itr(cnfs)) or ["root"]
         anyconfig.dump(dict(timestamp=timestamp(), hostname=hostname,
-                            origina_data=inpath),
+                            vdoms=vdoms, origina_data=inpath),
                        os.path.join(outdir, METADATA_FILENAME))
 
-        for cname in cnames:
-            for name in resolve_config_name(cnfs, cname):
-                cnf = edits_by_name(cnfs, name)
-                if cnf is None:  # It should have edits but configs.
-                    cnf = config_by_name(cnfs, name)
+        for name in cnames:
+            cnf = edits_by_name(cnfs, name)
+            if cnf is None:  # It should have edits but configs.
+                cnf = config_by_name(cnfs, name)
 
-                if cnf:
-                    opath = os.path.join(outdir, config_filename(name))
-                    anyconfig.dump(cnf, opath)
+            if cnf:
+                opath = os.path.join(outdir, config_filename(name))
+                anyconfig.dump(cnf, opath)
 
-    for grp in CNF_GRPS:
-        g_outpath = group_config_path(outpath, grp)
-        ensure_dir_exists(g_outpath)
+        for grp in CNF_GRPS:
+            g_outpath = os.path.join(outdir, grp + ".json")
+            ensure_dir_exists(g_outpath)
 
-        g_cnfs = make_group_configs(data, grp)
-        if g_cnfs:
-            anyconfig.dump(g_cnfs, g_outpath)
+            g_cnfs = make_group_configs(data, grp)
+            if g_cnfs:
+                anyconfig.dump(g_cnfs, g_outpath)
 
     return data
 
@@ -359,6 +446,10 @@ def firewall_networks_from_configs(fwcnfs, max_prefix=NET_MAX_PREFIX):
 
     :return: A list of network addresses (IPv*Network objects)
     """
+    edits = edits_by_name(fwcnfs, "firewall address")
+    if not edits:
+        raise ValueError(hostname_from_configs(fwcnfs))
+
     for edit in edits_by_name(fwcnfs, "firewall address"):
         if "subnet" not in edit:
             continue  # It is not subnet and may be iprange, etc.
