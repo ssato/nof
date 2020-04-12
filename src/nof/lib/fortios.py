@@ -104,20 +104,6 @@ def configs_by_name_0(cnfs, name, regexp=False):
     return res
 
 
-def vdom_names_itr(cnfs):
-    """
-    :param cnfs: A list of fortios config objects, [{"config": ...}]
-    :param list_names: List vdoms with names
-
-    :return: True if vdoms are found in given configurations
-    """
-    for vcnf in configs_by_name_0(cnfs, "vdom"):
-        if "edits" in vcnf:
-            if all(e for e in vcnf["edits"] if "configs" not in e):
-                for vdom in vcnf["edits"]:
-                    yield vdom["edit"]  # It's the vdom name.
-
-
 def has_vdom(cnfs):
     """
     :param cnfs: A list of fortios config objects, [{"config": ...}]
@@ -287,6 +273,20 @@ def timestamp():
     """Generate timestamp string.
     """
     return datetime.datetime.now().strftime("%F %T")
+
+
+def vdom_names_itr(cnfs):
+    """
+    :param cnfs: A list of fortios config objects, [{"config": ...}]
+    :param list_names: List vdoms with names
+
+    :return: True if vdoms are found in given configurations
+    """
+    for vcnf in configs_by_name_0(cnfs, "vdom"):
+        if "edits" in vcnf:
+            if all(e for e in vcnf["edits"] if "configs" not in e):
+                for vdom in vcnf["edits"]:
+                    yield vdom["edit"]  # It's the vdom name.
 
 
 def parse_show_config_and_dump(inpath, outpath, cnames=CNF_NAMES):
