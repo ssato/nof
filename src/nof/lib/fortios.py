@@ -17,6 +17,7 @@ import itertools
 import logging
 import os.path
 import re
+import uuid
 
 import anyconfig
 
@@ -276,7 +277,7 @@ def parse_show_config_and_dump(inpath, outpath, cnames=CNF_NAMES):
         hostname = hostname_from_configs(fwcnfs)
     except ValueError as exc:
         LOG.warning("%r: %s\nCould not resovle hostname", exc, inpath)
-        hostname = False
+        hostname = "unknown-{!s}".format(uuid.uuid4())
 
     if hostname:  # It should have this in most cases.
         outdir = os.path.join(os.path.dirname(outpath), hostname)
