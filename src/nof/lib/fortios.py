@@ -272,15 +272,6 @@ def parse_show_config(filepath):
     return None
 
 
-def group_config_path(filepath, group):
-    """
-    Compute the path of the group config file.
-
-    :param filepath: (JSON) file path contains parsed results
-    """
-    return os.path.join(os.path.dirname(filepath), group + ".json")
-
-
 def config_filename(name, ext="json"):
     """
     >>> config_filename("system global")
@@ -369,7 +360,7 @@ def load_configs(filepath, group=None):
     """
     if group is not None:
         assert_group(group)
-        filepath = group_config_path(filepath, group)
+        filepath = os.path.join(os.path.dirname(filepath), group + ".json")
 
     try:
         cnf = anyconfig.load(filepath)
