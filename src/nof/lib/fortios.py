@@ -12,12 +12,12 @@ from __future__ import absolute_import
 
 import collections.abc
 import datetime
+import hashlib
 import ipaddress
 import itertools
 import logging
 import os.path
 import re
-import uuid
 
 import anyconfig
 
@@ -33,6 +33,7 @@ CNF_NAMES = ("system.*",
              "firewall policy")
 
 METADATA_FILENAME = "metadata.json"
+ALL_FILENAME = "all.json"
 
 LOG = logging.getLogger(__name__)
 
@@ -251,6 +252,20 @@ def list_vdom_names(cnfs):
     return nss[0]
 
 
+def checksum(filepath, hash_fn=hashlib.md5):
+    """
+    Compute the checksum of given file, `filepath`
+    """
+    return hash_fn(open(filepath).read().encode("utf-8")).hexdigest()
+
+
+def unknown_hostname(inpath):
+    """
+    Compute the hostname using checksum of `inpath`
+    """
+    return "unknown-{}".format(checksum(inpath))
+
+
 def parse_show_config_and_dump(inpath, outpath, cnames=CNF_NAMES):
     """
     Similiar to the above :func:`parse_show_config` but save results as JSON
@@ -277,7 +292,7 @@ def parse_show_config_and_dump(inpath, outpath, cnames=CNF_NAMES):
         hostname = hostname_from_configs(fwcnfs)
     except ValueError as exc:
         LOG.warning("%r: %s\nCould not resovle hostname", exc, inpath)
-        hostname = "unknown-{!s}".format(uuid.uuid4())
+        hostname = "unknown-{!s}".format(checksum(inpath))
 
     if hostname:  # It should have this in most cases.
         outdir = os.path.join(os.path.dirname(outpath), hostname)
@@ -285,6 +300,7 @@ def parse_show_config_and_dump(inpath, outpath, cnames=CNF_NAMES):
         anyconfig.dump(dict(timestamp=timestamp(), hostname=hostname,
                             vdoms=vdoms, origina_data=inpath),
                        os.path.join(outdir, METADATA_FILENAME))
+        anyconfig.dump(data, os.path.join(outdir, ALL_FILENAME))
 
         for name in cnames:
             xcnfs = configs_by_name(fwcnfs, name)
