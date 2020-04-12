@@ -105,7 +105,7 @@ def path_finder(filename):
                                  summary=SUMMARIES["finder"])
 
 
-@APP.route("/config", methods=["GET"])
+@APP.route("/config", methods=["GET", "POST"])
 def config_index():
     """Top page for config uploads.
     """
@@ -114,19 +114,11 @@ def config_index():
              for fn in fns] for c, fns in cfns]
 
     flinks = itertools.chain(*flss)
-    ulink = flask.url_for(".config_upload")
 
-    return flask.render_template("config_index.html", flinks=flinks,
-                                 ulink=ulink)
-
-
-@APP.route("/config/upload", methods=["GET", "POST"])
-def config_upload():
-    """Upload configuration page.
-    """
     form = ConfigUploadForm()
     filename = None
-    octxs = dict(form=form)
+    msg = ""
+    octxs = dict(form=form, flinks=flinks)
 
     if form.validate_on_submit():
         cnf_data = form.upload.data
@@ -142,16 +134,16 @@ def config_upload():
 
         try:
             parse_config_and_save(filename, cnf_type)
+            msg = u"File was successfully uploaded and processed."
         except (IOError, OSError, ValueError, RuntimeError) as exc:
             flask.flash(u"Failed to convert the data uploaded! "
                         u"Please try again with other valid data files."
                         u"The error was: " + str(exc))
-            return flask.render_template("config_upload.html", **octxs)
 
-        flask.flash(u"File was successfully uploaded and processed.")
-        return flask.redirect(flask.url_for(".config_index"))
+        return flask.render_template("config_index.html", msg=msg,
+                                     filename=filename, **octxs)
 
-    return flask.render_template("config_upload.html", filename=filename,
-                                 **octxs)
+    return flask.render_template("config_index.html", msg=msg,
+                                 filename=filename, **octxs)
 
 # vim:sw=4:ts=4:et:

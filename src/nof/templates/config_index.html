@@ -1,7 +1,7 @@
 {% extends "base.html" -%}
 
 {% block page_content -%}
-<div>Index</div>
+<div>Config Index</div>
 <ul id="config_files">
 {%  for fname, link in flinks %}
 <li>
@@ -9,9 +9,10 @@
   <div><a href="{{ link }}">Parsed Results (RAW Data)</a></div>
 </li>
 {%  else %}
-<li>No data. Please go to <a href="{{ ulink }}">Upload page</a>.</li>
+<li>No data. Please upload config files from the form below.</li>
 {%  endfor %}
 </ul>
+<div class="pb-5">{{ wtf.quick_form(form) }}</div>
 {% endblock %}
 {# vim:sw=2:ts=2:et:
 -#}
