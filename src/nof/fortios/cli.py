@@ -23,21 +23,27 @@ LOG = logging.getLogger(__name__)
 
 
 @CLI.command("parse", with_appcontext=False)
-@click.argument("config_path", type=click.Path(exists=True))
-@click.argument("output", type=click.Path())
-def parse(config_path, output):
+@click.argument("inpaths", type=click.Path(exists=True), nargs=-1)
+@click.option("-O", "--outdir", type=click.Path(), help="Output dir")
+def parse(inpaths, outdir=None):
     """
-    Parse input (fortios 'show' or 'show full-configuration' outputs) and dump
-    parsed results into output dir.
+    Parse inputs (fortios 'show' or 'show full-configuration' outputs) and dump
+    parsed results under dir, `outdir`.
 
-    :param input: Input file path
-    :param output: Output file path
+    :param inpaths: Input file paths
+    :param outdir: Output directory
     """
-    outdir = os.path.dirname(output)
-    if not os.path.exists(outdir):
-        os.makedirs(outdir)
+    for ipath in inpaths:
+        if not outdir:
+            outdir = os.path.dirname(ipath)
 
-    fortios.parse_show_config_and_dump(config_path, output)
+        (bname, ext) = os.path.splitext(os.path.basename(ipath))
+        if ext == ".json":
+            LOG.warning("Input and output look same: %s, skip it", ipath)
+            continue
+
+        opath = os.path.join(outdir, bname + ".json")
+        fortios.parse_show_config_and_dump(ipath, opath)
 
 
 @CLI.command("gen_network", with_appcontext=False)
