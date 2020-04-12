@@ -74,6 +74,9 @@ def make_group_configs(cnfs, group=None):
 def list_configs_from_config_data(cnf, filepath=None):
     """
     :param cnf: Config data loaded or parsed log.
+    :param filepath: File path gives config data `cnf`
+    :param vdom: VDom name or regexp pattern
+
     :raises: ValueError, TypeError
     """
     if not cnf:
