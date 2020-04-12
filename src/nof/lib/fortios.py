@@ -71,7 +71,7 @@ def make_group_configs(cnfs, group=None):
     return fwcs
 
 
-def list_configs_from_config_data(cnf, filepath=None):
+def list_configs_from_config_data_0(cnf, filepath=None):
     """
     :param cnf: Config data loaded or parsed log.
     :param filepath: File path gives config data `cnf`
@@ -310,7 +310,7 @@ def parse_show_config_and_dump(inpath, outpath, cnames=CNF_NAMES):
     ensure_dir_exists(outpath)
     anyconfig.dump(data, outpath)
 
-    cnfs = list_configs_from_config_data(data, filepath=inpath)
+    cnfs = list_configs_from_config_data_0(data, filepath=inpath)
     try:
         hostname = hostname_from_configs(cnfs)
     except ValueError as exc:
@@ -367,7 +367,7 @@ def load_configs(filepath, group=None):
 
     try:
         cnf = anyconfig.load(filepath)
-        return list_configs_from_config_data(cnf, filepath)
+        return list_configs_from_config_data_0(cnf, filepath)
 
     except (IOError, OSError, ValueError) as exc:
         raise ValueError("{!r}: Something goes wrong with {}. "
