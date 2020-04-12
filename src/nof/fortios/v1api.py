@@ -24,17 +24,15 @@ def get_group_config_file(group, filename):
     :param group: Configuration group name, see ..lib.fortios.CNF_GRPS
     :param filename: Original configuration filename uploaded
     """
-    try:
-        fortios.assert_group(group)
-    except ValueError as exc:
-        return flask.jsonify(dict(error=dict(type="InvalidGroup",
-                                             message=str(exc)))), 400
-
     ctype = "fortios"
     filepath = utils.processed_filepath(filename, ctype)
     g_path = fortios.group_config_path(filepath, group)
 
-    return flask.send_from_directory(os.path.dirname(g_path),
-                                     os.path.basename(g_path))
+    try:
+        return flask.send_from_directory(os.path.dirname(g_path),
+                                         os.path.basename(g_path))
+    except ValueError as exc:
+        return flask.jsonify(dict(error=dict(type="InvalidOrMissingGroup",
+                                             message=str(exc)))), 400
 
 # vim:sw=4:ts=4:et:

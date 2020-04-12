@@ -41,8 +41,7 @@ class TT_10_Simple_Function_TestCases(unittest.TestCase):
 
     def test_50_hostname_from_configs(self):
         hostname = "nof-test-1"
-        css = [[dict(config="system global", hostname=hostname)],
-               [dict(config="global", hostname=hostname)]]
+        css = [[dict(config="system global", hostname=hostname)]]
         for cnfs in css:
             self.assertEqual(TT.hostname_from_configs(cnfs), hostname)
 
