@@ -39,6 +39,7 @@ def index():
     config_upload_url = flask.url_for("app.config_index")
 
     return flask.render_template("fortios_index.html",
+                                 summary="Fortios Nodes Index",
                                  hosts_with_filenames=h_cnfs,
                                  config_upload_url=config_upload_url)
 
