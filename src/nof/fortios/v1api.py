@@ -29,10 +29,7 @@ def index():
     """
     Get hosts with group config filenames
     """
-    hosts = [dict(hostname=h, filenames=utils.list_host_configs(h))
-             for h in utils.list_hostnames()]
-
-    return flask.jsonify(hosts)
+    return flask.jsonify(utils.list_hosts_with_config_filenames())
 
 
 @API.route("/<string:hostname>/<path:filename>", methods=["GET"])
