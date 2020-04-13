@@ -15,6 +15,18 @@ from .globals import CTYPE
 
 CONF_EXT = "json"
 
+CONF_DEFAULTS = """\
+all.json
+metadata.json
+system_interface.json
+firewall_address.json
+firewall_addrgrp.json
+firewall_policy.json
+firewall_service_category.json
+firewall_service_custom.json
+firewall_service_group.json
+""".split()
+
 
 def uploaddir():
     """
@@ -54,12 +66,14 @@ def get_group_config_path(hostname, filename):
     return os.path.join(host_configs_dir(hostname), filename)
 
 
-def list_host_configs(hostname, ext=CONF_EXT):
+def list_host_configs(hostname, ext=CONF_EXT, includes=CONF_DEFAULTS):
     """
     List host's (group) config files
     """
-    fitr = glob.glob(os.path.join(host_configs_dir(hostname), '*' + ext))
-    return sorted(werkzeug.utils.secure_filename(os.path.basename(f))
-                  for f in fitr)
+    pitr = glob.glob(os.path.join(host_configs_dir(hostname), "*." + ext))
+    if includes:
+        pitr = (p for p in pitr if os.path.basename(p) in includes)
+
+    return sorted(os.path.basename(f) for f in pitr)
 
 # vim:sw=4:ts=4:et:
