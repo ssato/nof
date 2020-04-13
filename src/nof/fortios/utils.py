@@ -76,4 +76,15 @@ def list_host_configs(hostname, ext=CONF_EXT, includes=CONF_DEFAULTS):
 
     return sorted(os.path.basename(f) for f in pitr)
 
+
+def list_hosts_with_config_filenames(includes=CONF_DEFAULTS):
+    """
+    :return:
+        A list of hostnames of fortigate nodes have parsed configuration files
+        in <uploaddir>/<hostname>/ on the server, with its config files.
+    """
+    return [dict(hostname=h,
+                 filenames=list_host_configs(h, includes=includes))
+            for h in list_hostnames()]
+
 # vim:sw=4:ts=4:et:
