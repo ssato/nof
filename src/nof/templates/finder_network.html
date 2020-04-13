@@ -1,14 +1,17 @@
 {% extends "finder.html" -%}
 
 {% block main_resutls -%}
-    <div class="row m-5 p-5 node-paths-box" id="node-networks">
-      {%- if networks -%}
+    <div class="row m-5 p-5 node-paths-box" id="node-nets_or_ipsets">
+      {%- if nets_or_ipsets -%}
       <ul>
-      {%-   for net in networks %}
-        <li>ID: #{{ loop.index }}
-          <div class="row path-node node-{{ net.type }}">
-            <span class="text-primary">#{{ net.id }}: {{ net.name }}</span>
-            <span class="text-secondary">{{ net.addr }}</span>
+      {%-   for ni in nets_or_ipsets %}
+        <li>ID: #{{ loop.index }}:
+          <div class="row path-node node-{{ ni.type }}">
+            <span class="text-primary">#{{ ni.id }}: {{ ni.name }}</span>
+            <ul>{% for addr in ni.addrs -%}
+              <li><span class="text-secondary">{{ addr }}</span>
+              {% endfor -%}
+            </ul>
           </div>
         </li>
       {%-   endfor %}

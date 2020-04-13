@@ -1,6 +1,6 @@
 #
 # Copyright (C) 2020 Satoru SATOH <ssato@redhat.com>.
-# License: MIT
+# SPDX-License-Identifier: MIT
 #
 r"""Parse fortios configuration
 
@@ -10,216 +10,182 @@ r"""Parse fortios configuration
 """
 from __future__ import absolute_import
 
-import collections
+import collections.abc
+import datetime
+import hashlib
+import ipaddress
 import itertools
+import logging
+import os.path
 import re
 
+import anyconfig
 
-EMPTY_RE = re.compile(r"^\s+$")
-COMMENT_RE = re.compile(r"^#(.*)$")
-
-# Examples:
-# - 'config firewall address'
-# - '       config ftgd-wf'
-# - '            config filters'
-CONFIG_START_RE = re.compile(r"^(\s*)"
-                             r"config\s+"
-                             r'(?:([^"\s]+)|"([^"\s]+)")' r"(?# word )"
-                             r"(?:\s+"
-                             r'(?:([^"\s]+)|"([^"\s]+)")'
-                             r")*$")
-# Examples:
-# - '     edit "fortinet"'
-# - '            edit 1'
-EDIT_START_RE = re.compile(r"^(\s+)"
-                           r"edit\s+"
-                           r'(?:([^"\s]+)|"([^"\s]+)")'
-                           r"$")
-SET_OR_UNSET_LINE_RE = re.compile(r"^\s+"
-                                  r"(set|unset)\s+"
-                                  r'(?:([^"\s]+)|"([^"\s]+)")' r"(?# key )"
-                                  r"(?:\s+"
-                                  r"(.+)"
-                                  r")?$")
-SET_VALUE_RE = re.compile(r'(?:([^"\s]+)|"([^"\s]+)")\s*')
-
-(ST_IN_CONFIG, ST_IN_EDIT, ST_OTHER) = list(range(3))
+from .utils import ensure_dir_exists
 
 
-def is_not_empty_nor_white_spaces(astr):
+CNF_NAMES = ("system.*",
+             "firewall service category",
+             "firewall service group",
+             "firewall service custom",
+             "firewall addrgrp",
+             "firewall address",
+             "firewall policy")
+
+METADATA_FILENAME = "metadata.json"
+ALL_FILENAME = "all.json"
+
+LOG = logging.getLogger(__name__)
+
+NET_MAX_PREFIX = 24
+
+
+def list_configs_from_config_data_0(cnf, filepath=None):
     """
-    True if given string is not empty or does not consists of white spaces.
+    :param cnf: Config data loaded or parsed log.
+    :param filepath: File path gives config data `cnf`
+    :param vdom: VDom name or regexp pattern
+
+    :raises: ValueError, TypeError
     """
-    return astr and astr.strip()
+    if not cnf:
+        raise ValueError("No expected data was found in {}".format(filepath))
+
+    if not isinstance(cnf, collections.abc.Mapping):
+        raise TypeError("Invalid typed data was found in {}".format(filepath))
+
+    if "configs" not in cnf:
+        raise ValueError("Configs were not found in {}".format(filepath))
+
+    return cnf["configs"]
 
 
-def list_matches(matches, cond=None):
+def has_vdom(cnfs):
     """
-    :param matches: A list of matched strings or None
-    :return: A list of matched strings only
+    :param cnfs: A list of fortios config objects, [{"config": ...}]
+    :return: True if vdoms are found in given configurations
     """
-    if cond is None:
-        cond = is_not_empty_nor_white_spaces
-
-    return [m for m in matches if cond(m)]
+    return any(c for c in cnfs if c.get("config") == "vdom")
 
 
-def process_config_or_edit_line(matched):
+def list_configs_from_configs_data(cnfs, vdom=None):
     """
-    :param matched: :class:`re.Match` object holding the config line info
+    Patterns:
 
-    :raises: ValueError
-    :return: A tuple of (indent_str, config_name_str)
+    - single vdom (root) only:
+
+      [ ... <configs to retun> ...]
+
+    - with multi vdoms:
+
+      - [{"config": "global",
+          "configs": [ ... <configs to retun> ...]
+            ...
+
+      - [{"config": "vdom",
+          "edits": [
+            {"edit": "root",
+             "configs": [ ... <configs to retun> ...]
+                ...
+
+    :param cnfs: Configs data
+    :param vdom: VDom name or regexp pattern
     """
-    matches = matched.groups()
-    if len(matches) < 2:
-        msg = "line: {}, matches: {}".format(matched.string,
-                                             ", ".join(matches))
-        raise ValueError(msg)
+    if not has_vdom(cnfs):
+        return cnfs  # Just return `cnfs` as it is for single VDom cases
 
-    return (matches[0],
-            ' '.join(list_matches(matches[1:])))  # TBD: What to return?
+    # {"configs": [{"config": "global", "configs": [...]}, ...]}
+    gcnfs = [c["configs"] for c in cnfs
+             if c.get("config") == "global" and "configs" in c]
+    if not gcnfs or len(gcnfs) > 1:  # It should not happen.
+        raise ValueError("No or corrupt global configs were found")
+    gcnfs = gcnfs[0]
+
+    css = (  # (<vdom_name>, <vdom_configs>)
+        (c["edits"][0]["edit"], c["edits"][0]["configs"]) for c in cnfs
+        if c.get("edits") and c["edits"][0].get("configs")
+    )
+
+    if vdom is None or '*' in vdom:
+        vdom = re.compile(r".*")
+
+    if isinstance(vdom, re.Pattern):  # regexp pattern.
+        return gcnfs + list(itertools.chain.from_iterable(
+            cs for v, cs in css if vdom.match(v)
+        ))
+
+    return gcnfs + list(itertools.chain.from_iterable(
+        cs for v, cs in css if v == vdom
+    ))
 
 
-def process_set_or_unset_line(matched):
+def configs_by_name(cnfs, name_or_re):
     """
-    :param matched: :class:`re.Match` object holding the '*set' line info
+    :param cnfs: A list of fortios config objects, [{"config": ...}]
+    :param name_or_re: Name of the configuration or re.Pattern object to match
 
-    :raises: ValueError
-    :return: A tuple of (name, type, *args)
+    :return: A list of configs or [] (not found)
     """
-    matches = [m for m in matched.groups() if m is not None]
-    if len(matches) < 2:
-        msg = "line: {}, matches: {}".format(matched.string,
-                                             ", ".join(matches))
-        raise ValueError(msg)
+    if "*" in name_or_re:
+        name_or_re = re.compile(name_or_re)
 
-    if len(matches) == 2:  # ex. unset ssd-trim-weekday
-        return dict(type=matches[0], name=matches[1])
+    if isinstance(name_or_re, re.Pattern):
+        res = [c for c in cnfs if name_or_re.match(c.get("config", ""))]
+    else:
+        res = [c for c in cnfs if c.get("config") == name_or_re]
 
-    vss = SET_VALUE_RE.findall(matches[2])
-    values = [m for m in itertools.chain.from_iterable(vss) if m]
-
-    return dict(type=matches[0], name=matches[1], values=values)
+    return res
 
 
-(NT_CONFIG, NT_EDIT) = ("config", "edit")
-
-
-def make_end_re(indent, _type=None):
+def config_by_name(fwcnfs, name_or_re):
     """
-    Make a regex object to match for 'config' or 'edit' section ends
+    .. note::
+       Even if there are more than one matched results were found, it returns
+       the first item only.
+
+    :param fwcnfs: A list of fortios config objects
+    :param name_or_re: Name of the configuration or re.Pattern object to match
+
+    :return: A list of config or None
     """
-    end = "next$" if _type == NT_EDIT else "end$"
-    return re.compile(r"^" + indent + end)
+    cnfs = configs_by_name(fwcnfs, name_or_re)
+    if cnfs:
+        # It should have an item only in most cases.
+        return cnfs[0]
+
+    return None
 
 
-def make_Node(matched, id_gen, _type=None):
+def edits_by_config_name(fwcnfs, name_or_re):
     """
-    :param matched: :class:`re.Match` object holding the config line info
-    :param id_gen: Any callable to generate unique ID of this node object
-    :param _type: Node type
+    :param fwcnfs: A list of fortios config objects
+    :param name_or_re: Name of the configuration or re.Pattern object to match
 
-    :return: A collections.namedtuple object has a config or edit info
+    :return: A list of edits or []
     """
-    if _type is None:
-        _type = NT_CONFIG
+    ess = (c["edits"] for c in configs_by_name(fwcnfs, name_or_re)
+           if c.get("edits"))
 
-    (indent, name) = process_config_or_edit_line(matched)
-    end_re = make_end_re(indent, _type)
-
-    Node = collections.namedtuple(_type.title(),
-                                  ("name", "id", "type", "end_re", "children"))
-    return Node(name=name, id=id_gen(), type=_type, end_re=end_re, children=[])
+    return list(itertools.chain.from_iterable(ess))
 
 
-def Node_to_dict(node):
-    """Convert a Node namedtuple object to a dict.
+def hostname_from_configs(fwcnfs):
     """
-    return dict(name=node.name, _id=node.id, type=node.type,
-                children=node.children)
+    Detect hostname of the fortigate node from its '[system ]global'
+    configuration.
 
-
-def parse_show_config_itr(lines):
+    :param fwcnfs: A list of fortios config objects
+    :raises:
+        ValueError if given data does not contain global configuration to find
+        hostname
+    :return: hostname str or None (if hostname was not found)
     """
-    Parse 'config xxxxx xxxx' .. 'end'.
+    sgcnf = config_by_name(fwcnfs, "system global")
 
-    :param lines: A list of lines in the configuration outputs
-    """
-    counter = itertools.count()
-    state = ST_OTHER
-    configs = []  # stack holds nested config objects
+    if not sgcnf:  # I believe that it never happen.
+        raise ValueError("No system global configs found. Is it correct data?")
 
-    def id_gen():
-        """ID generator"""
-        return next(counter)
-
-    for line in lines:
-        if EMPTY_RE.match(line):
-            continue
-
-        matched = COMMENT_RE.match(line)
-        if matched:
-            yield dict(type="comment", content=matched.groups()[0])  # TBD
-
-        if state == ST_OTHER:
-            matched = CONFIG_START_RE.match(line)
-            if matched:
-                state = ST_IN_CONFIG
-
-                config = make_Node(matched, id_gen)
-                configs.append(config)  # push config
-
-        elif state == ST_IN_CONFIG:
-            matched = EDIT_START_RE.match(line)
-            if matched:
-                state = ST_IN_EDIT
-
-                edit = make_Node(matched, id_gen, _type=NT_EDIT)
-                configs.append(edit)  # push edit
-                continue
-
-            assert configs[-1].type == NT_CONFIG, configs[-1]
-            matched = configs[-1].end_re.match(line)
-            if matched:
-                config = Node_to_dict(configs.pop())  # pop config
-
-                if not configs:  # It's a top level object.
-                    state = ST_OTHER
-                    yield config
-                else:
-                    state = ST_IN_EDIT
-                    configs[-1].children.append(config)
-
-                continue
-
-            matched = SET_OR_UNSET_LINE_RE.match(line)
-            if matched:
-                set_val = process_set_or_unset_line(matched)
-                configs[-1].children.append(set_val)
-
-        elif state == ST_IN_EDIT:
-            assert configs[-1].type == NT_EDIT, configs[-1]
-            matched = configs[-1].end_re.match(line)
-            if matched:
-                state = ST_IN_CONFIG
-
-                edit = Node_to_dict(configs.pop())
-                configs[-1].children.append(edit)
-                continue
-
-            matched = SET_OR_UNSET_LINE_RE.match(line)
-            if matched:
-                set_val = process_set_or_unset_line(matched)
-                configs[-1].children.append(set_val)
-                continue
-
-            matched = CONFIG_START_RE.match(line)
-            if matched:
-                state = ST_IN_CONFIG
-
-                config = make_Node(matched, id_gen)
-                configs.append(config)  # push config
+    return sgcnf.get("hostname", '').lower() or None
 
 
 def parse_show_config(filepath):
@@ -229,13 +195,331 @@ def parse_show_config(filepath):
     :param filepath:
         a str or :class:`pathlib.Path` object represents file path contains
         'show full-configuration` or any other 'show ...' outputs
+
+    :return:
+        A list of configs (mapping objects) or [] (no data or something went
+        wrong)
     :raises: IOError, OSError
     """
-    try:
-        lines = open(filepath).readlines()
-    except UnicodeDecodeError:
-        lines = open(filepath, encoding="shift-jis").readlines()
+    for enc in ("utf-8", "shift-jis"):
+        try:
+            with open(filepath, encoding=enc) as inp:
+                return anyconfig.load(inp, ac_parser="fortios")
+        except UnicodeDecodeError:
+            pass  # Try the next encoding...
 
-    return list(parse_show_config_itr(lines))
+    return None
+
+
+def config_filename(name, ext="json"):
+    """
+    >>> config_filename("system global")
+    'system_global.json'
+    >>> config_filename('system replacemsg webproxy "deny"')
+    'system_replacemsg_webproxy_deny.json'
+    >>> config_filename("system.*")
+    'system_.json'
+    """
+    cname = re.sub(r"[\"'\.]", '', re.sub("[- *]+", '_', name))
+    return "{}.{}".format(cname, ext)
+
+
+def timestamp():
+    """Generate timestamp string.
+    """
+    return datetime.datetime.now().strftime("%F %T")
+
+
+def list_vdom_names(cnfs):
+    """
+    Pattern:
+        {"config": "vdom",
+         "edits": [{"edit": "root"}, ...]}
+
+    :param cnfs: A list of fortios config objects, [{"config": ...}]
+    :param list_names: List vdoms with names
+
+    :return: A list of the name of VDoms
+    """
+    if not has_vdom(cnfs):
+        return ["root"]
+
+    nss = [[e["edit"] for e in c["edits"]] for c in cnfs
+           if c.get("config") == "vdom" and c.get("edits")]
+    if not nss:
+        raise ValueError("VDoms were not found. Is it correct data?")
+
+    return nss[0]
+
+
+def checksum(filepath, hash_fn=hashlib.md5):
+    """
+    Compute the checksum of given file, `filepath`
+    """
+    return hash_fn(open(filepath).read().encode("utf-8")).hexdigest()
+
+
+def unknown_hostname(inpath):
+    """
+    Compute the hostname using checksum of `inpath`
+    """
+    return "unknown-{}".format(checksum(inpath))
+
+
+def parse_show_config_and_dump(inpath, outpath, cnames=CNF_NAMES):
+    """
+    Similiar to the above :func:`parse_show_config` but save results as JSON
+    file (path: `outpath`).
+
+    :param inpath:
+        a str or :class:`pathlib.Path` object represents file path contains
+        'show full-configuration` or any other 'show ...' outputs
+    :param outpath: (JSON) file path to save parsed results
+
+    :return: A mapping object contains parsed results
+    :raises: IOError, OSError
+    """
+    data = parse_show_config(inpath)  # {"configs": [...]}
+
+    ensure_dir_exists(outpath)
+    anyconfig.dump(data, outpath)
+
+    cnfs = list_configs_from_config_data_0(data, filepath=inpath)
+    vdoms = list_vdom_names(cnfs)
+
+    fwcnfs = list_configs_from_configs_data(cnfs)
+    try:
+        hostname = hostname_from_configs(fwcnfs)
+    except ValueError as exc:
+        LOG.warning("%r: %s\nCould not resovle hostname", exc, inpath)
+        hostname = "unknown-{!s}".format(checksum(inpath))
+
+    if hostname:  # It should have this in most cases.
+        outdir = os.path.join(os.path.dirname(outpath), hostname)
+
+        anyconfig.dump(dict(timestamp=timestamp(), hostname=hostname,
+                            vdoms=vdoms, origina_data=inpath),
+                       os.path.join(outdir, METADATA_FILENAME))
+        anyconfig.dump(data, os.path.join(outdir, ALL_FILENAME))
+
+        for name in cnames:
+            xcnfs = configs_by_name(fwcnfs, name)
+
+            for xcnf in xcnfs:
+                fname = config_filename(xcnf["config"])
+                opath = os.path.join(outdir, fname)
+                odata = xcnf.get("edits", xcnf)  # only dump edits if avail.
+
+                anyconfig.dump(odata, opath)
+
+    return data
+
+
+def group_config_path(filepath, group):
+    """
+    Compute the path of the group config file.
+
+    :param filepath: (JSON) file path contains parsed results of group
+    """
+    return os.path.join(os.path.dirname(filepath), group + ".json")
+
+
+def load_configs(filepath, group=None):
+    """
+    :param filepath: (JSON) file path contains parsed results
+    :raises: ValueError, TypeError
+    """
+    if group is not None:
+        filepath = group_config_path(filepath, group)
+
+    if not os.path.exists(filepath):
+        raise IOError("File not found: {}".format(filepath))
+
+    try:
+        cnf = anyconfig.load(filepath)
+        return list_configs_from_config_data_0(cnf, filepath)
+
+    except (IOError, OSError, ValueError) as exc:
+        raise ValueError("{!r}: Something goes wrong with {}. "
+                         "Ignore it.".format(exc, filepath))
+
+
+def network_prefix(net_addr):
+    """
+    :param net_addr: IPv*Network object
+
+    >>> net = ipaddress.ip_network("192.168.122.0/24")
+    >>> network_prefix(net)
+    24
+    """
+    return int(net_addr.compressed.split('/')[-1])
+
+
+def summarize_networks(*net_addrs, prefix=None):
+    """
+    Degenerate and summarize given network addresses. For example,
+
+    >>> net1 = ipaddress.ip_network("192.168.122.0/25")
+    >>> net2 = ipaddress.ip_network("192.168.122.128/25")
+    >>> net3 = ipaddress.ip_network("10.1.0.0/16")
+    >>> summarize_networks(net1, net2)
+    IPv4Network('192.168.122.0/24')
+    >>> summarize_networks(net1, net2, prefix=16)
+    IPv4Network('192.168.0.0/16')
+    >>> summarize_networks(net1, net3)
+    >>> summarize_networks(net1, net3, prefix=1)
+    """
+    if prefix is None:
+        prefix_len = min(network_prefix(n) for n in net_addrs)
+
+        # try to find the smallest network.
+        for diff in range(prefix_len):
+            cnet = net_addrs[0].supernet(prefixlen_diff=diff)
+            if all(n.supernet(prefixlen_diff=diff) == cnet for n in net_addrs):
+                return cnet
+    else:
+        cnet = net_addrs[0].supernet(new_prefix=prefix)
+        if all(n.supernet(new_prefix=prefix) == cnet for n in net_addrs):
+            return cnet
+
+    return None
+
+
+def interface_ip_addrs_from_configs(fwcnfs):
+    """
+    :param fwcnfs: A list of fortios config objects
+    :return: A list of interface IP addresses (IPv*Address objects)
+    """
+    for iface in edits_by_config_name(fwcnfs, "system interface"):
+        if "ip" not in iface:
+            continue  # IP address is not assigned to this interface.
+
+        ip_netmask = iface["ip"]
+        try:
+            # Which is better? ipaddress.ip_address can validate the ip but ...
+            # ipaddress.ip_interface("{}/{}".format(*ip_netmask))
+            yield ipaddress.ip_address(ip_netmask[0])
+        except ValueError:  # Invalid IP address, etc.
+            LOG.warning("Found invalid IP address/mask: %s/%s", *ip_netmask)
+
+
+def firewall_networks_from_configs(fwcnfs, max_prefix=NET_MAX_PREFIX):
+    """
+    :param fwcnfs: A list of fortios config objects
+    :param max_prefix: Max prefix for networks
+
+    :return: A list of network addresses (IPv*Network objects)
+    """
+    if max_prefix is None or not max_prefix:
+        max_prefix = NET_MAX_PREFIX
+
+    edits = edits_by_config_name(fwcnfs, "firewall address")
+    if not edits:
+        raise ValueError(hostname_from_configs(fwcnfs))
+
+    for edit in edits_by_config_name(fwcnfs, "firewall address"):
+        if "subnet" not in edit:
+            continue  # It is not subnet and may be iprange, etc.
+
+        subnet = edit["subnet"]  # (network_or_host_ip_addr, netmask)
+        try:
+            maybe_net = ipaddress.ip_network("{}/{}".format(*subnet))
+            if maybe_net.num_addresses > 1:  # It's network.
+                # Replace it with its supernet (larger network segment).
+                if network_prefix(maybe_net) > max_prefix:
+                    maybe_net = maybe_net.supernet(new_prefix=max_prefix)
+
+                yield maybe_net
+        except ValueError:  # Invalid IP address, etc.
+            LOG.warning("Found invalid address/mask: %s/%s", *subnet)
+
+
+def collect_net_info_from_files(config_files, max_prefix=NET_MAX_PREFIX):
+    """
+    Load network related data from parsed fortigate config files.
+
+    :param config_files: A list of fortios' config files parsed
+    :param max_prefix: Max prefix for networks
+    """
+    cntr = itertools.count()
+    net_seen = set()      # {IP*Network}
+    net_id_seen = dict()  # {IP*Network: int}
+
+    for cpath in config_files:
+        try:
+            cnfs = load_configs(cpath)
+            fwcnfs = list_configs_from_configs_data(cnfs)
+        except (ValueError, TypeError) as exc:
+            LOG.warning(str(exc))
+            continue
+
+        node_id = next(cntr)
+
+        try:
+            name = hostname_from_configs(fwcnfs)
+        except ValueError as exc:
+            LOG.warning("%r: %s", exc, cpath)
+            continue
+
+        # interfaces
+        addrs = list(interface_ip_addrs_from_configs(fwcnfs))
+        if addrs:
+            # firewall node
+            yield dict(id=node_id, name=name, type="firewall",
+                       addrs=[str(a) for a in addrs])
+
+        # firewall address
+        for net in firewall_networks_from_configs(fwcnfs, max_prefix):
+            # network nodes
+            if net in net_seen:
+                net_id = net_id_seen[net]
+            else:
+                net_id = next(cntr)
+
+                net_seen.add(net)
+                net_id_seen[net] = net_id
+
+                yield dict(id=net_id, name=str(net), type="network",
+                           addrs=[str(net)])
+
+            # firewall <-> network link
+            yield [node_id, net_id]
+
+
+def make_networks_from_config_files(config_files, max_prefix=NET_MAX_PREFIX):
+    """
+    Load network related data from parsed fortigate config files.
+
+    :param config_files: A list of fortios' config files parsed
+    :param max_prefix: Max prefix for networks
+
+    :return: A mapping object, {nodes: [node], edges: [edge]}
+    """
+    nodes_and_edges = list(collect_net_info_from_files(config_files,
+                                                       max_prefix))
+    nodes = [x for x in nodes_and_edges
+             if isinstance(x, collections.abc.Mapping)]
+    edges = [x for x in nodes_and_edges
+             if isinstance(x, collections.abc.Sequence)]
+
+    return dict(nodes=nodes, edges=edges)
+
+
+def dump_networks_from_config_files(config_files, output=None,
+                                    max_prefix=NET_MAX_PREFIX):
+    """
+    Load network related data from parsed fortigate config files.
+
+    :param config_files: A list of fortios' config files parsed
+    :param output: Output file path
+    :param max_prefix: Max prefix for networks
+    """
+    nodes_links = make_networks_from_config_files(config_files,
+                                                  max_prefix=max_prefix)
+
+    if output is None:
+        output = os.path.join(os.path.dirname(config_files[0]), "output.yml")
+
+    anyconfig.dump(nodes_links, output)
 
 # vim:sw=4:ts=4:et:

@@ -1,0 +1,40 @@
+config log syslogd setting
+    set status enable
+    set server "192.168.122.1"
+    set reliable disable
+    set port 514
+    set csv disable
+    set facility local0
+    set source-ip "192.168.122.2"
+end
+config log syslogd2 setting
+    set status disable
+end
+config log syslogd3 setting
+    set status enable
+    set server "192.168.122.1"
+    set reliable disable
+    set port 514
+    set csv disable
+    set facility local0
+    set source-ip "192.168.122.2"
+end
+config log syslogd4 setting
+    set status enable
+    set server "192.168.122.1"
+    set reliable disable
+    set port 514
+    set csv disable
+    set facility local0
+    set source-ip "192.168.122.2"
+end
+config log webtrends setting
+    set status disable
+    set server ''
+end
+config log memory global-setting
+    set max-size 99999
+    set full-first-warning-threshold 90
+    set full-second-warning-threshold 90
+    set full-final-warning-threshold 90
+end

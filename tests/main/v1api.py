@@ -1,6 +1,6 @@
 #
 # Copyright (C) 2020 Satoru SATOH <ssato@redhat.com>.
-# License: MIT
+# SPDX-License-Identifier: MIT
 #
 # pylint: disable=missing-docstring, invalid-name
 import os.path
@@ -42,9 +42,8 @@ class V1_API_10_Simple_TestCase(C.BluePrintTestCaseWithWorkdir):
             path = _url_path("graph", filename)
             resp = self.client.get(path)
 
-            self.assertEqual(resp.status_code, 200,
-                             _err_msg(resp, "path: " + path,
-                                      "file: " + filepath_2))
+            self.assert200(resp, _err_msg(resp, "path: " + path,
+                                          "file: " + filepath_2))
             self.assertEqual(resp.data, open(filepath, 'rb').read())
 
     def test_20_get_or_upload_graph__post(self):
@@ -56,7 +55,7 @@ class V1_API_10_Simple_TestCase(C.BluePrintTestCaseWithWorkdir):
             path = _url_path("graph", filename)
             resp = self.client.post(path, data=data, headers=headers)
 
-            self.assertEqual(resp.status_code, 201, resp.data)
+            self.assertStatus(resp, 201, resp.data)
 
             outpath = nof.main.utils.processed_filepath(filename)
             outdata = anyconfig.load(outpath)
@@ -78,9 +77,8 @@ class V1_API_10_Simple_TestCase(C.BluePrintTestCaseWithWorkdir):
             path = _url_path("node_link", filename)
             resp = self.client.get(path)
 
-            self.assertEqual(resp.status_code, 200,
-                             _err_msg(resp, "path: " + path,
-                                      "outpath: " + outpath))
+            self.assert200(resp, _err_msg(resp, "path: " + path,
+                                          "outpath: " + outpath))
             self.assertEqual(resp.data, open(outpath, 'rb').read())
 
 
@@ -99,8 +97,7 @@ class V1_API_20_Network_TestCase(C.BluePrintTestCaseWithWorkdir):
         path = _url_path("networks", "by_addr", self.filename, ip)
         resp = self.client.get(path)
 
-        self.assertEqual(resp.status_code, 200,
-                         _err_msg(resp, "path: " + path, "ip: " + ip))
+        self.assert200(resp, _err_msg(resp, "path: " + path, "ip: " + ip))
         self.assertTrue(resp.data)
         data = anyconfig.loads(resp.data, ac_parser="json")
 
@@ -111,13 +108,12 @@ class V1_API_20_Network_TestCase(C.BluePrintTestCaseWithWorkdir):
         path = _url_path("networks", "by_addr", self.filename, ip)
         resp = self.client.get(path)
 
-        self.assertEqual(resp.status_code, 200,
-                         _err_msg(resp, "path: " + path, "ip: " + ip))
+        self.assert200(resp, _err_msg(resp, "path: " + path, "ip: " + ip))
         self.assertTrue(resp.data)
         data = anyconfig.loads(resp.data, ac_parser="json")
 
-        self.assertEqual(data[0]["addr"], "10.0.1.0/24", data[0])
-        self.assertEqual(data[1]["addr"], "10.0.0.0/8", data[1])
+        self.assertEqual(data[0]["addrs"][0], "10.0.1.0/24", data[0])
+        self.assertEqual(data[1]["addrs"][0], "10.0.0.0/8", data[1])
 
 
 class V1_API_30_Paths_TestCase(C.BluePrintTestCaseWithWorkdir):
@@ -141,9 +137,8 @@ class V1_API_30_Paths_TestCase(C.BluePrintTestCaseWithWorkdir):
             path = _url_path("node_link_paths", self.filename, src, dst)
             resp = self.client.get(path)
 
-            self.assertEqual(resp.status_code, 200,
-                             _err_msg(resp, "path: " + path,
-                                      "src: " + src, "dst: " + dst))
+            self.assert200(resp, _err_msg(resp, "path: " + path,
+                                          "src: " + src, "dst: " + dst))
             self.assertTrue(resp.data)
 
             try:
@@ -161,9 +156,8 @@ class V1_API_30_Paths_TestCase(C.BluePrintTestCaseWithWorkdir):
             path = _url_path("node_link_paths", self.filename, src, dst)
             resp = self.client.get(path)
 
-            self.assertEqual(resp.status_code, 200,
-                             _err_msg(resp, "path: " + path,
-                                      "src: " + src, "dst: " + dst))
+            self.assert200(resp, _err_msg(resp, "path: " + path,
+                                          "src: " + src, "dst: " + dst))
             self.assertTrue(resp.data)
 
             try:
@@ -175,7 +169,7 @@ class V1_API_30_Paths_TestCase(C.BluePrintTestCaseWithWorkdir):
 
             n_1 = "10.0.1.0/24"
             n_2 = "192.168.1.0/24"
-            addrs = set(x["addr"] for x in res)
+            addrs = set(x["addrs"][0] for x in res)
 
             self.assertTrue(n_1 in addrs, res)
             self.assertTrue(n_2 in addrs, res)

@@ -1,6 +1,6 @@
 #
 # Copyright (C) 2020 Satoru SATOH <ssato@redhat.com>.
-# License: MIT
+# SPDX-License-Identifier: MIT
 #
 # pylint: disable=missing-docstring, invalid-name
 import os.path
@@ -10,14 +10,11 @@ import nof.main.utils as TT
 from .. import common as C
 
 
-def _show_dict(dict):
-    return ", ".join("'{!s}': '{!s}'".format(*kv) for kv in dict.items())
+def _show_dict(dic):
+    return ", ".join("'{!s}': '{!s}'".format(*kv) for kv in dic.items())
 
 
 class TT_10_path_functions_TestCases(C.BluePrintTestCaseWithWorkdir):
-
-    def test_10_uploaddir(self):
-        self.assertEqual(TT.uploaddir(), self.workdir)
 
     def test_20_upload_filepath(self):
         filename = "foo.yml"
@@ -28,15 +25,20 @@ class TT_10_path_functions_TestCases(C.BluePrintTestCaseWithWorkdir):
         self.assertNotEqual(TT.upload_filepath(filename),
                             os.path.join(TT.uploaddir(), filename))
 
-    def test_30_processed_filename__wo_prefix(self):
+        filename = "foo.yml"
+        subdir = "bar"
+        self.assertEqual(TT.upload_filepath(filename, subdir),
+                         os.path.join(TT.uploaddir(), subdir, filename))
+
+    def test_30_processed_filename(self):
         filename = "a.yml"
         res = TT.processed_filename(filename)
         self.assertEqual(res, "a.json")
 
-    def test_32_processed_filename__w_prefix(self):
+    def test_32_processed_filename__w_ext(self):
         filename = "a.yml"
-        res = TT.processed_filename(filename, prefix="out_")
-        self.assertEqual(res, "out_a.json")
+        res = TT.processed_filename(filename, ext=".xml")
+        self.assertEqual(res, "a.xml")
 
 
 class TT_20_util_functions_TestCases(C.BluePrintTestCaseWithWorkdir):
@@ -78,31 +80,33 @@ class TT_20_util_functions_TestCases(C.BluePrintTestCaseWithWorkdir):
         n_1 = "10.0.1.0/24"
         n_2 = "192.168.1.0/24"
 
-        self.assertEqual(n_1, res_1[0][0]["addr"], repr(res_1))
-        self.assertEqual(n_2, res_2[0][-1]["addr"], repr(res_2[0][-1]["addr"]))
+        self.assertEqual(n_1, res_1[0][0]["addrs"][0], repr(res_1))
+        self.assertEqual(n_2, res_2[0][-1]["addrs"][0],
+                         repr(res_2[0][-1]["addrs"][0]))
 
     def test_30_list_filenames(self):
         for filepath in C.ok_yml_files():
             shutil.copy(filepath, TT.uploaddir())
 
         res = TT.list_filenames()
-        exp = sorted(os.path.basename(f) for f in C.ok_yml_files())
+        self.assertTrue(len(res) >= len(C.ok_yml_files()))
 
-        self.assertEqual(len(res), len(C.ok_yml_files()))
-        self.assertEqual(res, exp, res)
+        # exp = sorted(os.path.basename(f) for f in C.ok_yml_files())
+        # self.assertEqual(res, exp, res)
 
 
 class TT_30_parse_TestCases(C.BluePrintTestCaseWithWorkdir):
 
-    def test_10_parse_config_and_dump_json_file(self):
+    def test_10_parse_config_and_save(self):
         for ctype in ("fortios", ):
             for filepath in C.config_files("fortios"):
                 fname = os.path.basename(filepath)
-                outpath = TT.processed_filepath(fname, prefix=ctype + '_')
+                outpath = TT.processed_filepath(fname, ctype)
 
-                shutil.copy(filepath, TT.uploaddir())
-                TT.parse_config_and_dump_json_file(fname, ctype)
+                TT.utils.ensure_dir_exists(outpath)
+                shutil.copy(filepath, os.path.dirname(outpath))
 
+                TT.parse_config_and_save(fname, ctype)
                 self.assertTrue(os.path.exists(outpath))
 
 # vim:sw=4:ts=4:et:

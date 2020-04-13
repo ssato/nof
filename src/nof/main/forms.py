@@ -1,6 +1,6 @@
 """HTML Forms.
 
-License: MIT
+SPDX-License-Identifier: MIT
 
 References:
   - Flask-WTF: https://flask-wtf.readthedocs.org
@@ -18,6 +18,8 @@ from nof.globals import NODE_TYPES, CONFIG_TYPES
 
 NODE_TYPE_PAIRS = [(k, k.title()) for k in NODE_TYPES]
 CNF_TYPE_PAIRS = [(k, k.title()) for k in CONFIG_TYPES]
+
+CNF_VALID_EXTS = ("log", "txt")
 
 
 class UploadForm(flask_wtf.FlaskForm):
@@ -64,6 +66,7 @@ class ConfigUploadForm(flask_wtf.FlaskForm):
     """
     upload = flask_wtf.file.FileField(u"Config data", validators=[
         flask_wtf.file.FileRequired(),
+        flask_wtf.file.FileAllowed(CNF_VALID_EXTS, u"Log or txt files only!")
     ])
     ctype = wtforms.SelectField(u"Config Type", choices=CNF_TYPE_PAIRS,
                                 default=CONFIG_TYPES[0])

@@ -1,92 +1,66 @@
 #
 # Copyright (C) 2020 Satoru SATOH <ssato@redhat.com>.
-# License: MIT
+# SPDX-License-Identifier: MIT
 #
 # pylint: disable=missing-docstring, invalid-name
 import glob
 import os.path
 import unittest
 
-import anyconfig
-
 import nof.lib.fortios as TT
 from .. import common as C
 
 
-def _process(reg, proc_fn, line):
-    return proc_fn(reg.match(line))
+def _try_match_and_proc(line, reg, proc_fn):
+    matched = reg.match(line)
+    try:
+        return proc_fn(matched)
+    except AttributeError:
+        raise ValueError("Not match! line={}".format(line))
+
+
+def _result_files(workdir):
+    inputs = glob.glob(os.path.join(C.resdir(), "fortios", "*.txt"))
+    for inp_path in sorted(inputs):
+        exp_path = os.path.join(inp_path + ".exp", "ref.json")
+        out_path = os.path.join(workdir, os.path.basename(inp_path) + ".json")
+        yield (inp_path, out_path, exp_path)
 
 
 class TT_10_Simple_Function_TestCases(unittest.TestCase):
 
-    maxDiff = 10000
+    maxDiff = None
 
-    def test_10_list_matches(self):
-        # A pair of (line, expected_result)
-        les = ((TT.COMMENT_RE, "#global_vdom=1\n", ["global_vdom=1"]),
-               (TT.CONFIG_START_RE,
-                "config system global\n", ["system", "global"]),
-               (TT.CONFIG_START_RE,
-                "        config fp-anomaly-v4\n", ["fp-anomaly-v4"]),
-               (TT.EDIT_START_RE, "    edit 1\n", ["1"]),
-               (TT.EDIT_START_RE, '    edit "np6_0"\n', ["np6_0"]),
-               (TT.SET_OR_UNSET_LINE_RE,
-                "    set ssd-trim-min 60\n", ["set", "ssd-trim-min", "60"]),
-               (TT.SET_OR_UNSET_LINE_RE,
-                '        set service "HTTP" "PING" "TRACEROUTE"\n',
-                ["set", "service", '"HTTP" "PING" "TRACEROUTE"']),
-               (TT.SET_OR_UNSET_LINE_RE,
-                "    unset ssd-trim-weekday\n", ["unset", "ssd-trim-weekday"]),
-               (TT.SET_OR_UNSET_LINE_RE,
-                '    set vdom "root"\n', ["set", "vdom", '"root"']))
-
-        for reg, line, exp in les:
-            try:
-                matches = reg.match(line).groups()
-            except AttributeError as exc:
-                raise ValueError("{!s}: line={}, "
-                                 "reg={!r}".format(exc, line, exp))
-            self.assertEqual(TT.list_matches(matches), exp)
-
-    def test_20_process_config_or_edit_line(self):
-        res = _process(TT.CONFIG_START_RE, TT.process_config_or_edit_line,
-                       "config system interface\n")
-        self.assertEqual(res, ('', 'system interface'))
-
-        res = _process(TT.CONFIG_START_RE, TT.process_config_or_edit_line,
-                       "        config ipv6\n")
-        self.assertEqual(res, ('        ', 'ipv6'))
-
-    def test_30_process_set_or_unset_line(self):
-        res = _process(TT.SET_OR_UNSET_LINE_RE, TT.process_set_or_unset_line,
-                       "    set admin-port 80\n")
-        self.assertDictEqual(res, dict(type="set", name="admin-port",
-                                       values=["80"]))
-
-        res = _process(TT.SET_OR_UNSET_LINE_RE, TT.process_set_or_unset_line,
-                       "    unset ip6-allowaccess\n")
-        self.assertDictEqual(res, dict(type="unset", name="ip6-allowaccess"))
-
-        res = _process(TT.SET_OR_UNSET_LINE_RE, TT.process_set_or_unset_line,
-                       '    set admin-server-cert "Fortinet_Factory"\n')
-        self.assertDictEqual(res, dict(type="set", name="admin-server-cert",
-                                       values=["Fortinet_Factory"]))
-
-        res = _process(TT.SET_OR_UNSET_LINE_RE, TT.process_set_or_unset_line,
-                       '    set member "DNS" "HTTP" "HTTPS"\n')
-        self.assertDictEqual(res, dict(type="set", name="member",
-                                       values=["DNS", "HTTP", "HTTPS"]))
-
-    def test_90_parse_show_config__simple_config_set(self):
-        inputs = glob.glob(os.path.join(C.resdir(), "fortios", "*.txt"))
-        for inp_path in sorted(inputs):
-            exp_path = inp_path + ".exp.json"
+    def test_20_parse_show_config__simple_config_set(self):
+        for inp_path, _out_path, exp_path in _result_files("/tmp"):
+            self.assertTrue(os.path.exists(exp_path), exp_path)
+            exp = TT.anyconfig.load(exp_path)
 
             res = TT.parse_show_config(inp_path)
-            res_exp = anyconfig.load(exp_path)
+            self.assertEqual(res, exp)
 
-            self.assertEqual(len(res),  len(res_exp))
-            for cnf, exp in zip(res, res_exp):
-                self.assertDictEqual(cnf, exp, cnf)
+    def test_50_hostname_from_configs(self):
+        hostname = "nof-test-1"
+        css = [[dict(config="system global", hostname=hostname)]]
+        for cnfs in css:
+            self.assertEqual(TT.hostname_from_configs(cnfs), hostname)
+
+        with self.assertRaises(ValueError):
+            TT.hostname_from_configs([])
+
+        cnfs = [dict(config="system global")]
+        self.assertEqual(TT.hostname_from_configs(cnfs), None)
+
+
+class TT_20_Function_with_IO_TestCases(C.BluePrintTestCaseWithWorkdir):
+
+    def test_10_parse_show_config_and_dump__simple_config_set(self):
+        for inp_path, out_path, exp_path in _result_files(self.workdir):
+            res = TT.parse_show_config_and_dump(inp_path, out_path)
+
+            self.assertTrue(os.path.exists(exp_path))
+            res_exp = TT.anyconfig.load(exp_path)
+
+            self.assertEqual(res, res_exp, repr(res))
 
 # vim:sw=4:ts=4:et:

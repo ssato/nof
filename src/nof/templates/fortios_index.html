@@ -1,0 +1,56 @@
+{% extends "fortios_base.html" -%}
+
+{% block scripts %}
+{{ super() }}
+<script type="text/javascript">
+/*
+ * ref. https://www.w3schools.com/jquery/jquery_filters.asp
+ */
+$(document).ready(function(){
+  $("#search-form").on("keyup", function() {
+    var value = $(this).val().toLowerCase();
+    $("#fortigate-nodes-table tr").filter(function() {
+      $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+    });
+  });
+});
+</script>
+{% endblock %}
+
+{% block page_content -%}
+<div id="fortigate-nodes" class="row">
+  <div class="col-sm-8">
+    <form>
+      <div class="form-group">
+        <!-- <label for="search-form">Search</label> -->
+        <input type="text" id="search-form" placeholder="Search item..">
+      </div>
+    </form>
+  </div>
+  <div class="col-sm-8 table-responsive">
+    <table id="fortigate-nodes-table" class="table table-striped table-bordered table-sm">
+      <thead class="thead-dark">
+        <tr>
+          <th scope="col">Hostname</th>
+          <th scope="col">Config files</th>
+          <th scope="col">Firewall Policies</th>
+        </tr>
+      </thead>
+      {%  for hostname, host_url, filenames, policies_url in hosts_with_filenames %}
+      <tr>
+        <td><a href="{{ host_url }}">{{ hostname }}</a></td>
+        <td>{% for fn in filenames -%}
+            <a href="{{ url_for('fortios_api.get_host_config',
+                                hostname=hostname, filename=fn) }}">{{ fn }}</a>{{ ',' if not loop.last }}
+            {% endfor %}
+        </td>
+        <td><a href="{{ policies_url }}">{{ policies_url }}</a></td>
+      </tr>
+      {% endfor -%}
+    </table>
+  </div>
+</div>
+<div><a href="{{ config_upload_url }}">Upload page</a>.</li></div>
+{% endblock %}
+{# vim:sw=2:ts=2:et:
+-#}

@@ -5,21 +5,23 @@
 /*
  *
  * globals:
- * - networks :: {'id':, 'addr': <ip_addr>, 'label':, ...}
+ * - networks :: {'id':, 'addrs': [<ip_addr>], 'label':, ...}
  *
  */
 function render_node_link(data, width=700, height=700) {
+  console.log(network_addresses);
+  console.log(node_path_0_addrs);
   console.log(data); // {nodes, links}
 
   const radius = function (d) {
     if (d.type == "network") {
-      return 16;
+      return 7;
     }
     else if (d.type == "firewall" || d.type == "router" || d.type == "switch") {
-      return 10;
+      return 5;
     }
     else {
-      return 7;
+      return 4;
     }
   }
 
@@ -67,7 +69,7 @@ function render_node_link(data, width=700, height=700) {
     node_info.html("<div class='row text-primary'>#" + d.id + ": " + d.name + "</div>" +
                    "<ul class='row text-secondary'>" +
                    "  <li>type: " + d.type + "</li>" +
-                   "  <li>address: " + d.addr + "</li>" +
+                   "  <li>address: " + d.addrs.join(", ") + "</li>" +
                    "</ul>");
   };
 
@@ -76,13 +78,16 @@ function render_node_link(data, width=700, height=700) {
 
   const simulation = d3.forceSimulation(nodes)
       .force("link", d3.forceLink(links).id(d => d.id))
-      .force("charge", d3.forceManyBody()
-                         .strength(-50))
+      .force("charge", d3.forceManyBody() // ref. https://github.com/d3/d3-force#many-body
+                         .strength(-30)
+                         .distanceMax(300))
       .force("center", d3.forceCenter(width / 2, height / 2));
 
   const svg = d3.select("svg")
+                .classed("svg-container", true)
                 .attr("viewBox", "0 0 " + width + " " + height)
-                .attr("preserveAspectRatio", "xMidYMid meet");
+                .attr("preserveAspectRatio", "xMidYMid meet")
+                .attr('class', 'svg-content-responsive');
 
   const link = svg.append("g")
       .attr("stroke", "#999")
@@ -100,8 +105,8 @@ function render_node_link(data, width=700, height=700) {
     .join("circle")
       .attr("r", radius)
       .attr("class", function (d) {
-        if (network_addresses.includes(d.addr) ||
-            node_path_0_addrs.includes(d.addr)) {
+        if (network_addresses.some(addr => d.addrs.includes(addr)) ||
+            node_path_0_addrs.some(addr => d.addrs.includes(addr))) {
           return d.class + " found";
         } else {
           return d.class;

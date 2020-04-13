@@ -1,7 +1,8 @@
 {% extends "base.html" -%}
 
 {% block page_content -%}
-<div>Index</div>
+{% if msg | d(false) %}<div class="alert alert-primary" role="alert">{{ msg }}</div>{% endif %}
+<div>Networks</div>
 <ul id="graph_files">
 {%  for fname in filenames %}
 <li>
@@ -14,9 +15,10 @@
   <div><a href="/finder/paths/{{ fname }}">find paths by src and dst IP addresses</a></div>
 </li>
 {%  else %}
-<li>No data. Please go to <a href="/upload">Upload page</a>.</li>
+<li>No data. Please upload a network YAML data from the above form.</li>
 {%  endfor %}
 </ul>
+<div class="pb-5">{{ wtf.quick_form(form) }}</div>
 {% endblock %}
 {# vim:sw=2:ts=2:et:
 -#}

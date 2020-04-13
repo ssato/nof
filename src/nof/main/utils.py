@@ -1,6 +1,6 @@
 #
 # Copyright (C) 2020 Satoru SATOH <ssato@redhat.com>.
-# License: MIT
+# SPDX-License-Identifier: MIT
 #
 """Utility functions
 """
@@ -9,20 +9,20 @@ import glob
 import os.path
 import os
 
-import anyconfig
 import flask
 import werkzeug.utils
 
-from ..lib import finder, configparsers
-from ..globals import NODE_ANY, CONFIG_TYPES
+from ..lib import finder, configparsers, utils
+from ..globals import CONFIG_TYPES
 
 
 def uploaddir():
     """
+    .. seealso:: nof.utils.uploaddir
+
     :return: absolute path to the upload dir
     """
-    return os.getenv("NOF_UPLOADDIR",
-                     flask.current_app.config["UPLOADED_FILES_DEST"])
+    return flask.current_app.config["UPLOADED_FILES_DEST"]
 
 
 def list_filenames(pattern=None):
@@ -37,31 +37,43 @@ def list_filenames(pattern=None):
     return sorted(os.path.basename(f) for f in files)
 
 
-def upload_filepath(filename):
+def upload_filepath(filename, subdir=None):
     """
     :param filename: Uploaded file path
+    :param subdir: Sub dir to save file
     """
     filename = werkzeug.utils.secure_filename(filename)
-    return os.path.join(uploaddir(), filename)
+
+    if subdir is None:
+        return os.path.join(uploaddir(), filename)
+
+    return os.path.join(uploaddir(), subdir, filename)
 
 
 @functools.lru_cache(maxsize=None)
-def processed_filename(filename, prefix=None):
+def processed_filename(filename, ext=None):
+    """
+    :param filename: Processed file name
+    :param ext: processed file's extension
+    """
+    if ext is None:
+        ext = ".json"
+
+    basename = werkzeug.utils.secure_filename(filename)
+    return os.path.splitext(basename)[0] + ext
+
+
+def processed_filepath(filename, subdir=None, **kwargs):
     """
     :param filename: Processed file path
+    :param subdir: Sub dir to save file
     """
-    if prefix is None:
-        prefix = ''
+    pfname = processed_filename(filename, **kwargs)
 
-    basename = os.path.splitext(werkzeug.utils.secure_filename(filename))[0]
-    return "{}{}.json".format(prefix, basename)
+    if subdir is None:
+        return os.path.join(uploaddir(), pfname)
 
-
-def processed_filepath(filename, prefix=None):
-    """
-    :param filename: Processed file path
-    """
-    return os.path.join(uploaddir(), processed_filename(filename, prefix))
+    return os.path.join(uploaddir(), subdir, pfname)
 
 
 def generate_node_link_data_from_graph_data(filename):
@@ -89,7 +101,7 @@ def _load_graph_by_filename(filename):
     return finder.load(filepath, ac_parser="yaml")
 
 
-def find_networks_from_graph(filename, ip):
+def find_networks_or_ipsets_from_graph(filename, ip):
     """
     :param filename: Original YAML file name
     :param ip: A string represents an IP address
@@ -98,7 +110,7 @@ def find_networks_from_graph(filename, ip):
     :raises: ValueError if given `ip` is not an IP address string
     """
     graph = _load_graph_by_filename(filename)
-    networks = finder.find_networks_by_addr(graph, ip)
+    networks = finder.find_networks_or_ipsets_by_addr(graph, ip)
 
     return networks
 
@@ -112,28 +124,32 @@ def find_paths_from_graph(filename, src_ip, dst_ip, node_type=None):
     :return: A list of lists of nodes in the found paths
     :raises: ValueError if given src and/or dst is not an IP address string
     """
-    if node_type is None:
-        node_type = NODE_ANY
-
     graph = _load_graph_by_filename(filename)
-
     return finder.find_paths(graph, src_ip, dst_ip, node_type=node_type)
 
 
-def parse_config_and_dump_json_file(filename, ctype=None):
+def parse_config_and_save(filename, ctype=None):
     """
     Parse fortios 'show full-configuration' output and dump parsed results as
     JSON file.
     """
-    filepath = upload_filepath(filename)
-
     if ctype is None:
         ctype = CONFIG_TYPES[0]  # default
 
-    parse_fn = configparsers.PARSERS[ctype]
-    cnf = parse_fn(filepath)
+    filepath = upload_filepath(filename, subdir=ctype)
+    utils.ensure_dir_exists(filepath)
 
-    outpath = processed_filepath(filename, prefix=ctype + '_')
-    anyconfig.dump(dict(configs=cnf), outpath)
+    parse_fn = configparsers.PARSERS[ctype]
+    outpath = processed_filepath(filename, subdir=ctype)
+    utils.ensure_dir_exists(outpath)
+
+    return parse_fn(filepath, outpath)
+
+
+def is_valid_config_type(ctype):
+    """
+    :return: True if given `ctype` is a valid configuration type.
+    """
+    return ctype in list(configparsers.PARSERS.keys())
 
 # vim:sw=4:ts=4:et:

@@ -16,27 +16,30 @@
 d3.json("{{ node_link_url }}").then(render_node_link);
 
 /* seealso: src/nof/main/views.py */
-var network_addresses = {{ networks | map(attribute='addr') | list | tojson() }};
+var network_addresses = {{ nets_or_ipsets | sum(attribute='addrs', start=[]) | tojson() }};
 var node_type = {{ node_type | d("any") | tojson }};
+
 {% if node_paths | d(false) -%}
 var node_paths = {{ node_paths | tojson }};
 
 {%   if node_type != "any" -%}
 var node_path_0_addrs = {{ node_paths.0 | selectattr('type', 'equalto', node_type)
-                                        | map(attribute='addr') | list | tojson() }};
+                                        | sum(attribute="addrs", start=[])
+                                        | tojson() }};
 {%   else -%}
-var node_path_0_addrs = {{ node_paths.0 | map(attribute='addr') | list | tojson() }};
+var node_path_0_addrs = {{ node_paths.0 | sum(attribute="addrs", start=[]) | tojson() }};
 {%   endif -%}
 {% else -%}
 var node_paths = [];
 var node_path_0_addrs = [];
 {% endif -%}
+/* debug: console.log(node_path_0_addrs); */
 </script>
 {% endblock %}
 
 {% block page_content -%}
 <div id="node-graph" class="row">
-  <div class="col-sm-8"><svg id="main-svg"/></div>
+  <div class="col-sm-8"><svg id="main-svg" class="img-fluid"/></div>
   <div class="col-sm-4 container-fluid">
     {% block main_form -%}
     <div class="row m-5 p-5 finder-form-box">{{ wtf.quick_form(form) }}</div>
@@ -53,7 +56,7 @@ var node_path_0_addrs = [];
           <div class="row path-node node-{{ node.type }}">
             <span class="text-primary">#{{ node.id }}: {{ node.name }}</span>
             <span class="text-secondary">{{ node.type }}</span>
-            <span class="text-secondary">{{ node.addr }}</span>
+            <span class="text-secondary">{{ node.addrs | join(", ") }}</span>
           </div>
       {%-     endfor %}
         </li>

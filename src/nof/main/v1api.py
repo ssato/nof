@@ -1,17 +1,22 @@
 #
 # -*- coding: utf-8 -*-
 # Copyright (C) 2020 Satoru SATOH <ssato@redhat.com>.
-# License: MIT
+# SPDX-License-Identifier: MIT
 #
 """REST APIs. version 1.x
 """
+import os.path
+
 import anyconfig
 import flask
 import werkzeug.utils
 
-from .globals import API
+from .globals import API_PREFIX
 from . import utils
 from ..lib import finder
+
+
+API = flask.Blueprint("api", __name__, url_prefix=API_PREFIX)
 
 
 def _get_graph(filename):
@@ -74,7 +79,7 @@ def get_node_link(filename):
 
     :param filename: graph (YAML) data filename
     """
-    filename = utils.processed_filename(filename, prefix='')
+    filename = utils.processed_filename(filename)
     return flask.send_from_directory(utils.uploaddir(), filename)
 
 
@@ -86,9 +91,9 @@ def find_networks_by_addr(filename, ip):
     :param ip: IP address
     """
     graph = _load_graph_by_filename(filename)
-    networks = finder.find_networks_by_addr(graph, ip)
+    res = finder.find_networks_or_ipsets_by_addr(graph, ip)
 
-    return flask.jsonify(networks)
+    return flask.jsonify(res)
 
 
 @API.route("/node_link_paths/<path:filename>/<string:src_ip>/<string:dst_ip>",
@@ -103,15 +108,21 @@ def find_node_link_paths(filename, src_ip, dst_ip):
     return flask.jsonify(paths)
 
 
-@API.route("/config/<path:filename>", methods=["GET"])
-def get_config(filename):
+@API.route("/config/<string:ctype>/<path:filename>", methods=["GET"])
+def get_config(ctype, filename):
     """
     Get config parsed.
 
-    :param filename: graph (YAML) data filename
+    :param filename: Parsed configuration file
     """
-    filename = werkzeug.utils.secure_filename(filename)
-    return flask.send_from_directory(utils.uploaddir(), filename)
+    if not utils.is_valid_config_type(ctype):
+        flask.abort(400, dict(code="Invalid Configuration type",
+                              message="Given configuration type "
+                                      "was invalid"))
 
+    filepath = utils.processed_filepath(filename, ctype)
+    udir = os.path.dirname(filepath)
+
+    return flask.send_from_directory(udir, filename)
 
 # vim:sw=4:ts=4:et:

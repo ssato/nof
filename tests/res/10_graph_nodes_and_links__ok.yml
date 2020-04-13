@@ -1,60 +1,72 @@
 ---
 nodes:
-  - id: 1
-    name: net_A
+  - id: 1  # Node ID: 1..
+    name: net_A  # Node Name
     type: network  # net[work_segment] | firewall | ...
-    addr: 10.0.1.0/24
+    addrs:
+      - 10.0.1.0/24  # IP Address
 
   - id: 2
     name: FW_A
     type: firewall
-    addr: 10.0.1.254
+    addrs:
+      - 10.0.1.254
 
   - id: 3
     name: net_B
     type: network
-    addr: 10.0.2.0/24
+    addrs:
+      - 10.0.2.0/24
 
   - id: 4
     name: FW_B
     type: firewall
-    addr: 10.0.2.1
+    addrs:
+      - 10.0.2.1
 
   - id: 5
     name: net_C
     type: network
-    addr: 10.0.3.0/24
+    addrs:
+      - 10.0.3.0/24
 
   - id: 6
     name: FW_C
     type: firewall
-    addr: 10.0.3.1
+    addrs:
+      - 10.0.3.1
 
   - id: 7
     name: net_X
     type: network
-    addr: 10.0.0.0/8
+    addrs:
+      - 10.0.0.0/8
 
   - id: 8
     name: router_D
     type: router
-    addr: 10.0.0.1
+    addrs:
+      - 10.0.0.1
 
   - id: 9
     name: FW_M
     type: firewall
-    addr: 192.168.1.254
+    addrs:
+      - 192.168.1.254
 
   - id: 10
     name: net_M
     type: network
-    addr: 192.168.1.0/24
+    addrs:
+      - 192.168.1.0/24
 
   - id: 11
     name: host_M
     type: host
-    addr: 192.168.1.10
+    addrs:
+      - 192.168.1.10
 
+# Relations map between each nodes; A pair of node IDs connect each other.
 edges:
   - [1, 2]
   - [2, 7]

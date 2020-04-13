@@ -1,6 +1,6 @@
 #
 # Copyright (C) 2020 Satoru SATOH <ssato@redhat.com>.
-# License: MIT
+# SPDX-License-Identifier: MIT
 #
 r"""Entrypoint of this app.
 """
@@ -8,14 +8,14 @@ import flask
 import flask_bootstrap
 import flask_wtf.csrf
 
-from . import config, main
+from . import config, main, fortios, db
 
 
 def create_app(cnf_name="development"):
     """
     :param cnf_name: Config name, e.g. "development"
     """
-    cnf = config.CNF[cnf_name]
+    cnf = config.get_config(cnf_name)
 
     app = flask.Flask(__name__)
     app.config.from_object(cnf)
@@ -27,8 +27,16 @@ def create_app(cnf_name="development"):
     csrf = flask_wtf.csrf.CSRFProtect()
     csrf.init_app(app)
 
+    db.DB.init_app(app)
+
     app.register_blueprint(main.APP)
     app.register_blueprint(main.API)
+
+    # >= 1.1:
+    # app.register_blueprint(fortios.CLI)
+    app.cli.add_command(fortios.CLI)
+    app.register_blueprint(fortios.APP)
+    app.register_blueprint(fortios.API)
 
     return app
 
