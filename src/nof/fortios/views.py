@@ -6,53 +6,74 @@
 """
 import flask
 
-from ..main import utils
-from .globals import CTYPE, PREFIX
+from . import globals, utils
 
 
-APP = flask.Blueprint("fortios_app", __name__, url_prefix=PREFIX)
+APP = flask.Blueprint("fortios_app", __name__, url_prefix=globals.PREFIX)
 
-FIREWALL_COLS = (dict(key="name", width="5%"),
-                 dict(key="uuid", width="5%", hide=True),
-                 dict(key="srcaddr", width="10%"),
-                 dict(key="srcintf", width="5%"),
-                 dict(key="dstaddr", width="10%"),
-                 dict(key="dstintf", width="5%"),
+FIREWALL_POLICY_FILENAME = "firewall_policy.json"
+
+FIREWALL_COLS = (dict(key="edit"),
+                 dict(key="srcaddr", width="12%"),
+                 dict(key="srcintf", width="10%"),
+                 dict(key="dstaddr", width="12%"),
+                 dict(key="dstintf", width="10%"),
                  dict(key="service", width="10%"),
-                 dict(key="status", width="3%"),
-                 dict(key="action", width="3%"),
-                 dict(key="logtraffic", width="3%"),
-                 dict(key="comments", width="5%"),
-                 dict(key="schedule", width="5%"))
+                 dict(key="status", width="5%"),
+                 dict(key="action", width="5%"),
+                 dict(key="comments", width="8%"))
 
 
-@APP.route("/firewall", methods=["GET"])
-def firewall_index():
-    """Firewall index page
+@APP.route("/", methods=["GET"])
+def index():
+    """Fortios nodes index page.
     """
-    # FIXME: How to list original config files uploaded?
-    fnc = utils.list_filenames
-    files = fnc(CTYPE + "/*.txt") + fnc(CTYPE + "/*.log")
+    # [{"hostname": ...,  "filenames": [...]}]
+    h_cnfs = [(d["hostname"],
+               flask.url_for(".host_details", hostname=d["hostname"]),
+               d["filenames"],
+               flask.url_for(".host_firewall_policies",
+                             hostname=d["hostname"]))
+              for d in utils.list_hosts_with_config_filenames()]
 
-    fns = [(fn, flask.url_for(".firewall_policies", filename=fn))
-           for fn in files]
+    config_upload_url = flask.url_for("app.config_index")
 
-    config_upload_url = flask.url_for("app.config_upload")
-
-    return flask.render_template("fortios_firewall_index.html",
-                                 filenames=fns,
+    return flask.render_template("fortios_index.html",
+                                 hosts_with_filenames=h_cnfs,
                                  config_upload_url=config_upload_url)
 
 
-@APP.route("/firewall/<path:filename>", methods=["GET"])
-def firewall_policies(filename):
-    """Firewall polices search page.
+@APP.route("/<string:hostname>", methods=["GET"])
+def host_details(hostname):
+    """Host's details page.
     """
-    url = flask.url_for("fortios_api.get_group_config_file",
-                        group="firewall", filename=filename)
-    return flask.render_template("fortios_firewall.html",
-                                 summary="Firewall Policies",
-                                 policies_url=url,
-                                 policies_cols=FIREWALL_COLS)
+    cnfs = [(fn,
+             flask.url_for("fortios_api.get_host_config",
+                           hostname=hostname, filename=fn))
+            for fn in utils.list_host_configs(hostname)]
+
+    purl = flask.url_for(".host_firewall_policies", hostname=hostname)
+
+    return flask.render_template("fortios_host.html",
+                                 hostname=hostname,
+                                 summary="Fortios Node Details",
+                                 configs=cnfs, policies_url=purl)
+
+
+@APP.route("/<string:hostname>/firewall_policies", methods=["GET"])
+def host_firewall_policies(hostname):
+    """Host's firewall policy page.
+    """
+    summary = "Host {}: Firewall Policies".format(hostname)
+    purl = flask.url_for("fortios_api.get_host_config",
+                         hostname=hostname, filename=FIREWALL_POLICY_FILENAME)
+    curls = [flask.url_for("fortios_api.get_host_config",
+                           hostname=hostname, filename=f)
+             for f in utils.list_host_configs(hostname)]
+
+    return flask.render_template("fortios_host_firewall_policies.html",
+                                 summary=summary, hostname=hostname,
+                                 config_urls=curls, policies_url=purl,
+                                 policies_cols=FIREWALL_COLS,)
 
 # vim:sw=4:ts=4:et:

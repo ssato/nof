@@ -1,0 +1,27 @@
+{% extends "base.html" -%}
+
+{% block page_content -%}
+<div>Fortigate Nodes Index</div>
+<ul id="fortios-nodes">
+{%  for hostname, hostulr, filenames, policies_url in hosts_with_filenames %}
+  <li>
+    <ul>
+      <li>Hosname: <a href="{{ hostulr }}">{{ hostname }}</a></li>
+      <li>
+        <ul>
+          {%  for fn in filenames %}
+          <li><a href="{{ url_for("fortios_api.get_host_config",
+                                  hostname=hostname, filename=fn) }}">{{ fn }}</a></li>
+          {%  endfor %}
+        </ul>
+      </li>
+      <li><a href="{{ policies_url }}">Firewall Policies</a></li>
+    </ul>
+  </li>
+{%  else %}
+  <li>No data. Please go to <a href="{{ config_upload_url }}">Upload page</a>.</li>
+{%  endfor %}
+</ul>
+{% endblock %}
+{# vim:sw=2:ts=2:et:
+-#}
