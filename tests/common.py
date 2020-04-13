@@ -18,6 +18,7 @@ except ImportError:
 import flask_testing
 import nof
 import nof.utils
+import nof.lib.utils
 
 
 def uuid_gen():
@@ -61,6 +62,11 @@ def setup_workdir():
 
 def prune_workdir(workdir):
     shutil.rmtree(workdir)
+
+
+def touch_file(filepath, content="{}\n"):
+    nof.lib.utils.ensure_dir_exists(filepath)
+    open(filepath, 'w').write(content)
 
 
 class BluePrintTestCase(flask_testing.TestCase):
