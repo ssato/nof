@@ -13,14 +13,15 @@ APP = flask.Blueprint("fortios_app", __name__, url_prefix=globals.PREFIX)
 
 FIREWALL_POLICY_FILENAME = "firewall_policy.json"
 
-FIREWALL_COLS = (dict(key="edit", width="5%"),
+# .. seealso:: https://datatables.net/reference/option/columns.orderable
+FIREWALL_COLS = (dict(key="edit", width="3%", orderable=False),
                  dict(key="srcaddr", width="12%"),
-                 dict(key="srcintf", width="10%"),
+                 dict(key="srcintf", width="8%"),
                  dict(key="dstaddr", width="12%"),
-                 dict(key="dstintf", width="10%"),
-                 dict(key="service", width="10%"),
-                 dict(key="status", width="5%"),
-                 dict(key="action", width="5%"),
+                 dict(key="dstintf", width="8%"),
+                 dict(key="service", width="12%"),
+                 dict(key="status", width="4%"),
+                 dict(key="action", width="4%"),
                  dict(key="comments", width="8%"))
 
 
