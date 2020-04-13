@@ -4,11 +4,8 @@
 #
 # pylint: disable=missing-docstring, invalid-name
 import os.path
-import os
-import shutil
 
-import nof.main.utils as U
-import nof.lib.fortios as F
+import nof.fortios.utils as U
 
 from nof.fortios import API_PREFIX
 from .. import common as C
@@ -32,37 +29,33 @@ class V1_API_10_Simple_TestCase(C.BluePrintTestCaseWithWorkdir):
     maxDiff = None
     cleanup = False
 
-    def test_10_get_group_config_file(self):
-        C.skip_test()  # FIXME
+    hostname = "foo-1"
+    filenames = ["metadata.json", "firewall_policies.json"]
 
-        ctype = "fortios"
-        group = "firewall"
-        fpaths = C.list_res_files("{}/{}*.txt".format(ctype, group))
+    def test_10_get_host_configs(self):
+        hdir = U.host_configs_dir(self.hostname)
+        for fn in self.filenames:
+            C.touch_file(os.path.join(hdir, fn))
 
-        for filepath in fpaths:
-            filename = os.path.basename(filepath)
+        path = _url_path(self.hostname)
+        resp = self.client.get(path)
 
-            srcpath = U.upload_filepath(filename, ctype)
-            F.ensure_dir_exists(srcpath)
-            shutil.copy(filepath, srcpath)
-            assert os.path.exists(srcpath)
+        self.assertEqual(resp.status_code, 200,
+                         _err_msg(resp, "path: " + path))
+        self.assertEqual(set(resp.data), set(self.filenames),
+                         resp.data)
 
-            try:
-                U.parse_config_and_save(filename, ctype)
-            except ValueError:
-                continue
+    def test_50_get_host_config(self):
+        hdir = U.host_configs_dir(self.hostname)
+        for fn in self.filenames:
+            filepath = os.path.join(hdir, fn)
+            C.touch_file(filepath, fn)
 
-            outpath = U.processed_filepath(filename, ctype)
-            outpath_2 = F.group_config_path(outpath, group)
-            self.assertTrue(os.path.exists(outpath), outpath)
-            self.assertTrue(os.path.exists(outpath_2), outpath_2)
-
-            path = _url_path(group, filename)
+            path = _url_path(self.hostname, fn)
             resp = self.client.get(path)
 
             self.assertEqual(resp.status_code, 200,
-                             _err_msg(resp, "path: " + path,
-                                      "file: " + outpath_2))
-            self.assertEqual(resp.data, open(outpath_2, 'rb').read())
+                             _err_msg(resp, "path: " + path))
+            self.assertEqual(resp.data, open(filepath, "rb").read())
 
 # vim:sw=4:ts=4:et:
