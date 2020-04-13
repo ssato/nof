@@ -13,7 +13,7 @@ APP = flask.Blueprint("fortios_app", __name__, url_prefix=globals.PREFIX)
 
 FIREWALL_POLICY_FILENAME = "firewall_policy.json"
 
-FIREWALL_COLS = (dict(key="edit"),
+FIREWALL_COLS = (dict(key="edit", width="5%"),
                  dict(key="srcaddr", width="12%"),
                  dict(key="srcintf", width="10%"),
                  dict(key="dstaddr", width="12%"),
