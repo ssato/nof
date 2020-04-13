@@ -71,9 +71,12 @@
 }
 */
 .table {
+  font-size: xx-small; /* to save space */
+}
+
+.table-fixed-cols {
   table-layout: fixed;
   word-wrap: break-word;
-  font-size: xx-small; /* to save space */
 }
 /* vim:sw=2:ts=2:et:
  */
