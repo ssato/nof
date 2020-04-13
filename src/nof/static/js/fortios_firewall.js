@@ -1,11 +1,14 @@
 /*
- * @param {Array} fwcs A mapping object holds firewall configurations
+ * @param {Array} fwcnfs A mapping object holds firewall configurations
  */
-function make_firewall_policy_maps(fwcs) {
+function make_firewall_policy_maps(fwcnfs) {
     /*
      * @seealso https://api.jquery.com/jQuery.map/
      */
-    const keys = ["name",
+    /*
+     * @seealso src/nof/fortios/views.py
+     */
+    const keys = ["edit",
                   "srcaddr",
                   "srcintf",
                   "dstaddr",
@@ -13,13 +16,9 @@ function make_firewall_policy_maps(fwcs) {
                   "service",
                   "status",
                   "action",
-                  "logtraffic",
-                  "comments",
-                  "schedule",
-                  "uuid"];
+                  "comments"];
 
-    let policies = $.map(fwcs["policy"], function (val, key) {
-        val["_id"] = val["name"] = key;
+    let policies = $.map(fwcnfs, function (val, key) {
         console.log(val); // debug
 
         for (let k in keys) {
