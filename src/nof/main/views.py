@@ -115,10 +115,11 @@ def config_index():
 
     flinks = itertools.chain(*flss)
 
+    summary = "Config Index"
     form = ConfigUploadForm()
     filename = None
     msg = ""
-    octxs = dict(form=form, flinks=flinks)
+    octxs = dict(summary=summary, form=form, flinks=flinks)
 
     if form.validate_on_submit():
         cnf_data = form.upload.data
