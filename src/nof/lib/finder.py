@@ -277,6 +277,19 @@ def find_network_or_ipset_by_addr(graph, ip):
     return None
 
 
+def select_unique_paths_itr(paths):
+    """
+    :param paths: A list of lists of nodes in the found paths
+    :return: A generator yields a filtered a list of nodes in the paths
+    """
+    seen = set()
+    for path in paths:  # path :: [{id: ..., } (node), ...]
+        path_by_node_ids = tuple(n["id"] for n in path)
+        if path_by_node_ids not in seen:
+            seen.add(path_by_node_ids)
+            yield path
+
+
 def find_paths(graph, src, dst, node_type=False, **nx_opts):
     """
     :param graph: networkx.Graph object to find paths from
@@ -309,11 +322,14 @@ def find_paths(graph, src, dst, node_type=False, **nx_opts):
 
         nss = networkx.all_shortest_paths(graph, src_net["id"], dst_net["id"],
                                           **nx_opts)
-        res = [[src_net] + [n for n in nodes if n["id"] in ns] + [dst_net]
-               for ns in nss]
+        res = [[n for n in nodes if n["id"] in ns] for ns in nss]
 
         if node_type and node_type != NODE_ANY:
-            res = [[n for n in ns if n["type"] == node_type] for ns in res]
+            # Those paths might be degenerated and need to remove duplicates.
+            pitr = ([n for n in ns if n["type"] == node_type] for ns in res)
+            res = list(select_unique_paths_itr(pitr))
+
+        res = [[src_net] + ns + [dst_net] for ns in res]
 
         return [to_ext_native_dicts(ns) for ns in res]
 
