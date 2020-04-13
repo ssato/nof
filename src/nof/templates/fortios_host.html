@@ -1,0 +1,18 @@
+{% extends "base.html" -%}
+
+{% block page_content -%}
+<div>Fortigate Node Details: {{ hostname }}</div>
+<ul id="fortios-node-details">
+  <li>Hostname: {{ hostname }}</li>
+  <li>Configs:
+    <ul>
+  {%  for fname, furl in configs %}
+      <li><a href="{{ furl }}">{{ fn }}</a></li>
+  {%  endfor %}
+    <ul>
+  </li>
+  <li><a href="{{ policies_url }}">Firewall Policies</a></li>
+</ul>
+{% endblock %}
+{# vim:sw=2:ts=2:et:
+-#}
