@@ -35,6 +35,7 @@ $(document).ready(function() {
       "url": "{{ policies_url }}",
       "dataSrc": make_firewall_policy_maps
     },
+    "order": [],  /* Disable auto-sort-ordering: https://datatables.net/reference/option/order */
     "columns": [
       {% for col in policies_cols -%}
       { "data": "{{ col.key }}",
