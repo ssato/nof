@@ -77,10 +77,12 @@ function render_node_link(data, width=700, height=700) {
   const nodes = data.nodes.map(d => Object.create(d));
 
   const simulation = d3.forceSimulation(nodes)
-      .force("link", d3.forceLink(links).id(d => d.id))
+      .force("link", d3.forceLink(links)
+                       .id(d => d.id)) // ref. https://github.com/d3/d3-force#link_links
+                       // .distance(d => d.distance)) // ref. https://github.com/d3/d3-force#link_distance
       .force("charge", d3.forceManyBody() // ref. https://github.com/d3/d3-force#many-body
-                         .strength(-30)
-                         .distanceMax(300))
+                         // .strength(() => - 30.0)
+                         .distanceMax(150))
       .force("center", d3.forceCenter(width / 2, height / 2));
 
   const svg = d3.select("svg")
