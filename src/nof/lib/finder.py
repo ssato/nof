@@ -51,7 +51,8 @@ def _to_net_node_itr(node):
             if is_net_node(node):
                 yield (key, [ipaddress.ip_network(i) for i in val])
             else:
-                yield (key, [ipaddress.ip_address(i) for i in val])
+                yield (key,
+                       [ipaddress.ip_interface(i).ip for i in val])
         else:
             yield (key, val)
 
@@ -125,7 +126,11 @@ def load(graph_filepath, **ac_args):
     """
     data = anyconfig.load(graph_filepath, **ac_args)
     nodes = to_net_nodes(data["nodes"])
-    edges = data["edges"]
+
+    if data["links"] and "edges" in data["links"][0]:
+        edges = data["edges"]
+    else:
+        edges = [(l["source"], l["target"]) for l in data["links"]]
 
     graph = networkx.Graph()
     graph.add_nodes_from((n["id"], n) for n in nodes)
