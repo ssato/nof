@@ -68,6 +68,18 @@ def has_vdom(cnfs):
     return any(c for c in cnfs if c.get("config") == "vdom")
 
 
+def is_regexp_obj(obj):
+    """
+    :param obj: str or _sre.SRE_Pattern or re.Pattern object
+    """
+    try:
+        return isinstance(obj, re.Pattern)
+    except AttributeError:
+        return not isinstance(obj, str)
+
+    return False
+
+
 def list_configs_from_configs_data(cnfs, vdom=None):
     """
     Patterns:
@@ -109,7 +121,7 @@ def list_configs_from_configs_data(cnfs, vdom=None):
     if vdom is None or '*' in vdom:
         vdom = re.compile(r".*")
 
-    if isinstance(vdom, re.Pattern):  # regexp pattern.
+    if is_regexp_obj(vdom):  # regexp pattern.
         return gcnfs + list(itertools.chain.from_iterable(
             cs for v, cs in css if vdom.match(v)
         ))
@@ -129,7 +141,7 @@ def configs_by_name(cnfs, name_or_re):
     if "*" in name_or_re:
         name_or_re = re.compile(name_or_re)
 
-    if isinstance(name_or_re, re.Pattern):
+    if is_regexp_obj(name_or_re):
         res = [c for c in cnfs if name_or_re.match(c.get("config", ""))]
     else:
         res = [c for c in cnfs if c.get("config") == name_or_re]
