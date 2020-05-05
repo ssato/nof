@@ -15,13 +15,13 @@ function render_node_link(data, width=700, height=700) {
 
   const radius = function (d) {
     if (d.type == "network") {
-      return 7;
+      return 4;
     }
     else if (d.type == "firewall" || d.type == "router" || d.type == "switch") {
       return 5;
     }
     else {
-      return 4;
+      return 2;
     }
   }
 
@@ -83,6 +83,7 @@ function render_node_link(data, width=700, height=700) {
       .force("charge", d3.forceManyBody() // ref. https://github.com/d3/d3-force#many-body
                          // .strength(() => - 30.0)
                          .distanceMax(150))
+      .force("collisionForce", d3.forceCollide(5))
       .force("center", d3.forceCenter(width / 2, height / 2));
 
   const svg = d3.select("svg")
