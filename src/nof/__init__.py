@@ -11,6 +11,9 @@ import flask_wtf.csrf
 from . import config, main, fortios
 
 
+__version__ = "0.2.0"
+
+
 def create_app(cnf_name="development"):
     """
     :param cnf_name: Config name, e.g. "development"

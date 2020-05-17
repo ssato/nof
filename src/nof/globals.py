@@ -13,7 +13,6 @@ from .lib import (
 
 PACKAGE = "nof"
 AUTHOR = "Satoru SATOH <ssato@redhat.com>"
-VERSION = "0.1.0"
 
 NOF_DATA_DIR = "/var/lib/nof"
 
