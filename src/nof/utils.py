@@ -29,15 +29,4 @@ def uploaddir(datadir=None):
 
     return os.path.join(datadir, "uploads")
 
-
-def database_url(datadir=None):
-    """
-    >>> database_url()
-    'sqlite:////var/lib/nof/main.db'
-    """
-    if datadir is None:
-        datadir = datadir_maybe_from_env()
-
-    return "sqlite:///" + os.path.join(datadir, "main.db")
-
 # vim:sw=4:ts=4:et:
