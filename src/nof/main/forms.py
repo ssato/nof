@@ -72,5 +72,4 @@ class ConfigUploadForm(flask_wtf.FlaskForm):
                                 default=CONFIG_TYPES[0])
     submit = wtforms.SubmitField(u"Upload Config")
 
-
 # vim:sw=4:ts=4:et:
