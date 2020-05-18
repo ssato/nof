@@ -8,6 +8,8 @@ import flask
 import flask_bootstrap
 import flask_wtf.csrf
 
+from . import config, main, fortios
+
 
 def create_app(cnf_name="development"):
     """
