@@ -39,7 +39,6 @@ def _upload_graph(filename):
     try:
         yml_data = anyconfig.loads(payload.decode("utf-8"), ac_parser="yaml")
         anyconfig.dump(yml_data, utils.upload_filepath(filename))
-        utils.generate_node_link_data_from_graph_data(filename)
     except (IOError, OSError, ValueError, RuntimeError):
         flask.abort(400, dict(code="Invalid data",
                               message="Uploaded data was invalid "

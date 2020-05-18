@@ -13,7 +13,7 @@ import flask
 import werkzeug.utils
 
 from .. import libs
-from ..lib import finder, configparsers
+from ..lib import configparsers
 from ..globals import CONFIG_TYPES
 
 
@@ -75,24 +75,6 @@ def processed_filepath(filename, subdir=None, **kwargs):
         return os.path.join(uploaddir(), pfname)
 
     return os.path.join(uploaddir(), subdir, pfname)
-
-
-def generate_node_link_data_from_graph_data(filename):
-    """
-    :param filename: Original YAML file name
-    """
-    filepath = upload_filepath(filename)
-    outpath = processed_filepath(filename)
-    msg = "filepath: {}, outpath: {}".format(filepath, outpath)
-
-    try:
-        graph = finder.load(filepath, ac_parser="yaml")
-        finder.save_as_node_link(graph, outpath)
-    except (IOError, OSError, RuntimeError):
-        raise IOError(msg)
-
-    except (ValueError, KeyError):
-        raise ValueError(msg)
 
 
 def _load_graph_by_filename(filename):

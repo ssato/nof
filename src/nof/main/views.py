@@ -15,7 +15,7 @@ from .forms import (
     UploadForm, NetworkFinderForm, PathFinderForm, ConfigUploadForm
 )
 from .utils import (
-    upload_filepath, generate_node_link_data_from_graph_data, list_filenames,
+    upload_filepath, list_filenames,
     find_networks_or_ipsets_from_graph, find_paths_from_graph,
     parse_config_and_save, is_valid_config_type
 )
@@ -48,14 +48,7 @@ def index():
         filename = os.path.basename(filepath)
         yml_data.save(filepath)
 
-        try:
-            generate_node_link_data_from_graph_data(filename)
-        except (IOError, OSError, ValueError, RuntimeError):
-            flask.flash(u"Failed to convert the YAML data uploaded! "
-                        u"Please try again with other valid data files.")
-            return flask.render_template(tmpl, **octxs)
-
-        msg = u"File was successfully uploaded and converted."
+        msg = u"File was successfully uploaded."
         return flask.render_template(tmpl, filename=filename, msg=msg, **octxs)
 
     return flask.render_template(tmpl, filename=filename, **octxs)
