@@ -11,7 +11,7 @@ import os.path
 import os
 import uuid
 
-from .utils import uploaddir, database_url
+from .utils import uploaddir
 
 
 class Config():
@@ -31,7 +31,6 @@ class Config():
         # pylint: disable=invalid-name
         # .. seealso:: https://pythonhosted.org/Flask-Uploads/
         self.UPLOADED_FILES_DEST = uploaddir(datadir)
-        self.SQLALCHEMY_DATABASE_URI = database_url(datadir)
         # pylint: enable=invalid-name
 
     def init_app(self, app):
