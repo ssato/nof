@@ -69,17 +69,12 @@ class V1_API_10_Simple_TestCase(C.BluePrintTestCaseWithWorkdir):
             filename = os.path.basename(filepath)
             shutil.copy(filepath, nof.main.utils.uploaddir())
 
-            nof.main.utils.generate_node_link_data_from_graph_data(filename)
-            outpath = nof.main.utils.processed_filepath(filename)
-
-            self.assertTrue(os.path.exists(outpath))
-
             path = _url_path("node_link", filename)
             resp = self.client.get(path)
 
             self.assert200(resp, _err_msg(resp, "path: " + path,
-                                          "outpath: " + outpath))
-            self.assertEqual(resp.data, open(outpath, 'rb').read())
+                                          "filepath: " + filepath))
+            self.assertEqual(resp.data, open(filepath, 'rb').read())
 
 
 class V1_API_20_Network_TestCase(C.BluePrintTestCaseWithWorkdir):
@@ -125,7 +120,6 @@ class V1_API_30_Paths_TestCase(C.BluePrintTestCaseWithWorkdir):
         filepath = os.path.join(C.resdir(), self.filename)
 
         shutil.copy(filepath, nof.main.utils.uploaddir())
-        nof.main.utils.generate_node_link_data_from_graph_data(self.filename)
 
     def test_10_find_node_link_paths__not_found(self):
         i_1 = "10.0.1.7"

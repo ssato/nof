@@ -48,11 +48,6 @@ class Views_TestCase(C.BluePrintTestCaseWithWorkdir):
             filename = os.path.basename(filepath)
             shutil.copy(filepath, nof.main.utils.uploaddir())
 
-            nof.main.utils.generate_node_link_data_from_graph_data(filename)
-            outpath = nof.main.utils.processed_filepath(filename)
-
-            self.assertTrue(os.path.exists(outpath))
-
             resp = self.client.get("/finder/paths/" + filename)
             self.assertEqual(resp.status_code, 200, resp)
 

@@ -43,17 +43,6 @@ class TT_10_path_functions_TestCases(C.BluePrintTestCaseWithWorkdir):
 
 class TT_20_util_functions_TestCases(C.BluePrintTestCaseWithWorkdir):
 
-    def test_10_generate_node_link_data_from_graph_data(self):
-        for filepath in C.ok_yml_files():
-            shutil.copy(filepath, TT.uploaddir())
-
-            filename = os.path.basename(filepath)
-            TT.generate_node_link_data_from_graph_data(filename)
-
-            outpath = TT.processed_filepath(filename)
-            self.assertTrue(os.path.exists(outpath))
-            self.assertTrue(outpath.endswith(".json"))
-
     def test_20_find_paths_from_graph(self):
         filename = "10_graph_nodes_and_links__ok.yml"
         filepath = os.path.join(C.resdir(), filename)
@@ -103,7 +92,7 @@ class TT_30_parse_TestCases(C.BluePrintTestCaseWithWorkdir):
                 fname = os.path.basename(filepath)
                 outpath = TT.processed_filepath(fname, ctype)
 
-                TT.utils.ensure_dir_exists(outpath)
+                TT.libs.ensure_dir_exists(outpath)
                 shutil.copy(filepath, os.path.dirname(outpath))
 
                 TT.parse_config_and_save(fname, ctype)
