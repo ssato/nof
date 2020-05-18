@@ -17,8 +17,8 @@ except ImportError:
 
 import flask_testing
 import nof
+import nof.libs
 import nof.utils
-import nof.lib.utils
 
 
 def uuid_gen():
@@ -65,7 +65,7 @@ def prune_workdir(workdir):
 
 
 def touch_file(filepath, content="{}\n"):
-    nof.lib.utils.ensure_dir_exists(filepath)
+    nof.libs.ensure_dir_exists(filepath)
     open(filepath, 'w').write(content)
 
 
