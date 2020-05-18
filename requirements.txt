@@ -1,7 +1,7 @@
 setuptools
 anyconfig
 anyconfig-fortios-backend
-click
+fortios_xutils
 pyyaml
 networkx
 Flask
