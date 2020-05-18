@@ -12,7 +12,8 @@ import os
 import flask
 import werkzeug.utils
 
-from ..lib import finder, configparsers, utils
+from .. import libs
+from ..lib import finder, configparsers
 from ..globals import CONFIG_TYPES
 
 
@@ -137,11 +138,11 @@ def parse_config_and_save(filename, ctype=None):
         ctype = CONFIG_TYPES[0]  # default
 
     filepath = upload_filepath(filename, subdir=ctype)
-    utils.ensure_dir_exists(filepath)
+    libs.ensure_dir_exists(filepath)
 
     parse_fn = configparsers.PARSERS[ctype]
     outpath = processed_filepath(filename, subdir=ctype)
-    utils.ensure_dir_exists(outpath)
+    libs.ensure_dir_exists(outpath)
 
     return parse_fn(filepath, outpath)
 

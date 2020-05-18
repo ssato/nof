@@ -10,13 +10,14 @@ import os
 
 import flask
 
+from .. import libs
 from .forms import (
     UploadForm, NetworkFinderForm, PathFinderForm, ConfigUploadForm
 )
 from .utils import (
     upload_filepath, generate_node_link_data_from_graph_data, list_filenames,
     find_networks_or_ipsets_from_graph, find_paths_from_graph,
-    parse_config_and_save, utils, is_valid_config_type
+    parse_config_and_save, is_valid_config_type
 )
 from ..globals import NODE_ANY, CONFIG_TYPES
 
@@ -128,7 +129,7 @@ def config_index():
         assert is_valid_config_type(cnf_type)
 
         filepath = upload_filepath(cnf_data.filename, cnf_type)
-        utils.ensure_dir_exists(filepath)
+        libs.ensure_dir_exists(filepath)
 
         filename = os.path.basename(filepath)
         cnf_data.save(filepath)
