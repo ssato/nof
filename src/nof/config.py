@@ -11,7 +11,7 @@ import os.path
 import os
 import uuid
 
-from .utils import uploaddir
+from . import utils
 
 
 class Config():
