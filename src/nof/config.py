@@ -20,8 +20,6 @@ class Config():
     SECRET_KEY = os.environ.get('SECRET_KEY') or str(uuid.uuid4())
     WTF_CSRF_ENABLED = True
 
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
-
     # Limit the size of file to upload: 500 [MB]
     MAX_CONTENT_LENGTH = 500 * 1024 * 1024
 
@@ -30,13 +28,13 @@ class Config():
         """
         # pylint: disable=invalid-name
         # .. seealso:: https://pythonhosted.org/Flask-Uploads/
-        self.UPLOADED_FILES_DEST = uploaddir(datadir)
+        self.UPLOADED_FILES_DEST = utils.uploaddir(datadir)
         # pylint: enable=invalid-name
 
     def init_app(self, app):
         """Initialize application.
         """
-        keys = ("UPLOADED_FILES_DEST", "SQLALCHEMY_DATABASE_URI")
+        keys = ("UPLOADED_FILES_DEST", )
         for key in keys:
             setattr(app, key, getattr(self, key))
 
