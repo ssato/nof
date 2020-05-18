@@ -10,7 +10,7 @@ import os
 
 import flask
 
-from .. import libs
+from .. import utils
 from .forms import (
     UploadForm, NetworkFinderForm, PathFinderForm, ConfigUploadForm
 )
@@ -122,7 +122,7 @@ def config_index():
         assert is_valid_config_type(cnf_type)
 
         filepath = upload_filepath(cnf_data.filename, cnf_type)
-        libs.ensure_dir_exists(filepath)
+        utils.ensure_dir_exists(filepath)
 
         filename = os.path.basename(filepath)
         cnf_data.save(filepath)

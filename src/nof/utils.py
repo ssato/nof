@@ -29,4 +29,13 @@ def uploaddir(datadir=None):
 
     return os.path.join(datadir, "uploads")
 
+
+def ensure_dir_exists(filepath):
+    """Ensure dir for filepath exists
+    """
+    tdir = os.path.dirname(filepath)
+
+    if not os.path.exists(tdir):
+        os.makedirs(tdir)
+
 # vim:sw=4:ts=4:et:

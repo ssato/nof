@@ -12,7 +12,7 @@ import os
 import flask
 import werkzeug.utils
 
-from .. import libs
+from .. import utils
 from ..lib import configparsers
 from ..globals import CONFIG_TYPES
 
@@ -120,11 +120,11 @@ def parse_config_and_save(filename, ctype=None):
         ctype = CONFIG_TYPES[0]  # default
 
     filepath = upload_filepath(filename, subdir=ctype)
-    libs.ensure_dir_exists(filepath)
+    utils.ensure_dir_exists(filepath)
 
     parse_fn = configparsers.PARSERS[ctype]
     outpath = processed_filepath(filename, subdir=ctype)
-    libs.ensure_dir_exists(outpath)
+    utils.ensure_dir_exists(outpath)
 
     return parse_fn(filepath, outpath)
 

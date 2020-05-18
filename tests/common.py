@@ -17,7 +17,6 @@ except ImportError:
 
 import flask_testing
 import nof
-import nof.libs
 import nof.utils
 
 
@@ -65,7 +64,7 @@ def prune_workdir(workdir):
 
 
 def touch_file(filepath, content="{}\n"):
-    nof.libs.ensure_dir_exists(filepath)
+    nof.utils.ensure_dir_exists(filepath)
     open(filepath, 'w').write(content)
 
 

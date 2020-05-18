@@ -21,7 +21,7 @@ import re
 
 import anyconfig
 
-from .. import libs
+from .. import utils
 
 
 CNF_NAMES = ("system.*",
@@ -293,7 +293,7 @@ def parse_show_config_and_dump(inpath, outpath, cnames=CNF_NAMES):
     """
     data = parse_show_config(inpath)  # {"configs": [...]}
 
-    libs.ensure_dir_exists(outpath)
+    utils.ensure_dir_exists(outpath)
     anyconfig.dump(data, outpath)
 
     cnfs = list_configs_from_config_data_0(data, filepath=inpath)
