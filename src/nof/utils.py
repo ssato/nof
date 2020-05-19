@@ -7,14 +7,14 @@
 import os.path
 import os
 
-from .globals import NOF_DATA_DIR
+from . import globals
 
 
 def datadir_maybe_from_env():
     """
     :return: data top dir of this app
     """
-    return os.environ.get("NOF_DATA_DIR", NOF_DATA_DIR)
+    return os.environ.get("NOF_DATA_DIR", globals.NOF_DATA_DIR)
 
 
 def uploaddir(datadir=None):
