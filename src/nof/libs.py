@@ -8,27 +8,19 @@ import flask
 import fortios_xutils
 
 from . import utils
-
-from fortios_xutils import (  # noqa: F401
-    NODE_TYPES,
-    NODE_ANY, NODE_NET, NODE_HOST, NODE_ROUTER, NODE_SWITCH, NODE_FIREWALL
-)
+from .globals import FT_NETWORKS
 
 
-CONFIG_TYPES = (CONFIG_FORTIOS, ) \
-             = ("fortios", )
-# PARSERS = dict(fortios=fortios.parse_show_config_and_dump)
-
-
-def sendfile_from_upload_dir(filename, datadir=None):
+def sendfile_from_upload_dir(filename, file_type, datadir=None):
     """
     Load and send file from upload dir.
 
     :param filename: The name of the file to send
+    :param file_type: type of file uploaded
     :param datadir: Path to the top dir for data files
     """
-    fname = utils.uploaded_filepath(filename)  # No content
-    udir = utils.uploaddir(datadir=datadir)
+    fname = utils.uploaded_filepath(filename, file_type)
+    udir = utils.uploaddir(file_type, datadir=datadir)
 
     return flask.send_from_directory(udir, fname)
 
@@ -40,7 +32,7 @@ def load_networks(filename, datadir=None):
     :param filename: The name of the file contains network graph data
     :param datadir: Path to the top dir for data files
     """
-    fpath = utils.uploaded_filepath(filename, datadir=datadir)
+    fpath = utils.uploaded_filepath(filename, FT_NETWORKS, datadir=datadir)
 
     return fortios_xutils.load_network_graph(fpath)
 
@@ -55,7 +47,7 @@ def find_networks_by_ipaddr(filename, ipa, datadir=None):
 
     :return: [] or a list of network nodes sorted by its prefix
     """
-    fpath = utils.uploaded_filepath(filename, datadir=datadir)
+    fpath = utils.uploaded_filepath(filename, FT_NETWORKS, datadir=datadir)
 
     return fortios_xutils.find_network_nodes_by_ip(fpath, ipa)
 
@@ -72,7 +64,7 @@ def find_network_paths(filename, src, dst, node_type=False, datadir=None):
 
     :return: An iterable object to yield nodes in the found paths
     """
-    fpath = utils.uploaded_filepath(filename, datadir=datadir)
+    fpath = utils.uploaded_filepath(filename, FT_NETWORKS, datadir=datadir)
     opts = dict(node_type=node_type)
 
     return fortios_xutils.find_network_paths(fpath, src, dst, **opts)
