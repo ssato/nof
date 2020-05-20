@@ -22,19 +22,20 @@ def datadir_maybe_from_env():
     return os.environ.get("NOF_DATA_DIR", globals.NOF_DATA_DIR)
 
 
-def uploaddir(datadir=None):
+def uploaddir(file_type, datadir=None):
     """
+    :param file_type: type of file to upload
     :param datadir: top dir to save data files
 
-    >>> uploaddir()
-    '/var/lib/nof/uploads'
-    >>> uploaddir("/tmp/nof")
-    '/tmp/nof/uploads'
+    >>> uploaddir("foo")
+    '/var/lib/nof/uploads/foo'
+    >>> uploaddir("bar", "/tmp/nof")
+    '/tmp/nof/uploads/bar'
     """
     if datadir is None:
         datadir = datadir_maybe_from_env()
 
-    return os.path.join(datadir, "uploads")
+    return os.path.join(datadir, "uploads", file_type)
 
 
 @functools.lru_cache(maxsize=32)
@@ -82,7 +83,7 @@ def uploaded_filename(filename, content=None):
     return "{}-{}".format(fbase, chksm)
 
 
-def uploaded_filepath(filename, content=None, datadir=None):
+def uploaded_filepath(filename, file_type, content=None, datadir=None):
     """
     Compute a consisten path of the file to save content from uploaded file
     based on its filename and content.
@@ -91,13 +92,14 @@ def uploaded_filepath(filename, content=None, datadir=None):
         The name of the original maybe unsecure file or uploaded file. In the
         former case, the content of the file must be given also.
 
+    :param file_type: type of file to upload
     :param content: The content (str) of the file
     :param datadir: top dir to save data files
 
     :return: A str gives a absolute file path
     """
-    fname = uploaded_filename(filename, content)
-    udir = uploaddir(datadir=datadir)
+    fname = uploaded_filename(filename, content=content)
+    udir = uploaddir(file_type, datadir=datadir)
 
     return os.path.join(udir, fname)
 
@@ -125,14 +127,15 @@ def list_filenames(pattern=None, datadir=None):
     return sorted(os.path.basename(f) for f in files)
 
 
-def list_uploaded_filenames(pattern=None, datadir=None):
+def list_uploaded_filenames(file_type, pattern=None, datadir=None):
     """
+    :param file_type: type of file to upload
     :param pattern: Filename pattern [*.yml]
     :param datadir: top dir to save data files
 
     :return: A list of data files in given `datadir`.
     """
-    return list_filenames(pattern=pattern,
-                          datadir=uploaddir(datadir=datadir))
+    udir = uploaddir(file_type, datadir=datadir)
+    return list_filenames(pattern=pattern, datadir=udir)
 
 # vim:sw=4:ts=4:et:

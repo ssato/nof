@@ -38,12 +38,15 @@ class TestFunctions(unittest.TestCase):
 
     @mock.patch.dict(os.environ, org_env(), clear=True)
     def test_20_uploaddir__default(self):
-        self.assertEqual(TT.uploaddir(), os.path.join(NOF_DATA_DIR, "uploads"))
+        ftype = "foo"
+        ref = os.path.join(NOF_DATA_DIR, "uploads", ftype)
+        self.assertEqual(TT.uploaddir(ftype), ref)
 
     @mock.patch.dict(os.environ, _OS_ENVIRON_PATCH)
     def test_22_uploaddir__env(self):
-        self.assertEqual(TT.uploaddir(),
-                         os.path.join(_NOF_DATA_DIR, "uploads"))
+        ftype = "foo"
+        ref = os.path.join(_NOF_DATA_DIR, "uploads", ftype)
+        self.assertEqual(TT.uploaddir(ftype), ref)
 
     def test_30_checksum__no_filepath_content(self):
         self.assertRaises(ValueError, TT.checksum)
