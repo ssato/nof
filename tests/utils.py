@@ -91,4 +91,22 @@ class TestFunctions(unittest.TestCase):
             self.assertTrue(os.path.exists(datadir))
             self.assertTrue(os.path.isdir(datadir))
 
+    def test_70_list_filenames(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            fnames = "012.yml abc.txt xyz.json".split()
+            for fname in fnames:
+                fpath = os.path.join(tmpdir, fname)
+                open(fpath, 'w').write("1\n")
+
+            res = TT.list_filenames("*.dat", datadir=tmpdir)
+            self.assertFalse(res)
+
+            res = TT.list_filenames("*.json", datadir=tmpdir)
+            self.assertTrue(res)
+            self.assertEqual(res, [fnames[-1]])
+
+            res = TT.list_filenames("*.*", datadir=tmpdir)
+            self.assertTrue(res)
+            self.assertEqual(res, fnames)
+
 # vim:sw=4:ts=4:et:

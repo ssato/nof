@@ -5,6 +5,7 @@
 """Global utility routines
 """
 import functools
+import glob
 import hashlib
 import os.path
 import os
@@ -23,6 +24,8 @@ def datadir_maybe_from_env():
 
 def uploaddir(datadir=None):
     """
+    :param datadir: top dir to save data files
+
     >>> uploaddir()
     '/var/lib/nof/uploads'
     >>> uploaddir("/tmp/nof")
@@ -89,6 +92,7 @@ def uploaded_filepath(filename, content=None, datadir=None):
         former case, the content of the file must be given also.
 
     :param content: The content (str) of the file
+    :param datadir: top dir to save data files
 
     :return: A str gives a absolute file path
     """
@@ -105,5 +109,30 @@ def ensure_dir_exists(filepath):
 
     if not os.path.exists(tdir):
         os.makedirs(tdir)
+
+
+def list_filenames(pattern=None, datadir=None):
+    """
+    :param pattern: Filename pattern [*.yml]
+    :param datadir: top dir to save data files
+
+    :return: A list of data files in given `datadir`.
+    """
+    if pattern is None:
+        pattern = "*.json"
+
+    files = glob.glob(os.path.join(datadir, pattern))
+    return sorted(os.path.basename(f) for f in files)
+
+
+def list_uploaded_filenames(pattern=None, datadir=None):
+    """
+    :param pattern: Filename pattern [*.yml]
+    :param datadir: top dir to save data files
+
+    :return: A list of data files in given `datadir`.
+    """
+    return list_filenames(pattern=pattern,
+                          datadir=uploaddir(datadir=datadir))
 
 # vim:sw=4:ts=4:et:
