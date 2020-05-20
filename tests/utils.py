@@ -45,7 +45,45 @@ class TestFunctions(unittest.TestCase):
         self.assertEqual(TT.uploaddir(),
                          os.path.join(_NOF_DATA_DIR, "uploads"))
 
-    def test_30_ensure_dir_exists(self):
+    def test_30_checksum__no_filepath_content(self):
+        self.assertRaises(ValueError, TT.checksum)
+
+    def test_32_checksum__filepath(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            fpath = os.path.join(tmpdir, "hello.txt")
+            content = "hello, world!\n"
+            # checksum (sha1) value of the above `content`
+            ref = "e91ba0972b9055187fa2efa8b5c156f487a8293a"
+            open(fpath, 'w').write(content)
+
+            res = TT.checksum(filepath=fpath)
+            self.assertEqual(res, ref)
+
+    def test_34_checksum__content(self):
+        content = "hello, world!\n"
+        # checksum (sha1) value of the above `content`
+        ref = "e91ba0972b9055187fa2efa8b5c156f487a8293a"
+
+        res = TT.checksum(content=content)
+        self.assertEqual(res, ref)
+
+    def test_40_uploaded_filename__no_content(self):
+        fname = "test.txt"
+        self.assertEqual(TT.uploaded_filename(fname), fname)
+
+    def test_40_uploaded_filename__with_content(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            fname = "hello.txt"
+            content = "hello, world!\n"
+            # checksum (sha1) value of the above `content`
+            csum = "e91ba0972b9055187fa2efa8b5c156f487a8293a"
+            open(os.path.join(tmpdir, fname), 'w').write(content)
+
+            ref = "{}-{}".format(fname, csum)
+            res = TT.uploaded_filename(fname, content=content)
+            self.assertEqual(res, ref)
+
+    def test_60_ensure_dir_exists(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             datadir = os.path.join(tmpdir, "a/b/c/d")
             TT.ensure_dir_exists(os.path.join(datadir, "e.txt"))
