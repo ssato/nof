@@ -16,7 +16,7 @@
 d3.json("{{ node_link_url }}").then(render_node_link);
 
 /* seealso: src/nof/main/views.py */
-var network_addresses = {{ nets_or_ipsets | sum(attribute='addrs', start=[]) | tojson() }};
+var network_addresses = {{ nets | sum(attribute='addrs', start=[]) | tojson() }};
 var node_type = {{ node_type | d("any") | tojson }};
 
 {% if node_paths | d(false) -%}
