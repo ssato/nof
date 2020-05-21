@@ -5,7 +5,7 @@
 r"""Entrypoint of this app.
 """
 from .init import create_app
-from . import config, main, fortios
+from . import config, main, fortios, networks
 
 
 __version__ = "0.2.0"
