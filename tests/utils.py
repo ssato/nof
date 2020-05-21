@@ -82,7 +82,7 @@ class TestFunctions(unittest.TestCase):
             csum = "e91ba0972b9055187fa2efa8b5c156f487a8293a"
             open(os.path.join(tmpdir, fname), 'w').write(content)
 
-            ref = "{}-{}".format(fname, csum)
+            ref = "{}-{}".format(csum, fname)
             res = TT.uploaded_filename(fname, content=content)
             self.assertEqual(res, ref)
 

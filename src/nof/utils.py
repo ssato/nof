@@ -39,14 +39,12 @@ def uploaddir(file_type, datadir=None):
 
 
 @functools.lru_cache(maxsize=32)
-def checksum(filepath=None, content=None, encoding="utf-8",
-             hash_fn=hashlib.sha1):
+def checksum(filepath=None, content=None, hash_fn=hashlib.sha1):
     """
     Compute the checksum of given file, `filepath`
 
     :param filepath: Absolute path to the file to compuste its checksum
-    :param content: The content of the file
-    :param encoding: Character set encoding of the file
+    :param content: a (unicode) str gives the content of the file
     :param hash_fn: Hash algorithm to compute the checksum
 
     :return: A str gives the checksum value of the given file's content
@@ -55,13 +53,9 @@ def checksum(filepath=None, content=None, encoding="utf-8",
         if filepath is None:
             raise ValueError("Either `filepath` or `content` must be given!")
 
-        # .. note::
-        #    We don't need to worry about the size of files uploaded
-        #    because we use Flask-Uploads and it should limit the size of
-        #    files to upload.
         content = open(filepath).read()
 
-    return hash_fn(content.encode(encoding)).hexdigest()
+    return hash_fn(content.encode("utf-8")).hexdigest()
 
 
 def uploaded_filename(filename, content=None):
@@ -70,7 +64,7 @@ def uploaded_filename(filename, content=None):
     content in a consistent way.
 
     :param filename: Original maybe unsecure file name
-    :param content: File's content
+    :param content: a (unicode) str gives the content of the file
 
     :return: A str gives a file name
     """
@@ -80,7 +74,7 @@ def uploaded_filename(filename, content=None):
 
     chksm = checksum(content=content)  # filepath is not fixed yet.
 
-    return "{}-{}".format(fbase, chksm)
+    return "{}-{}".format(chksm, fbase)
 
 
 def uploaded_filepath(filename, file_type, content=None, datadir=None):
@@ -93,7 +87,7 @@ def uploaded_filepath(filename, file_type, content=None, datadir=None):
         former case, the content of the file must be given also.
 
     :param file_type: type of file to upload
-    :param content: The content (str) of the file
+    :param content: a (unicode) str gives the content of the file
     :param datadir: top dir to save data files
 
     :return: A str gives a absolute file path
