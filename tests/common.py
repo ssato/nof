@@ -44,7 +44,9 @@ def resdir(self=__file__):
 
 
 def list_res_files(pattern):
-    return sorted(glob.glob(os.path.join(resdir(), pattern)))
+    return sorted(
+        os.path.abspath(f) for f in glob.glob(os.path.join(resdir(), pattern))
+    )
 
 
 def ok_yml_files():
@@ -85,7 +87,7 @@ class BluePrintTestCaseWithWorkdir(BluePrintTestCase):
 
     def create_app(self):
         self.workdir = os.environ["NOF_DATA_DIR"] = setup_workdir()
-        udir = nof.utils.uploaddir(self.workdir)
+        udir = os.path.join(self.workdir, "uploads")
         if not os.path.exists(udir):
             os.makedirs(udir)
 
@@ -95,18 +97,5 @@ class BluePrintTestCaseWithWorkdir(BluePrintTestCase):
         super(BluePrintTestCaseWithWorkdir, self).tearDown()
         if self.cleanup:
             prune_workdir(self.workdir)
-
-
-class BluePrintTestCaseWithDB(BluePrintTestCaseWithWorkdir):
-    """
-    https://pythonhosted.org/Flask-Testing/#testing-with-sqlalchemy
-    """
-
-    def setUp(self):
-        nof.db.DB.create_all()
-
-    def tearDown(self):
-        nof.db.DB.session.remove()
-        nof.db.DB.drop_all()
 
 # vim:sw=4:ts=4:et:
