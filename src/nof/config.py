@@ -28,13 +28,14 @@ class Config():
         """
         # pylint: disable=invalid-name
         # .. seealso:: https://pythonhosted.org/Flask-Uploads/
-        self.UPLOADED_FILES_DEST = utils.uploaddir(datadir)
+        datadir = utils.datadir_maybe_from_env()
+        self.UPLOADS_DEFAULT_DEST = os.path.join(datadir, "uploads")
         # pylint: enable=invalid-name
 
     def init_app(self, app):
         """Initialize application.
         """
-        keys = ("UPLOADED_FILES_DEST", )
+        keys = ("UPLOADS_DEFAULT_DEST", )
         for key in keys:
             setattr(app, key, getattr(self, key))
 
@@ -63,8 +64,8 @@ class ProductionConfig(Config):
     def init_app(self, app):
         """Ensure workdir exists.
         """
-        if not os.path.exists(self.UPLOADED_FILES_DEST):
-            os.makedirs(self.UPLOADED_FILES_DEST)
+        if not os.path.exists(self.UPLOADS_DEFAULT_DEST):
+            os.makedirs(self.UPLOADS_DEFAULT_DEST)
 
 
 def get_config(name="development"):
