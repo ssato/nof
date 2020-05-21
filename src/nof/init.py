@@ -8,7 +8,7 @@ import flask
 import flask_bootstrap
 import flask_wtf.csrf
 
-from . import config, main, fortios
+from . import config, networks, fortios
 
 
 def create_app(cnf_name="development"):
@@ -27,8 +27,8 @@ def create_app(cnf_name="development"):
     csrf = flask_wtf.csrf.CSRFProtect()
     csrf.init_app(app)
 
-    app.register_blueprint(main.APP)
-    app.register_blueprint(main.API)
+    app.register_blueprint(networks.APP)
+    app.register_blueprint(networks.API)
 
     app.register_blueprint(fortios.APP)
     app.register_blueprint(fortios.API)
