@@ -19,9 +19,9 @@ API = flask.Blueprint("api", __name__, url_prefix=API_PREFIX)
 
 # url paths :
 UP_GET_PATH = "/<path:filename>"
-BY_ADDR_PATH = os.path.join(UP_GET_PATH, "by_addr/<string:ipa>")
-BY_PATH_PATH = os.path.join(UP_GET_PATH,
-                            "by_path/<string:src_ip>/<string:dst_ip>")
+BY_ADDR_PATH = os.path.join("by_addr", "<path:filename>", "<string:ipa>")
+BY_PATH_PATH = os.path.join("by_path", "<path:filename>",
+                            "<string:src_ip>", "<string:dst_ip>")
 
 
 def _get_networks(filename):

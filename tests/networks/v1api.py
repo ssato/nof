@@ -85,7 +85,7 @@ class Find_Networks_20_TestCase(C.BluePrintTestCaseWithWorkdir):
         ipa = "127.0.0.1"
         for upf in self.up_files:
             fname = os.path.basename(upf)
-            upath = os.path.join(TT.API_PREFIX, fname, "by_addr", ipa)
+            upath = os.path.join(TT.API_PREFIX, "by_addr", fname, ipa)
 
             resp = self.client.get(upath)
 
@@ -99,7 +99,7 @@ class Find_Networks_20_TestCase(C.BluePrintTestCaseWithWorkdir):
         ipa = "192.168.122.5"
         for upf in self.up_files:
             fname = os.path.basename(upf)
-            upath = os.path.join(TT.API_PREFIX, fname, "by_addr", ipa)
+            upath = os.path.join(TT.API_PREFIX, "by_addr", fname, ipa)
 
             resp = self.client.get(upath)
 
@@ -114,7 +114,7 @@ class Find_Networks_20_TestCase(C.BluePrintTestCaseWithWorkdir):
 
         for upf in self.up_files:
             fname = os.path.basename(upf)
-            upath = os.path.join(TT.API_PREFIX, fname, "by_path", src, dst)
+            upath = os.path.join(TT.API_PREFIX, "by_path", fname, src, dst)
 
             resp = self.client.get(upath)
             self.assert200(resp, _err_msg(resp,
@@ -130,7 +130,7 @@ class Find_Networks_20_TestCase(C.BluePrintTestCaseWithWorkdir):
 
         for upf in self.up_files:
             fname = os.path.basename(upf)
-            upath = os.path.join(TT.API_PREFIX, fname, "by_path", sip, dip)
+            upath = os.path.join(TT.API_PREFIX, "by_path", fname, sip, dip)
 
             resp = self.client.get(upath)
             self.assert200(resp, _err_msg(resp,
