@@ -49,6 +49,8 @@ def _upload_networks(filename):
     ftype = FT_NETWORKS
     fpath = utils.uploaded_filepath(filename, ftype, content=content)
     try:
+        utils.ensure_dir_exists(fpath)
+
         # It does not look work...
         # net_data = anyconfig.loads(content, ac_parser="json")
         # anyconfig.dump(net_data, fpath)
