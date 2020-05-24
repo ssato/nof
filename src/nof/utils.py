@@ -55,6 +55,7 @@ def checksum(filepath=None, content=None, hash_fn=hashlib.sha1):
 
         content = open(filepath).read()
 
+    # content (unicode str) must be encoded to the byte data.
     return hash_fn(content.encode("utf-8")).hexdigest()
 
 
