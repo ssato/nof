@@ -15,7 +15,7 @@ from .. import libs, utils
 from .common import API_PREFIX
 
 
-API = flask.Blueprint("api", __name__, url_prefix=API_PREFIX)
+API = flask.Blueprint("networks_api", __name__, url_prefix=API_PREFIX)
 
 # url paths :
 UP_GET_PATH = "/<path:filename>"

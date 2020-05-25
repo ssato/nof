@@ -1,0 +1,21 @@
+{% extends "base.html" -%}
+
+{% block page_content -%}
+{% if msg | d(false) %}<div class="alert alert-primary" role="alert">{{ msg }}</div>{% endif %}
+<div>Networks</div>
+<ul id="graph_files">
+{%  for fname in filenames %}
+<li>
+  <div>{{ fname }}:</div>
+  <div><a href="{{ url_for('networks_api.get_or_upload_networks', filename=fname) }}">Network file</a></div>
+  <div><a href="{{ url_for('.find_networks', filename=fname) }}">find networks by IP address</a></div>
+  <div><a href="{{ url_for('.find_network_paths', filename=fname) }}">find paths by src and dst IP addresses</a></div>
+</li>
+{%  else %}
+<li>No data. Please upload a network YAML data from the above form.</li>
+{%  endfor %}
+</ul>
+<div class="pb-5">{{ wtf.quick_form(form) }}</div>
+{% endblock %}
+{# vim:sw=2:ts=2:et:
+-#}
