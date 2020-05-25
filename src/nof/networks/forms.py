@@ -31,7 +31,7 @@ class FindNetworksForm(flask_wtf.FlaskForm):
     """
     Form to find networks by IP address
     """
-    ip = wtforms.StringField(u"IP Address", validators=[
+    ipa = wtforms.StringField(u"IP Address", validators=[
         wtforms.validators.InputRequired(),
         wtforms.validators.IPAddress()
     ])
@@ -52,7 +52,7 @@ class FindNetworkPathsForm(flask_wtf.FlaskForm):
     ])
 
     ntype_pairs = [(k, k.title()) for k in NODE_TYPES]
-    find_type = wtforms.SelectField(u"Node Type", choices=ntype_pairs,
+    node_type = wtforms.SelectField(u"Node Type", choices=ntype_pairs,
                                     default=NODE_ANY)
     submit = wtforms.SubmitField("Find Network Paths")
 
