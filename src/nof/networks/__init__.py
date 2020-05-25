@@ -4,7 +4,7 @@
 #
 # flake8: noqa: F401
 # pylint: disable=unused-import
-"""netowrks app
+"""networks app
 """
 from .common import PREFIX, API_PREFIX
 from .views import APP

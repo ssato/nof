@@ -5,7 +5,7 @@
 """Globals
 """
 
-PREFIX = "/netowrks"
+PREFIX = "/networks"
 API_PREFIX = PREFIX + "/api/v1"
 
 # vim:sw=4:ts=4:et:
