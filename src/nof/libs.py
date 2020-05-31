@@ -6,7 +6,6 @@
 """
 import os.path
 
-import anyconfig
 import flask
 import fortios_xutils
 

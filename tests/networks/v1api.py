@@ -5,7 +5,6 @@
 # pylint: disable=invalid-name,missing-function-docstring
 """.networks.v1api test cases
 """
-import itertools
 import os.path
 import os
 import shutil
@@ -27,6 +26,7 @@ def _uploaded_filepath(filepath):
         TT.FT_NETWORKS,
         content=open(filepath).read()  # str
     )
+
 
 def _err_msg(resp, *args):
     """Make error message.
@@ -126,7 +126,7 @@ class Find_Networks_20_TestCase(C.BluePrintTestCaseWithWorkdir):
 
     def test_32_find_networks_by_path__found(self):
         (sip, dip) = ("192.168.122.10", "192.168.5.2")
-        (snt, dnt) = ("192.168.122.0/24", "192.168.5.0/24")
+        # (snt, dnt) = ("192.168.122.0/24", "192.168.5.0/24")
 
         for upf in self.up_files:
             fname = os.path.basename(upf)

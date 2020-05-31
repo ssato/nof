@@ -12,7 +12,6 @@ import nof.fortios.common as TT
 import nof.libs
 import nof.utils
 
-from nof.globals import FT_FORTI_SHOW_CONFIG
 from .. import common as C
 
 

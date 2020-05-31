@@ -9,7 +9,6 @@ import os.path
 import os
 import shutil
 
-import werkzeug.datastructures as WD
 import nof.utils
 import nof.networks.views as TT
 

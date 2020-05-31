@@ -5,8 +5,6 @@
 #
 """REST APIs for fortios app. version 1.x
 """
-import os.path
-
 import flask
 
 from ..globals import FT_FORTI_SHOW_CONFIG
