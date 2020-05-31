@@ -126,4 +126,28 @@ def parse_fortigate_config_and_save_files(filepath):
 
     return (hostname, cnf)
 
+
+def load_firewall_policy_table(hostname, datadir=None):
+    """
+    :param hostname: Hostname
+    :param datadir: Path to the top dir for data files
+
+    :return:
+        A :class:`pandas.DataFrame` object gives firewall policy table data
+    """
+    udir = utils.uploaddir(FT_FORTI_SHOW_CONFIG, datadir=datadir)
+    fpath = os.path.join(udir, hostname, FORTI_FIREWALL_POLICIES)
+
+    return fortios_xutils.load_firewall_policy_table(fpath)
+
+
+def search_firewall_policy_by_addr(tbl_rdf, ipa):
+    """
+    :param tbl_rdf: A :class:`pandas.DataFrame` object to search
+    :param ipa: A str gives an ip address to find nodes
+
+    :return: A list of mappping objects contains results
+    """
+    return fortios_xutils.search_firewall_policy_table_by_addr(ipa, tbl_rdf)
+
 # vim:sw=4:ts=4:et:
