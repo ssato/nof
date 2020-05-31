@@ -3,25 +3,75 @@
 # Copyright (C) 2020 Satoru SATOH <ssato@redhat.com>.
 # SPDX-License-Identifier: MIT
 #
-"""REST APIs. version 1.x
+"""REST APIs for fortios app. version 1.x
 """
 import os.path
+
 import flask
 
-from . import globals as G, utils
+from ..globals import FT_FORTI_SHOW_CONFIG
+from .. import libs, utils
+from . import common
 
 
-API = flask.Blueprint("fortios_api", __name__, url_prefix=G.API_PREFIX)
+API = flask.Blueprint("forti_api", __name__, url_prefix=common.API_PREFIX)
+
+# url paths :
+IDX_PATH = "/"
+
+GET_PATH_0 = "/configs/<string:hostname>/"
+GET_PATH_1 = GET_PATH_0 + "<path:filename>"
+UP_PATH = "/upload/<path:filename>"
+
+FIND_POLICY_BY_ADDR = "/policies/by_addr/<string:ipa>"
 
 
-@API.route("/<string:hostname>", methods=["GET"])
-def get_host_configs(hostname):
+def _get_host_config(hostname, filename):
     """
-    Get host's config filenames
+    Download a parsed and structured JSON file contains fortigate's "show
+    *configuration" outputs. FILENAME may be 'all.json', 'metadata.json',
+    'firewall_policy_table.data.pickle.gz' and so on (seealso fortios_api's
+    sources).
 
-    :param hostname: Hostname to get config file
+    :param filename: a str gives a name of the fortigate JSON config file
     """
-    return flask.jsonify(utils.list_host_configs(hostname))
+    return flask.send_from_directory(common.host_uploaddir(hostname),
+                                     common.secure_filename(filename))
+
+
+def _upload_show_config(filename):
+    """
+    Upload and process fortigate's "show *configuration" outputs.
+
+    :param filename:
+        a str gives a name of the fortigate's "show *configuration" output
+    """
+    payload = flask.request.get_data()
+
+    content = payload.decode("utf-8")
+    ftype = FT_FORTI_SHOW_CONFIG
+    fpath = utils.uploaded_filepath(filename, ftype, content=content)
+    try:
+        utils.ensure_dir_exists(fpath)
+
+        open(fpath, 'wb').write(payload)  # the source
+
+        # process the source and generate JSON and database files.
+        (hostname, cnf) = libs.parse_fortigate_config_and_save_files(fpath)
+
+    except (IOError, OSError, ValueError, RuntimeError) as exc:
+        flask.abort(400,
+                    dict(code="Invalid data",
+                         message="Uploaded data was invalid "
+                                 "or something went wrong. "
+                                 "uploaded file: {}"
+                                 "exc={!r}".format(filename,
+                                                   exc)))
+
+    data = dict(hostname=hostname,
+                filenames=common.list_host_files(hostname))
+
+    return flask.make_response(flask.jsonify(data), 201)
 
 
 @API.route("/", methods=["GET"])
@@ -29,24 +79,32 @@ def index():
     """
     Get hosts with group config filenames
     """
-    return flask.jsonify(utils.list_hosts_with_config_filenames())
+    res = common.list_hosts_with_data_filenames()
+    status = 200 if res else 204  # No content
+
+    return flask.make_response(flask.jsonify(res), status)
 
 
-@API.route("/<string:hostname>/<path:filename>", methods=["GET"])
-def get_host_config(hostname, filename):
+@API.route(GET_PATH_0, methods=["GET"])
+@API.route(GET_PATH_1, methods=["GET"])
+def get_host_config(hostname, filename=libs.FORTI_CNF_ALL):
     """
-    Get host's configuration file
+    Download a JSON data file contains some configs of the node `hostname`.
 
-    :param hostname: Hostname to get config file
-    :param filename: Original configuration filename uploaded
+    :param hostname: a str gives hostname of the fortigate node
+    :param filename: a str gives a name of the data file to download
     """
-    filepath = utils.get_group_config_path(hostname, filename)
-    (hdir, filename) = os.path.split(filepath)
+    return _get_host_config(hostname, filename)
 
-    try:
-        return flask.send_from_directory(hdir, filename)
-    except ValueError as exc:
-        return flask.jsonify(dict(error=dict(type="InvalidOrMissing",
-                                             message=str(exc)))), 400
+
+@API.route(UP_PATH, methods=["POST"])
+def upload_show_config(filename):
+    """
+    Get or upload a networks JSON data.
+
+    :param filename:
+        a str gives a name of the fortigate's "show *configuration" output
+    """
+    return _upload_show_config(filename)
 
 # vim:sw=4:ts=4:et:
