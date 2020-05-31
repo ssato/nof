@@ -5,8 +5,8 @@
 # flake8: noqa: F401
 """app main.
 """
-from .views import APP
+# from .views import APP  # Not ready yet.
 from .v1api import API
-from .globals import PREFIX, API_PREFIX
+from .common import PREFIX, API_PREFIX
 
 # vim:sw=4:ts=4:et:
