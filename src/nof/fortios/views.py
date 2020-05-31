@@ -6,10 +6,10 @@
 """
 import flask
 
-from . import globals, utils
+from . import common
 
 
-APP = flask.Blueprint("forti_app", __name__, url_prefix=globals.PREFIX)
+APP = flask.Blueprint("forti_app", __name__, url_prefix=common.PREFIX)
 
 FIREWALL_POLICY_FILENAME = "firewall_policy.json"
 
@@ -35,7 +35,7 @@ def index():
                d["filenames"],
                flask.url_for(".host_firewall_policies",
                              hostname=d["hostname"]))
-              for d in utils.list_hosts_with_config_filenames()]
+              for d in common.list_hosts_with_config_filenames()]
 
     config_upload_url = flask.url_for("app.config_index")
 
@@ -52,7 +52,7 @@ def host_details(hostname):
     cnfs = [(fn,
              flask.url_for("fortios_api.get_host_config",
                            hostname=hostname, filename=fn))
-            for fn in utils.list_host_configs(hostname)]
+            for fn in common.list_host_configs(hostname)]
 
     purl = flask.url_for(".host_firewall_policies", hostname=hostname)
 
@@ -71,7 +71,7 @@ def host_firewall_policies(hostname):
                          hostname=hostname, filename=FIREWALL_POLICY_FILENAME)
     curls = [flask.url_for("fortios_api.get_host_config",
                            hostname=hostname, filename=f)
-             for f in utils.list_host_configs(hostname)]
+             for f in common.list_host_configs(hostname)]
 
     return flask.render_template("fortios_host_firewall_policies.html",
                                  summary=summary, hostname=hostname,
