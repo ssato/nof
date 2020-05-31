@@ -19,7 +19,6 @@ from .. import common as C
 class TestCase(C.BluePrintTestCaseWithWorkdir):
 
     maxDiff = None
-    cleanup = False
 
     # .. seealso:: tests/res/forti/show_configs/*.txt, hostname value.
     hostnames = "fortigate-01 fortigate-02".split()
