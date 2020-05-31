@@ -9,7 +9,7 @@ import flask
 from . import globals, utils
 
 
-APP = flask.Blueprint("fortios_app", __name__, url_prefix=globals.PREFIX)
+APP = flask.Blueprint("forti_app", __name__, url_prefix=globals.PREFIX)
 
 FIREWALL_POLICY_FILENAME = "firewall_policy.json"
 
