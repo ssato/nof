@@ -4,11 +4,29 @@
 #
 """Libs to wrap external library functions.
 """
+import os.path
+
+import anyconfig
 import flask
 import fortios_xutils
 
 from . import utils
-from .globals import FT_NETWORKS
+from .globals import FT_NETWORKS, FT_FORTI_SHOW_CONFIG
+
+
+FORTI_FILENAMES = (
+    FORTI_CNF_ALL,
+    FORTI_CNF_META,
+    FORTI_FIREWALL_POLICIES
+) = (
+    # .. seealso:: `fortios_xutils.parser`
+    "all.json",
+    "metadata.json",
+
+    # .. seealso:: `fortios_xutils.firewall`
+    # "firewall_policy_table.data.pickle.gz"
+    "firewall_policy_table.json"
+)
 
 
 def sendfile_from_upload_dir(filename, file_type, datadir=None):
@@ -68,5 +86,44 @@ def find_network_paths(filename, src, dst, node_type=False, datadir=None):
     opts = dict(node_type=node_type)
 
     return fortios_xutils.find_network_paths(fpath, src, dst, **opts)
+
+
+def parse_fortigate_config_and_save_files(filepath):
+    """
+    Parse fortigate's "show *configuration" output and save its result as a
+    series of JSON and database files under `datadir`.
+
+    :param filepath:
+       Path to the fortigate's "show *configuration" output uploaded
+
+    :return: (hostname, a_mapping_object_holding_configs)
+    :raises: ValueError
+    """
+    odir = os.path.dirname(filepath)
+
+    # FIXME: Quick and dirty hack.
+    if "config system global" not in open(filepath).read():
+        raise ValueError("Not a fortigate's show *configuration output? "
+                         "{}".format(filepath))
+
+    res = fortios_xutils.parse_and_save_show_configs([filepath], outdir=odir)
+
+    # res: (path of all.json, a_mapping_object_holding_configs)
+    if not res or not res[0][-1]:
+        raise ValueError("Looks invalid data: {}".format(filepath))
+
+    (apath, cnf) = res[0]
+
+    fwp = fortios_xutils.make_and_save_firewall_policy_table(
+        apath,
+        os.path.join(os.path.dirname(apath), FORTI_FIREWALL_POLICIES)
+    )
+    if fwp.empty:
+        raise ValueError("Failed to generate firewall policies database: "
+                         "{}".format(filepath))
+
+    hostname = os.path.basename(os.path.split(apath)[0])
+
+    return (hostname, cnf)
 
 # vim:sw=4:ts=4:et:
