@@ -133,11 +133,16 @@ def load_firewall_policy_table(hostname, datadir=None):
 
     :return:
         A :class:`pandas.DataFrame` object gives firewall policy table data
+    :raiess: ValueError
     """
     udir = utils.uploaddir(FT_FORTI_SHOW_CONFIG, datadir=datadir)
     fpath = os.path.join(udir, hostname, FORTI_FIREWALL_POLICIES)
 
-    return fortios_xutils.load_firewall_policy_table(fpath)
+    try:
+        return fortios_xutils.load_firewall_policy_table(fpath)
+    except (IOError, OSError, ValueError) as exc:
+        raise ValueError("Could not load the firewall policy table "
+                         "data: {}, exc={!r}".format(fpath, exc))
 
 
 def search_firewall_policy_by_addr(tbl_rdf, ipa):
