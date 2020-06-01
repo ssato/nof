@@ -16,7 +16,8 @@ from .globals import FT_NETWORKS, FT_FORTI_SHOW_CONFIG
 FORTI_FILENAMES = (
     FORTI_CNF_ALL,
     FORTI_CNF_META,
-    FORTI_FIREWALL_POLICIES
+    FORTI_FIREWALL_POLICIES,
+    FORTI_FIREWALL_POLICIES_RESOLVED
 ) = (
     # .. seealso:: `fortios_xutils.parser`
     "all.json",
@@ -24,7 +25,8 @@ FORTI_FILENAMES = (
 
     # .. seealso:: `fortios_xutils.firewall`
     # "firewall_policy_table.data.pickle.gz"
-    "firewall_policy_table.json"
+    "firewall_policy_table.json",
+    "firewall_policy_table_resolved.json"
 )
 
 
@@ -113,13 +115,17 @@ def parse_fortigate_config_and_save_files(filepath):
 
     (apath, cnf) = res[0]
 
+    adir = os.path.dirname(apath)
     fwp = fortios_xutils.make_and_save_firewall_policy_table(
         apath,
-        os.path.join(os.path.dirname(apath), FORTI_FIREWALL_POLICIES)
+        os.path.join(adir, FORTI_FIREWALL_POLICIES)
     )
     if fwp.empty:
         raise ValueError("Failed to generate firewall policies database: "
                          "{}".format(filepath))
+
+    fwr_path = os.path.join(adir, FORTI_FIREWALL_POLICIES_RESOLVED)
+    fwp.to_json(fwr_path, orient='records')  # For REST API (get).
 
     hostname = os.path.basename(os.path.split(apath)[0])
 
