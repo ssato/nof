@@ -21,7 +21,8 @@ GET_PATH_0 = "/configs/<string:hostname>/"
 GET_PATH_1 = GET_PATH_0 + "<path:filename>"
 UP_PATH = "/upload/<path:filename>"
 
-FIND_POLICY_BY_ADDR = "/policies/by_addr/<string:ipa>"
+FIND_POLICY_BY_ADDR = ("/firewall/policies/by_addr/"
+                       "<string:hostname>/<string:ipa>")
 
 
 def _get_host_config(hostname, filename):
@@ -104,5 +105,28 @@ def upload_show_config(filename):
         a str gives a name of the fortigate's "show *configuration" output
     """
     return _upload_show_config(filename)
+
+
+@API.route(FIND_POLICY_BY_ADDR, methods=["GET"])
+def find_firewall_policy_by_ipa(hostname, ipa):
+    """
+    Find firewall policies match given ip address
+
+    :param hostname: a str gives hostname of the fortigate node
+    :param ipa: a str gives an ip address
+    """
+    status = 204  # No content. Is there any other appropriate one?
+    try:
+        res = common.find_firewall_policy_by_addr(hostname, ipa)
+    except ValueError as exc:
+        logger = flask.current_app.logger
+        logger.warn("Failed to find the firewall policy: "
+                    "hostname={}, ipa={}, "
+                    "exc={!s}".format(hostname, ipa, exc))
+
+        return flask.make_response(flask.jsonify([]), status)
+
+    status = 200
+    return flask.make_response(flask.jsonify(res), status)
 
 # vim:sw=4:ts=4:et:

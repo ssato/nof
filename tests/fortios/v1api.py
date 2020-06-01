@@ -7,23 +7,23 @@
 """
 import os.path
 
+import anyconfig
+
 import nof.fortios.v1api as TT
 import nof.utils
 
 from nof.fortios.common import API_PREFIX
-from .. import common as C
+from . import common
 
 
 # .. seealso:: nof.fortios.v1api
 UP_PREFIX = os.path.join(API_PREFIX, "upload/")
 GET_PREFIX = os.path.join(API_PREFIX, "configs/")
+FIND_PREFIX = os.path.join(API_PREFIX, "firewall/policies/by_addr/")
 
 
-class V1_API_10_TestCase(C.BluePrintTestCaseWithWorkdir):
+class V1_API_10_TestCase(common.TestBase):
 
-    maxDiff = None
-
-    cnf_files = C.list_res_files("forti/show_configs/*.txt")
     hosts = "fortigate-01 fortigate-02".split()
 
     def test_10_upload_show_config__wrong_data(self):
@@ -67,5 +67,50 @@ class V1_API_10_TestCase(C.BluePrintTestCaseWithWorkdir):
             resp = self.client.get(GET_PREFIX + hname)
             # self.assertStatus(resp, ?, resp.data)  # FIXME
             self.assertTrue(resp.data)
+
+    def test_20_find_firewall_policy_by_ipa__no_data(self):
+        for hname in self.hosts:
+            upath = os.path.join(FIND_PREFIX, hname, "127.0.0.1")
+            resp = self.client.get(upath)
+            self.assertStatus(resp, 204, resp.data)  # no content
+
+    def test_22_find_firewall_policy_by_ipa__not_found(self):
+        self._arrange_uploaded_and_procecced_files()
+        for hname in self.hosts:
+            upath = os.path.join(FIND_PREFIX, hname, "127.0.0.1")
+            resp = self.client.get(upath)
+            self.assert200(resp)
+
+            res = anyconfig.loads(
+                resp.data.decode("utf-8"),  # b -> u
+                ac_parser="json"
+            )
+            self.assertFalse(res)  # == []
+
+    def test_24_find_firewall_policy_by_ipa__match_ip(self):
+        self._arrange_uploaded_and_procecced_files()
+        for hname in self.hostnames:
+            upath = os.path.join(FIND_PREFIX, hname, "192.168.3.5")
+            resp = self.client.get(upath)
+            self.assert200(resp)
+
+            res = anyconfig.loads(
+                resp.data.decode("utf-8"),  # b -> u
+                ac_parser="json"
+            )
+            self.assertTrue(res)  # == [{"edit":, ...}]
+
+    def test_34_find_firewall_policy_by_addr__contain_ipa(self):
+        self._arrange_uploaded_and_procecced_files()
+        for hname in self.hostnames:
+            upath = os.path.join(FIND_PREFIX, hname, "192.168.2.2")
+            resp = self.client.get(upath)
+            self.assert200(resp)
+
+            res = anyconfig.loads(
+                resp.data.decode("utf-8"),  # b -> u
+                ac_parser="json"
+            )
+            self.assertTrue(res)
 
 # vim:sw=4:ts=4:et:
