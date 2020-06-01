@@ -10,6 +10,7 @@ import os.path
 import anyconfig
 
 import nof.fortios.v1api as TT
+import nof.libs
 import nof.utils
 
 from nof.fortios.common import API_PREFIX
@@ -54,8 +55,9 @@ class V1_API_10_TestCase(common.TestBase):
             resp = self.client.post(rpath, data=content, headers=headers)
             self.assertStatus(resp, 201, resp.data)
 
-            upath = nof.utils.uploaded_filepath(fname, TT.FT_FORTI_SHOW_CONFIG,
-                                                content=content)
+            upath = nof.utils.uploaded_filepath(
+                fname, nof.libs.FT_FORTI_SHOW_CONFIG, content=content
+            )
             self.assertTrue(os.path.exists(upath))
 
             # API: index
