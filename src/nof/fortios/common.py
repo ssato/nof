@@ -91,4 +91,33 @@ def find_firewall_policy_by_addr(hostname, ipa):
 
     return libs.search_firewall_policy_by_addr(rdf, ipa)
 
+
+def upload_forti_show_config(filename, request):
+    """
+    Upload and process fortigate's "show *configuration" outputs.
+
+    :param filename:
+        a str gives a name of the fortigate's "show *configuration" output
+    :param request: flask.request object
+    """
+    payload = request.get_data()
+    content = payload.decode("utf-8")
+
+    ftype = libs.FT_FORTI_SHOW_CONFIG
+    fpath = utils.uploaded_filepath(filename, ftype, content=content)
+    try:
+        utils.ensure_dir_exists(fpath)
+        open(fpath, 'wb').write(payload)  # the source
+
+        # process the source and generate JSON and database files.
+        (hostname, _cnf) = libs.parse_fortigate_config_and_save_files(fpath)
+
+    except (IOError, OSError, ValueError, RuntimeError) as exc:
+        raise RuntimeError(
+            "Uploaded data was invalid or something went wrong. "
+            "uploaded file: {} exc={!r}".format(filename, exc)
+        )
+
+    return dict(hostname=hostname, filenames=list_host_files(hostname))
+
 # vim:sw=4:ts=4:et:

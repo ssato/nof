@@ -45,30 +45,10 @@ def _upload_show_config(filename):
     :param filename:
         a str gives a name of the fortigate's "show *configuration" output
     """
-    payload = flask.request.get_data()
-
-    content = payload.decode("utf-8")
-    ftype = FT_FORTI_SHOW_CONFIG
-    fpath = utils.uploaded_filepath(filename, ftype, content=content)
     try:
-        utils.ensure_dir_exists(fpath)
-
-        open(fpath, 'wb').write(payload)  # the source
-
-        # process the source and generate JSON and database files.
-        (hostname, cnf) = libs.parse_fortigate_config_and_save_files(fpath)
-
-    except (IOError, OSError, ValueError, RuntimeError) as exc:
-        flask.abort(400,
-                    dict(code="Invalid data",
-                         message="Uploaded data was invalid "
-                                 "or something went wrong. "
-                                 "uploaded file: {}"
-                                 "exc={!r}".format(filename,
-                                                   exc)))
-
-    data = dict(hostname=hostname,
-                filenames=common.list_host_files(hostname))
+        data = common.upload_forti_show_config(filename, flask.request)
+    except RuntimeError as exc:
+        flask.abort(400, dict(code="Invalid data", message=str(exc)))
 
     return flask.make_response(flask.jsonify(data), 201)
 
