@@ -7,8 +7,7 @@
 """
 import flask
 
-from ..globals import FT_FORTI_SHOW_CONFIG
-from .. import libs, utils
+from .. import libs
 from . import common
 
 
