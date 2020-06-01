@@ -71,4 +71,24 @@ def list_hosts_with_data_filenames():
     return [dict(hostname=h, filenames=list_host_files(h))
             for h in list_hostnames()]
 
+
+def find_firewall_policy_by_addr(hostname, ipa):
+    """
+    Find firewall policies match given ip address
+
+    :param hostname: a str gives hostname of the fortigate node
+    :param ipa: a str gives an ip address
+
+    :return: A list of mappping objects contains results
+    :raises: ValueError (could not find/open data file, etc.)
+    """
+    # Just in case. Maybe I should consider to implement custom converter:
+    # https://exploreflask.com/en/latest/views.html#custom-converters
+    ipa = secure_filename(ipa)
+    hname = secure_filename(hostname)
+
+    rdf = libs.load_firewall_policy_table(hname)
+
+    return libs.search_firewall_policy_by_addr(rdf, ipa)
+
 # vim:sw=4:ts=4:et:

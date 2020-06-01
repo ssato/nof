@@ -63,4 +63,23 @@ class TestCase(C.BluePrintTestCaseWithWorkdir):
                 all(fname in res for fname in nof.libs.FORTI_FILENAMES)
             )
 
+    def test_30_find_firewall_policy_by_addr__no_data(self):
+        for hname in self.hostnames:
+            self.assertRaises(
+                ValueError,
+                TT.find_firewall_policy_by_addr, hname, "127.0.0.1"
+            )
+
+    def test_32_find_firewall_policy_by_addr__match_ipa(self):
+        self._arrange_uploaded_and_procecced_files()
+        for hname in self.hostnames:
+            res = TT.find_firewall_policy_by_addr(hname, "192.168.3.5")
+            self.assertTrue(res)
+
+    def test_34_find_firewall_policy_by_addr__contain_ipa(self):
+        self._arrange_uploaded_and_procecced_files()
+        for hname in self.hostnames:
+            res = TT.find_firewall_policy_by_addr(hname, "192.168.2.2")
+            self.assertTrue(res)
+
 # vim:sw=4:ts=4:et:
