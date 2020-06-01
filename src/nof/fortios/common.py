@@ -92,15 +92,14 @@ def find_firewall_policy_by_addr(hostname, ipa):
     return libs.search_firewall_policy_by_addr(rdf, ipa)
 
 
-def upload_forti_show_config(filename, request):
+def upload_forti_show_config(filename, payload):
     """
     Upload and process fortigate's "show *configuration" outputs.
 
     :param filename:
         a str gives a name of the fortigate's "show *configuration" output
-    :param request: flask.request object
+    :param payload: byte data to upload
     """
-    payload = request.get_data()
     content = payload.decode("utf-8")
 
     ftype = libs.FT_FORTI_SHOW_CONFIG

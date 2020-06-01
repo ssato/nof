@@ -46,7 +46,8 @@ def _upload_show_config(filename):
         a str gives a name of the fortigate's "show *configuration" output
     """
     try:
-        data = common.upload_forti_show_config(filename, flask.request)
+        payload = flask.request.get_data()
+        data = common.upload_forti_show_config(filename, payload)
     except RuntimeError as exc:
         flask.abort(400, dict(code="Invalid data", message=str(exc)))
 
