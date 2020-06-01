@@ -15,9 +15,7 @@ import nof.utils
 from .. import common as C
 
 
-class TestCase(C.BluePrintTestCaseWithWorkdir):
-
-    maxDiff = None
+class TestBase(C.BluePrintTestCaseWithWorkdir):
 
     # .. seealso:: tests/res/forti/show_configs/*.txt, hostname value.
     hostnames = "fortigate-01 fortigate-02".split()
@@ -34,6 +32,9 @@ class TestCase(C.BluePrintTestCaseWithWorkdir):
 
             # Arrange dir and files
             nof.libs.parse_fortigate_config_and_save_files(upath)
+
+
+class TestCase(TestBase):
 
     def test_10_list_hostnames__no_data(self):
         self.assertFalse(TT.list_hostnames())
