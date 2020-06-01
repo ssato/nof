@@ -32,25 +32,24 @@ $(document).ready(function(){
       <thead class="thead-dark">
         <tr>
           <th scope="col">Hostname</th>
-          <th scope="col">Config files</th>
+          <th scope="col">JSON-ed Config files</th>
           <th scope="col">Firewall Policies</th>
         </tr>
       </thead>
-      {%  for hostname, host_url, filenames, policies_url in hosts_with_filenames %}
+      {%  for hostname, label_urls, fw_url in hosts_with_filenames %}
       <tr>
-        <td><a href="{{ host_url }}">{{ hostname }}</a></td>
-        <td>{% for fn in filenames -%}
-            <a href="{{ url_for('fortios_api.get_host_config',
-                                hostname=hostname, filename=fn) }}">{{ fn }}</a>{{ ',' if not loop.last }}
+        <td>{{ hostname }}</td>
+        <td>{% for label, url in label_urls -%}
+            <a href="{{ url }}">{{ label }}</a>{{ ',' if not loop.last }}
             {% endfor %}
         </td>
-        <td><a href="{{ policies_url }}">{{ policies_url }}</a></td>
+        <td><a href="{{ fw_url }}">Firewall Policies</a></td>
       </tr>
       {% endfor -%}
     </table>
   </div>
 </div>
-<div><a href="{{ config_upload_url }}">Upload page</a>.</li></div>
+<div class="pb-5">{{ wtf.quick_form(form) }}</div>
 {% endblock %}
 {# vim:sw=2:ts=2:et:
 -#}

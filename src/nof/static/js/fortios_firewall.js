@@ -16,7 +16,9 @@ function make_firewall_policy_maps(fwcnfs) {
                   "service",
                   "status",
                   "action",
-                  "comments"];
+                  "comments",
+                  "srcaddrs",
+                  "dstaddrs"]
 
     let policies = $.map(fwcnfs, function (val, key) {
         console.log(val); // debug

@@ -5,7 +5,7 @@
 # flake8: noqa: F401
 """app main.
 """
-# from .views import APP  # Not ready yet.
+from .views import APP
 from .v1api import API
 from .common import PREFIX, API_PREFIX
 

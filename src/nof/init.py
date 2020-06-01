@@ -32,8 +32,7 @@ def create_app(cnf_name="development"):
     app.register_blueprint(networks.APP)
     app.register_blueprint(networks.API)
 
-    # Disabled until it switched to fortios_xutils.
-    # app.register_blueprint(fortios.APP)
+    app.register_blueprint(fortios.APP)
     app.register_blueprint(fortios.API)
 
     return app
