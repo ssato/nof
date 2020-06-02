@@ -102,7 +102,7 @@ class V1_API_10_TestCase(common.TestBase):
             )
             self.assertTrue(res)  # == [{"edit":, ...}]
 
-    def test_34_find_firewall_policy_by_addr__contain_ipa(self):
+    def test_26_find_firewall_policy_by_ipa__contain_ip(self):
         self._arrange_uploaded_and_procecced_files()
         for hname in self.hostnames:
             upath = os.path.join(FIND_PREFIX, hname, "192.168.2.2")
